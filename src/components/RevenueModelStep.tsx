@@ -49,26 +49,22 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
   const [selectedModel, setSelectedModel] = useState<string>(initialData?.revenueModel || '');
   const [customModel, setCustomModel] = useState<string>(initialData?.customModel || '');
   const [error, setError] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    // Validação
+    // VALIDAÇÃO SIMPLES E DIRETA
     if (!selectedModel) {
-      setError('Por favor, selecione como sua empresa ganha dinheiro.');
-      setIsSubmitting(false);
+      setError('Selecione um modelo de receita para continuar');
       return;
     }
     
     if (selectedModel === 'outros' && !customModel.trim()) {
-      setError('Por favor, descreva o modelo de receita da sua empresa.');
-      setIsSubmitting(false);
+      setError('Descreva o modelo de receita da sua empresa');
       return;
     }
 
-    // Envia os dados
+    // ENVIA OS DADOS
     onNext({
       revenueModel: selectedModel,
       customModel: selectedModel === 'outros' ? customModel : undefined,
@@ -86,7 +82,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {models.map((model) => (
             <button
@@ -94,7 +90,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
               type="button"
               onClick={() => {
                 setSelectedModel(model.id);
-                setError(''); // Limpa erro ao selecionar
+                setError('');
               }}
               className={`p-4 text-left border-2 rounded-xl transition-all duration-200 ${
                 selectedModel === model.id
@@ -140,8 +136,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         <div className="mt-8 flex justify-end">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors"
           >
             Continuar
             <ChevronRight size={20} />

@@ -319,9 +319,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             className="px-5 py-2.5 bg-white hover:bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-pointer shadow-sm">
             <ArrowLeft className="w-4 h-4" /><span>Voltar</span>
           </button>
-          <span className="text-xs text-[#5A6270] font-medium hidden sm:inline">
-            Etapa {currentStep - 1} de {totalWizardSteps - 3}
-          </span>
+         <span className="text-xs text-[#5A6270] font-medium hidden sm:inline">
+  Etapa {currentStep} de {totalWizardSteps}
+</span>
           {currentStep !== 15 && (
             <button type="button" onClick={nextStep}
               className="px-6 py-2.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
