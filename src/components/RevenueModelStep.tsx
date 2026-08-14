@@ -49,17 +49,26 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
   const [selectedModel, setSelectedModel] = useState<string>(initialData?.revenueModel || '');
   const [customModel, setCustomModel] = useState<string>(initialData?.customModel || '');
   const [error, setError] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Validação
     if (!selectedModel) {
-      setError('Selecione um modelo de receita para continuar');
+      setError('Por favor, selecione como sua empresa ganha dinheiro.');
+      setIsSubmitting(false);
       return;
     }
+    
     if (selectedModel === 'outros' && !customModel.trim()) {
-      setError('Descreva qual é o modelo de receita da sua empresa');
+      setError('Por favor, descreva o modelo de receita da sua empresa.');
+      setIsSubmitting(false);
       return;
     }
+
+    // Envia os dados
     onNext({
       revenueModel: selectedModel,
       customModel: selectedModel === 'outros' ? customModel : undefined,
@@ -77,17 +86,20 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {models.map((model) => (
             <button
               key={model.id}
               type="button"
-              onClick={() => setSelectedModel(model.id)}
+              onClick={() => {
+                setSelectedModel(model.id);
+                setError(''); // Limpa erro ao selecionar
+              }}
               className={`p-4 text-left border-2 rounded-xl transition-all duration-200 ${
                 selectedModel === model.id
-                  ? 'border-blue-500 bg-blue-50 shadow-md'
-                  : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -109,9 +121,12 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
             <input
               type="text"
               value={customModel}
-              onChange={(e) => setCustomModel(e.target.value)}
+              onChange={(e) => {
+                setCustomModel(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="Ex: Franquia, Licenciamento, Royalties..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
             />
           </div>
         )}
@@ -125,7 +140,8 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         <div className="mt-8 flex justify-end">
           <button
             type="submit"
-            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors disabled:opacity-50"
           >
             Continuar
             <ChevronRight size={20} />
