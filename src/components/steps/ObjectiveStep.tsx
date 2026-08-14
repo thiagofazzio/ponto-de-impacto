@@ -1,5 +1,5 @@
-import React from 'react';
-import { Target, AlertTriangle, Lightbulb } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 
 interface ObjectiveStepProps {
   mainGoal: string;
@@ -7,61 +7,178 @@ interface ObjectiveStepProps {
   onUpdate: (data: { mainGoal: string; biggestDifficulty: string }) => void;
 }
 
-export const ObjectiveStep: React.FC<ObjectiveStepProps> = ({
-  mainGoal,
-  biggestDifficulty,
-  onUpdate,
-}) => {
+const goalOptions = [
+  { id: 'crescer_faturamento', label: 'Crescer Faturamento', icon: '📈', description: 'Aumentar a receita total do negócio' },
+  { id: 'aumentar_margem', label: 'Aumentar Margem', icon: '💰', description: 'Melhorar a rentabilidade e lucratividade' },
+  { id: 'profissionalizar_gestao', label: 'Profissionalizar Gestão', icon: '📊', description: 'Estruturar processos e governança' },
+  { id: 'reduzir_dependencia', label: 'Reduzir Dependência', icon: '🔄', description: 'Diminuir dependência do sócio/fundador' },
+  { id: 'expandir_operacao', label: 'Expandir Operação', icon: '🌍', description: 'Abrir novas unidades ou canais' },
+  { id: 'outro_objetivo', label: 'Outro', icon: '💡', description: 'Descreva seu objetivo específico' },
+];
+
+const difficultyOptions = [
+  { id: 'comercial', label: 'Comercial', icon: '📞', description: 'Vendas, prospecção, ticket médio' },
+  { id: 'financeiro', label: 'Financeiro', icon: '💳', description: 'Fluxo de caixa, margem, custos' },
+  { id: 'operacional', label: 'Operacional', icon: '⚙️', description: 'Processos, logística, entrega' },
+  { id: 'gestao', label: 'Gestão', icon: '📋', description: 'Processos, indicadores, planejamento' },
+  { id: 'pessoas', label: 'Pessoas', icon: '👥', description: 'Liderança, times, cultura' },
+  { id: 'outro_desafio', label: 'Outro', icon: '💡', description: 'Descreva seu desafio específico' },
+];
+
+const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficulty, onUpdate }) => {
+  const [selectedGoal, setSelectedGoal] = useState<string>(mainGoal || '');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>(biggestDifficulty || '');
+  const [customGoal, setCustomGoal] = useState<string>('');
+  const [customDifficulty, setCustomDifficulty] = useState<string>('');
+  const [error, setError] = useState<string>('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validação
+    if (!selectedGoal) {
+      setError('Selecione um objetivo para continuar');
+      return;
+    }
+    if (selectedGoal === 'outro_objetivo' && !customGoal.trim()) {
+      setError('Descreva seu objetivo');
+      return;
+    }
+    if (!selectedDifficulty) {
+      setError('Selecione um gargalo para continuar');
+      return;
+    }
+    if (selectedDifficulty === 'outro_desafio' && !customDifficulty.trim()) {
+      setError('Descreva seu gargalo');
+      return;
+    }
+
+    // Envia os dados
+    const goalValue = selectedGoal === 'outro_objetivo' ? customGoal : selectedGoal;
+    const difficultyValue = selectedDifficulty === 'outro_desafio' ? customDifficulty : selectedDifficulty;
+    
+    onUpdate({
+      mainGoal: goalValue,
+      biggestDifficulty: difficultyValue,
+    });
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 2 de 16 • Objetivos & Desafios</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">O que você quer alcançar nos próximos 12 meses?</h2>
-        <p className="text-[#5A6270] text-sm mt-1">
-          Essas respostas direcionam a análise para focar exatamente na sua prioridade atual.
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">
+          Objetivos & Desafios
+        </h2>
+        <p className="text-gray-600 mt-2">
+          Conte-nos o que você quer alcançar e qual o maior gargalo hoje.
         </p>
       </div>
 
-      <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
-        
-        {/* Goal */}
-        <div className="space-y-2">
-          <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#6B0F1A]" />
-            <span>1. Qual é o seu principal objetivo estratégico para este ano? *</span>
-          </label>
-          <textarea
-            id="input-main-goal"
-            rows={3}
-            value={mainGoal}
-            onChange={(e) => onUpdate({ mainGoal: e.target.value, biggestDifficulty })}
-            placeholder="Ex: Dobrar o faturamento, estruturar equipe comercial, reduzir custos e trabalhar menos horas no operacional..."
-            className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20 placeholder:text-[#5A6270]"
-          />
+      <form onSubmit={handleSubmit}>
+        {/* Objetivo */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">
+            🎯 Qual é o seu principal objetivo?
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {goalOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setSelectedGoal(option.id);
+                  setError('');
+                }}
+                className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                  selectedGoal === option.id
+                    ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                    : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">{option.icon}</span>
+                  <div>
+                    <div className="font-semibold text-gray-800">{option.label}</div>
+                    <div className="text-sm text-gray-500">{option.description}</div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          {selectedGoal === 'outro_objetivo' && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={customGoal}
+                onChange={(e) => setCustomGoal(e.target.value)}
+                placeholder="Descreva seu objetivo..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
+              />
+            </div>
+          )}
         </div>
 
-        {/* Difficulty */}
-        <div className="space-y-2">
-          <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#6B0F1A]" />
-            <span>2. Qual é a sua maior dificuldade ou gargalo hoje? *</span>
-          </label>
-          <textarea
-            id="input-biggest-difficulty"
-            rows={3}
-            value={biggestDifficulty}
-            onChange={(e) => onUpdate({ mainGoal, biggestDifficulty: e.target.value })}
-            placeholder="Ex: Faturamento inconstante, equipe não assume responsabilidades, margem líquida baixa, falta de tempo..."
-            className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20 placeholder:text-[#5A6270]"
-          />
+        {/* Gargalo */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">
+            🚧 Qual é o maior gargalo da sua operação?
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {difficultyOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setSelectedDifficulty(option.id);
+                  setError('');
+                }}
+                className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                  selectedDifficulty === option.id
+                    ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                    : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">{option.icon}</span>
+                  <div>
+                    <div className="font-semibold text-gray-800">{option.label}</div>
+                    <div className="text-sm text-gray-500">{option.description}</div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          {selectedDifficulty === 'outro_desafio' && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={customDifficulty}
+                onChange={(e) => setCustomDifficulty(e.target.value)}
+                placeholder="Descreva seu gargalo..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
+              />
+            </div>
+          )}
         </div>
 
-        <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB] flex items-start gap-2.5 text-xs text-[#5A6270]">
-          <Lightbulb className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-          <span>Quanto mais específico você for, mais preciso e prático será o seu relatório com o plano de ação de 90 dias.</span>
-        </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
-      </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors"
+          >
+            Continuar
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
+
+export default ObjectiveStep;
