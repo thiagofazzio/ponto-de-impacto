@@ -1,158 +1,166 @@
 import React, { useState } from 'react';
-import { CompanyCNPJData } from '../../types';
-import { Search, Building2, MapPin, Tag, Calendar, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Search, CheckCircle, AlertTriangle, Building2, Users, DollarSign } from 'lucide-react';
 
 interface CnpjStepProps {
   cnpj: string;
-  cnpjData: CompanyCNPJData | null;
-  onUpdate: (cnpj: string, cnpjData: CompanyCNPJData | null) => void;
+  cnpjData: any;
+  onUpdate: (cnpj: string, cnpjData: any) => void;
   onNext: () => void;
+  formData: any;
+  updateFormData: (data: any) => void;
 }
 
-export const CnpjStep: React.FC<CnpjStepProps> = ({ cnpj, cnpjData, onUpdate, onNext }) => {
-  const [inputCnpj, setInputCnpj] = useState(cnpj || '');
+export const CnpjStep: React.FC<CnpjStepProps> = ({ 
+  cnpj, 
+  cnpjData, 
+  onUpdate, 
+  onNext,
+  formData,
+  updateFormData 
+}) => {
+  const [localCnpj, setLocalCnpj] = useState(cnpj || '');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
-  // Format CNPJ as user types 00.000.000/0000-00
-  const formatCnpjMask = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 14);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
-    if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
-    if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
-    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCnpjMask(e.target.value);
-    setInputCnpj(formatted);
-    setErrorMsg(null);
-  };
-
-  const fetchCnpjData = async () => {
-    const clean = inputCnpj.replace(/\D/g, '');
-    if (clean.length !== 14) {
-      setErrorMsg('Por favor, informe um CNPJ válido com 14 dígitos.');
-      return;
+  const formatCnpj = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 14) {
+      let formatted = digits;
+      if (formatted.length > 2) formatted = formatted.replace(/^(\d{2})(\d)/, '$1.$2');
+      if (formatted.length > 5) formatted = formatted.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+      if (formatted.length > 8) formatted = formatted.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
+      if (formatted.length > 12) formatted = formatted.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+      return formatted;
     }
+    return value;
+  };
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    const formatted = formatCnpj(raw);
+    setLocalCnpj(formatted);
+    setError(null);
+    if (raw.length === 14) handleSearch(raw);
+  };
+
+  const handleSearch = async (rawCnpj: string) => {
+    if (rawCnpj.length !== 14) { setError('CNPJ deve ter 14 dígitos'); return; }
 
     setLoading(true);
-    setErrorMsg(null);
+    setError(null);
+    setIsValidating(true);
 
     try {
-      const response = await fetch(`/api/cnpj/${clean}`);
-      const data = await response.json();
-
+      const response = await fetch(`/api/cnpj/${rawCnpj}`);
       if (!response.ok) {
-        throw new Error(data.error || 'Não foi possível consultar os dados do CNPJ.');
+        if (response.status === 444) setError('CNPJ não encontrado. Verifique o número e tente novamente.');
+        else setError('Erro ao buscar dados do CNPJ. Tente novamente.');
+        setLoading(false); setIsValidating(false); return;
       }
 
-      onUpdate(inputCnpj, data);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao conectar à API de CNPJ. Você pode continuar preenchendo os dados manualmente.');
-    } finally {
+      const data = await response.json();
+      onUpdate(rawCnpj, data);
+      updateFormData({
+        companyName: data.razaoSocial || data.nomeFantasia || '',
+        segment: data.cnaeDescricao || '',
+        cityState: data.municipio ? `${data.municipio} / ${data.uf}` : '',
+      });
+      
       setLoading(false);
+      setIsValidating(false);
+    } catch (err) {
+      setError('Erro ao buscar dados. Verifique sua conexão.');
+      setLoading(false);
+      setIsValidating(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      if (!cnpjData) {
-        fetchCnpjData();
-      } else {
-        onNext();
-      }
-    }
+  const handleConfirm = () => {
+    if (!cnpjData) { setError('Busque os dados do CNPJ primeiro'); return; }
+    onNext();
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 1 de 16 • Identificação Pública</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Qual é o CNPJ da sua empresa?</h2>
-        <p className="text-[#5A6270] text-sm mt-1">
-          Usamos o CNPJ para buscar automaticamente a razão social, porte e segmento oficial (CNAE) via BrasilAPI, enriquecendo o relatório.
-        </p>
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Dados da Empresa</h2>
+        <p className="text-gray-600 mt-2">Informe o CNPJ para buscar os dados automaticamente e confirme as informações.</p>
       </div>
 
-      <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-4 shadow-sm">
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-          Informe o CNPJ da empresa
-        </label>
-        
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <input
-              id="input-cnpj"
-              type="text"
-              value={inputCnpj}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="00.000.000/0000-00"
-              maxLength={18}
-              className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-4 py-3 text-lg font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
-            />
+      <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 shadow-sm">
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={localCnpj}
+            onChange={handleCnpjChange}
+            placeholder="00.000.000/0000-00"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A] text-lg"
+            maxLength={18}
+          />
+          <button
+            onClick={() => handleSearch(localCnpj.replace(/\D/g, ''))}
+            disabled={loading || localCnpj.replace(/\D/g, '').length !== 14}
+            className="px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? <span className="inline-block animate-spin">⟳</span> : <Search size={20} />}
+            Buscar
+          </button>
+        </div>
+        {error && <div className="mt-3 p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center gap-2"><AlertTriangle size={16} />{error}</div>}
+        {loading && <div className="mt-3 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex items-center gap-2"><span className="inline-block animate-spin">⟳</span> Buscando dados do CNPJ...</div>}
+      </div>
+
+      {cnpjData && !loading && (
+        <div className="mt-6 space-y-4">
+          <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2"><Building2 size={18} className="text-[#6B0F1A]" /> Dados da Empresa</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium text-gray-600">Razão Social</label><div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.razaoSocial || 'Não informado'}</div></div>
+              <div><label className="block text-sm font-medium text-gray-600">Nome Fantasia</label><div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.nomeFantasia || cnpjData.razaoSocial || 'Não informado'}</div></div>
+              <div><label className="block text-sm font-medium text-gray-600">Porte</label><div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.porte || 'Não informado'}</div></div>
+              <div><label className="block text-sm font-medium text-gray-600">Cidade / UF</label><div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.municipio ? `${cnpjData.municipio} / ${cnpjData.uf}` : 'Não informado'}</div></div>
+              <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-600">Atividade Principal (CNAE)</label><div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800 text-sm">{cnpjData.cnaeDescricao || 'Não informado'}</div></div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2"><Users size={18} className="text-[#6B0F1A]" /> Confirme os dados operacionais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Número de Funcionários</label>
+                <select
+                  value={formData.employeesCount || '6_15'}
+                  onChange={(e) => updateFormData({ employeesCount: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
+                >
+                  <option value="1_5">1 a 5</option>
+                  <option value="6_15">6 a 15</option>
+                  <option value="16_50">16 a 50</option>
+                  <option value="51_100">51 a 100</option>
+                  <option value="100+">Mais de 100</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 flex items-center gap-1"><DollarSign size={16} /> Faturamento Mensal (R$)</label>
+                <input
+                  type="number"
+                  value={formData.monthlyRevenue || 150000}
+                  onChange={(e) => updateFormData({ monthlyRevenue: Number(e.target.value) })}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
+                />
+              </div>
+            </div>
           </div>
 
           <button
-            id="btn-search-cnpj"
-            type="button"
-            onClick={fetchCnpjData}
-            disabled={loading || inputCnpj.replace(/\D/g, '').length !== 14}
-            className="px-6 py-3 bg-[#6B0F1A] hover:bg-[#500B13] disabled:opacity-50 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+            onClick={handleConfirm}
+            className="w-full px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Search className="w-4 h-4 text-[#D4AF37]" />}
-            <span>{loading ? 'Consultando...' : 'Buscar CNPJ'}</span>
+            <CheckCircle size={20} /> Confirmar e Continuar
           </button>
         </div>
-
-        {errorMsg && (
-          <div className="p-3 bg-[#F4E8C1]/50 border border-[#D4AF37] rounded-xl text-[#6B0F1A] text-xs flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 text-[#6B0F1A] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">{errorMsg}</p>
-              <p className="text-[11px] text-[#5A6270] mt-1">Dica: Se preferir não consultar agora, você pode prosseguir para a próxima etapa.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Live Preview Card when data is found */}
-        {cnpjData && (
-          <div className="mt-4 p-4 rounded-xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-3">
-            <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-bold text-emerald-700">Dados Localizados Oficialmente</span>
-              </div>
-              <span className="text-[10px] text-[#5A6270] uppercase font-bold">Status: {cnpjData.situacaoCadastral}</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-[#5A6270] block font-medium">Razão Social:</span>
-                <span className="font-bold text-[#1A1A1A] text-sm">{cnpjData.razaoSocial}</span>
-              </div>
-              <div>
-                <span className="text-[#5A6270] block font-medium">Nome Fantasia:</span>
-                <span className="font-semibold text-[#1A1A1A]">{cnpjData.nomeFantasia || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-[#5A6270] block font-medium">Porte da Empresa:</span>
-                <span className="font-bold text-[#6B0F1A]">{cnpjData.porte}</span>
-              </div>
-              <div>
-                <span className="text-[#5A6270] block font-medium">Cidade / UF:</span>
-                <span className="font-medium text-[#1A1A1A]">{cnpjData.municipio} - {cnpjData.uf}</span>
-              </div>
-              <div className="sm:col-span-2">
-                <span className="text-[#5A6270] block font-medium">Atividade Principal (CNAE):</span>
-                <span className="font-medium text-[#1A1A1A]">{cnpjData.cnaeCodigo} - {cnpjData.cnaeDescricao}</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

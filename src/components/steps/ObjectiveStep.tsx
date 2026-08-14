@@ -35,7 +35,6 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação
     if (!selectedGoal) {
       setError('Selecione um objetivo para continuar');
       return;
@@ -53,7 +52,6 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
       return;
     }
 
-    // Envia os dados
     const goalValue = selectedGoal === 'outro_objetivo' ? customGoal : selectedGoal;
     const difficultyValue = selectedDifficulty === 'outro_desafio' ? customDifficulty : selectedDifficulty;
     
@@ -166,16 +164,6 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
             {error}
           </div>
         )}
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors"
-          >
-            Continuar
-            <ChevronRight size={20} />
-          </button>
-        </div>
       </form>
     </div>
   );
