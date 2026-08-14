@@ -290,7 +290,66 @@ TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSu
       return res.json({ count: leads.length, leads });
     } catch (err: any) { return res.status(500).json({ error: err.message }); }
   });
+// ===== ROTA PARA O MOTOR DE DECISÃO =====
+app.post('/api/motor/diagnose', async (req, res) => {
+  try {
+    const formData = req.body;
+    const motorUrl = process.env.MOTOR_URL || 'https://motor-tfazzio.onrender.com';
+    
+    console.log('🔗 Chamando motor:', motorUrl);
+    
+    // Mapear dados do GAS para o formato do motor
+    const payload = {
+      cnpj: formData.cnpj || '',
+      faturamento: formData.monthlyRevenue || 0,
+      equipe: formData.employeesCount || 0,
+      desafio: formData.mainGoal || 'crescer_faturamento',
+      respostas: {
+        ...formData
+      }
+    };
 
+    const response = await fetch(`${motorUrl}/diagnose`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Motor error: ${response.status}`);
+    }
+
+    const motorResult = await response.json();
+    const localResult = generateFullDiagnostic(formData);
+    
+    // Combinar resultados
+    const mergedResult = {
+      ...localResult,
+      motor: motorResult,
+      motorIntegrado: true,
+      // Priorizar dados do motor quando disponíveis
+      hipoteseMotor: motorResult.hipotese_vencedora || null,
+      acoesMotor: motorResult.acoes || [],
+      // Manter os dados locais como fallback
+      primaryBottleneck: motorResult.hipotese_vencedora || localResult.primaryBottleneck,
+      strategicRecommendations: motorResult.acoes?.length > 0 ? motorResult.acoes : localResult.strategicRecommendations
+    };
+
+    registrarLead(formData, mergedResult);
+    return res.json(mergedResult);
+    
+  } catch (error) {
+    console.error('❌ Motor API error:', error);
+    // Fallback para diagnóstico local
+    const localResult = generateFullDiagnostic(req.body);
+    registrarLead(req.body, localResult);
+    return res.json({
+      ...localResult,
+      motorIntegrado: false,
+      motorErro: error.message
+    });
+  }
+});
   // ===== SERVER ARQUIVOS ESTÁTICOS =====
   const distPath = path.join(process.cwd(), 'dist');
   app.use(express.static(distPath));
