@@ -99,31 +99,26 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   };
 
   const validateStep = (): boolean => {
-    setValidationError(null);
+  setValidationError(null);
 
-    // Etapa 2: Modelo de Receita
-    if (currentStep === 2) {
-      if (!formData.revenueModel) {
-        setValidationError('Por favor, selecione como sua empresa ganha dinheiro.');
-        return false;
-      }
-      if (formData.revenueModel === 'outros' && !formData.customRevenueModel?.trim()) {
-        setValidationError('Por favor, descreva o modelo de receita da sua empresa.');
-        return false;
-      }
-    }
-    
-    // Etapa 3: Objetivo
-    else if (currentStep === 3) {
-      if (!formData.mainGoal.trim()) {
-        setValidationError('Por favor, descreva o seu principal objetivo estratégico.');
-        return false;
-      }
-      if (!formData.biggestDifficulty.trim()) {
-        setValidationError('Por favor, informe a maior dificuldade ou gargalo atual.');
-        return false;
-      }
-    }
+  // REMOVA OU COMENTE ESTA PARTE:
+  // if (currentStep === 2) {
+  //   if (!formData.revenueModel) {
+  //     setValidationError('Por favor, selecione como sua empresa ganha dinheiro.');
+  //     return false;
+  //   }
+  //   if (formData.revenueModel === 'outros' && !formData.customRevenueModel?.trim()) {
+  //     setValidationError('Por favor, descreva o modelo de receita da sua empresa.');
+  //     return false;
+  //   }
+  // }
+  
+  // Etapa 3: Objetivo
+  else if (currentStep === 3) {
+    // ... resto da validação
+  }
+  // ... resto
+};
     
     // Etapa 5: Dados da Empresa
     else if (currentStep === 5) {
@@ -218,18 +213,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
 
             {/* Etapa 2: Modelo de Receita */}
-            {currentStep === 2 && (
-              <RevenueModelStep
-                onNext={(data) => {
-                  updateFormData({
-                    revenueModel: data.revenueModel,
-                    customRevenueModel: data.customModel,
-                  });
-                  nextStep();
-                }}
-                initialData={formData}
-              />
-            )}
+           {currentStep === 2 && (
+  <RevenueModelStep
+    onNext={(data) => {
+      updateFormData({
+        revenueModel: data.revenueModel,
+        customRevenueModel: data.customModel,
+      });
+      nextStep();
+    }}
+    initialData={formData}
+  />
+)}
 
             {/* Etapa 3: Objetivo */}
             {currentStep === 3 && (

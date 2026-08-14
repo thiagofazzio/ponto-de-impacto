@@ -50,26 +50,30 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
   const [customModel, setCustomModel] = useState<string>(initialData?.customModel || '');
   const [error, setError] = useState<string>('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // VALIDAÇÃO SIMPLES E DIRETA
+  // Função que será chamada pelo WizardContainer ao clicar em "Avançar"
+  const validateAndGetData = () => {
     if (!selectedModel) {
       setError('Selecione um modelo de receita para continuar');
-      return;
+      return null;
     }
-    
     if (selectedModel === 'outros' && !customModel.trim()) {
       setError('Descreva o modelo de receita da sua empresa');
-      return;
+      return null;
     }
-
-    // ENVIA OS DADOS
-    onNext({
+    return {
       revenueModel: selectedModel,
       customModel: selectedModel === 'outros' ? customModel : undefined,
-    });
+    };
   };
+
+  // Expõe a função de validação para o WizardContainer
+  React.useEffect(() => {
+    // @ts-ignore - Adiciona a função ao componente para ser chamada pelo WizardContainer
+    (window as any).__validateRevenueModel = validateAndGetData;
+    return () => {
+      delete (window as any).__validateRevenueModel;
+    };
+  }, [selectedModel, customModel]);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -82,67 +86,55 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {models.map((model) => (
-            <button
-              key={model.id}
-              type="button"
-              onClick={() => {
-                setSelectedModel(model.id);
-                setError('');
-              }}
-              className={`p-4 text-left border-2 rounded-xl transition-all duration-200 ${
-                selectedModel === model.id
-                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
-                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{model.icon}</span>
-                <div>
-                  <div className="font-semibold text-gray-800">{model.label}</div>
-                  <div className="text-sm text-gray-500 mt-0.5">{model.description}</div>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {selectedModel === 'outros' && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descreva o modelo de receita da sua empresa:
-            </label>
-            <input
-              type="text"
-              value={customModel}
-              onChange={(e) => {
-                setCustomModel(e.target.value);
-                if (error) setError('');
-              }}
-              placeholder="Ex: Franquia, Licenciamento, Royalties..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
-            />
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-8 flex justify-end">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {models.map((model) => (
           <button
-            type="submit"
-            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors"
+            key={model.id}
+            type="button"
+            onClick={() => {
+              setSelectedModel(model.id);
+              setError('');
+            }}
+            className={`p-4 text-left border-2 rounded-xl transition-all duration-200 ${
+              selectedModel === model.id
+                ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+            }`}
           >
-            Continuar
-            <ChevronRight size={20} />
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">{model.icon}</span>
+              <div>
+                <div className="font-semibold text-gray-800">{model.label}</div>
+                <div className="text-sm text-gray-500 mt-0.5">{model.description}</div>
+              </div>
+            </div>
           </button>
+        ))}
+      </div>
+
+      {selectedModel === 'outros' && (
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Descreva o modelo de receita da sua empresa:
+          </label>
+          <input
+            type="text"
+            value={customModel}
+            onChange={(e) => {
+              setCustomModel(e.target.value);
+              if (error) setError('');
+            }}
+            placeholder="Ex: Franquia, Licenciamento, Royalties..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
+          />
         </div>
-      </form>
+      )}
+
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
     </div>
   );
 };
