@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DiagnosticFormData, DiagnosticResult, CompanyCNPJData } from '../types';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { CnpjStep } from './steps/CnpjStep';
-import { ObjectiveStep } from './steps/ObjectiveStep';
+import ObjectiveStep from './steps/ObjectiveStep';
 import { CompanyDetailsStep } from './steps/CompanyDetailsStep';
 import { FinancialDataStep } from './steps/FinancialDataStep';
 import { CommercialDataStep } from './steps/CommercialDataStep';
