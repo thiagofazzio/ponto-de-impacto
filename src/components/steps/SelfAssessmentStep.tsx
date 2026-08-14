@@ -84,7 +84,7 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa {stepNumber} de 16 • Autoavaliação Direcionada</span>
+        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Autoavaliação</span>
         <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Como você avalia a área de {areaTitle}?</h2>
         <p className="text-[#5A6270] text-sm mt-1">{guide.subtitle}</p>
       </div>
@@ -107,8 +107,8 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
                 onClick={() => onSelect(star)}
                 className={`p-4 rounded-xl border text-left transition duration-150 flex items-start gap-4 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#1A1A1A] shadow-md'
-                    : 'bg-[#F9F7F3] border-[#D8D3CB] text-[#1A1A1A] hover:border-[#6B0F1A]/50'
+                    ? 'bg-[#F9F7F3] border-[#6B0F1A] shadow-md'
+                    : 'bg-white border-[#D8D3CB] hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
                 }`}
               >
                 {/* Score badge */}
@@ -116,10 +116,10 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
                   className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-sm border ${
                     isSelected
                       ? 'bg-[#6B0F1A] text-white border-[#500B13] shadow'
-                      : 'bg-white text-[#5A6270] border-[#D8D3CB]'
+                      : 'bg-gray-100 text-[#5A6270] border-[#D8D3CB]'
                   }`}
                 >
-                  {star}★
+                  {star}
                 </div>
 
                 {/* Level details */}
