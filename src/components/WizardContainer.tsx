@@ -101,47 +101,42 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const validateStep = (): boolean => {
   setValidationError(null);
 
-  // REMOVA OU COMENTE ESTA PARTE:
-  // if (currentStep === 2) {
-  //   if (!formData.revenueModel) {
-  //     setValidationError('Por favor, selecione como sua empresa ganha dinheiro.');
-  //     return false;
-  //   }
-  //   if (formData.revenueModel === 'outros' && !formData.customRevenueModel?.trim()) {
-  //     setValidationError('Por favor, descreva o modelo de receita da sua empresa.');
-  //     return false;
-  //   }
-  // }
+  // Etapa 2: Modelo de Receita - REMOVIDA (validação agora está no componente)
   
   // Etapa 3: Objetivo
-  else if (currentStep === 3) {
-    // ... resto da validação
+  if (currentStep === 3) {
+    if (!formData.mainGoal.trim()) {
+      setValidationError('Por favor, descreva o seu principal objetivo estratégico.');
+      return false;
+    }
+    if (!formData.biggestDifficulty.trim()) {
+      setValidationError('Por favor, informe a maior dificuldade ou gargalo atual.');
+      return false;
+    }
   }
-  // ... resto
-};
-    
-    // Etapa 5: Dados da Empresa
-    else if (currentStep === 5) {
-      if (!formData.companyName.trim()) {
-        setValidationError('Por favor, informe o nome ou marca da sua empresa.');
-        return false;
-      }
-      if (!formData.segment.trim()) {
-        setValidationError('Por favor, informe o segmento de atuação.');
-        return false;
-      }
+  
+  // Etapa 5: Dados da Empresa
+  else if (currentStep === 5) {
+    if (!formData.companyName.trim()) {
+      setValidationError('Por favor, informe o nome ou marca da sua empresa.');
+      return false;
     }
-    
-    // Etapa 6: Dados Financeiros
-    else if (currentStep === 6) {
-      if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
-        setValidationError('Por favor, informe um faturamento mensal válido.');
-        return false;
-      }
+    if (!formData.segment.trim()) {
+      setValidationError('Por favor, informe o segmento de atuação.');
+      return false;
     }
+  }
+  
+  // Etapa 6: Dados Financeiros
+  else if (currentStep === 6) {
+    if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
+      setValidationError('Por favor, informe um faturamento mensal válido.');
+      return false;
+    }
+  }
 
-    return true;
-  };
+  return true;
+};
 
   const nextStep = () => {
     if (!validateStep()) return;
