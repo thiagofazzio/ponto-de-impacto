@@ -125,7 +125,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         <div className="mt-8 flex justify-end">
           <button
             type="submit"
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors"
           >
             Continuar
             <ChevronRight size={20} />
