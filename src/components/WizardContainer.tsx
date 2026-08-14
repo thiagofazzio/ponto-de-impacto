@@ -15,6 +15,7 @@ import { PdfGenerator } from './report/PdfGenerator';
 import { ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
+import RevenueModelStep from './RevenueModelStep'; // NOVO
 
 const MIN_PROCESSING_MS = 3600;
 
@@ -53,6 +54,9 @@ const INITIAL_FORM_DATA: DiagnosticFormData = {
   contactEmail: '',
   contactPhone: '',
   consentGiven: false,
+  // NOVO CAMPO
+  revenueModel: '',
+  customRevenueModel: '',
 };
 
 interface WizardContainerProps {
@@ -66,6 +70,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Total de etapas = 17 (aumentou 1)
+  const totalWizardSteps = 17;
 
   const updateFormData = (fields: Partial<DiagnosticFormData>) => {
     setFormData((prev) => {
@@ -93,12 +100,19 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     }
   };
 
-  const totalWizardSteps = 16;
-
   const validateStep = (): boolean => {
     setValidationError(null);
 
-    if (currentStep === 3) {
+    if (currentStep === 2) {
+      if (!formData.revenueModel) {
+        setValidationError('Por favor, selecione como sua empresa ganha dinheiro.');
+        return false;
+      }
+      if (formData.revenueModel === 'outros' && !formData.customRevenueModel?.trim()) {
+        setValidationError('Por favor, descreva o modelo de receita da sua empresa.');
+        return false;
+      }
+    } else if (currentStep === 4) {
       if (!formData.mainGoal.trim()) {
         setValidationError('Por favor, descreva o seu principal objetivo estratégico.');
         return false;
@@ -107,7 +121,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         setValidationError('Por favor, informe a maior dificuldade ou gargalo atual.');
         return false;
       }
-    } else if (currentStep === 4) {
+    } else if (currentStep === 5) {
       if (!formData.companyName.trim()) {
         setValidationError('Por favor, informe o nome ou marca da sua empresa.');
         return false;
@@ -116,7 +130,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         setValidationError('Por favor, informe o segmento de atuação.');
         return false;
       }
-    } else if (currentStep === 5) {
+    } else if (currentStep === 6) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
         return false;
@@ -152,14 +166,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (onCompanyChange) onCompanyChange('');
   };
 
-  // CORRIGIDO: antes, o avanço pro passo 16 dependia só de um timer fixo
-  // dentro do ProcessingStep, desacoplado da resposta real da API — se a IA
-  // demorasse mais que a animação, a tela ficava em branco. Agora o avanço
-  // só acontece quando a resposta real chega (com um piso mínimo de tempo
-  // só pra a animação não parecer instantânea/quebrada).
   const runDiagnosticCalculation = async () => {
-    setCurrentStep(15);
-    if (onStepChange) onStepChange(15);
+    setCurrentStep(16);
+    if (onStepChange) onStepChange(16);
 
     const minDelay = new Promise<void>((resolve) => setTimeout(resolve, MIN_PROCESSING_MS));
 
@@ -182,8 +191,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const [result] = await Promise.all([fetchResult, minDelay]);
     setDiagnosticResult(result);
-    setCurrentStep(16);
-    if (onStepChange) onStepChange(16);
+    setCurrentStep(17);
+    if (onStepChange) onStepChange(17);
   };
 
   return (
@@ -199,11 +208,25 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           >
             {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
 
+            {/* NOVA ETAPA 2: Modelo de Receita */}
             {currentStep === 2 && (
-              <CnpjStep cnpj={formData.cnpj} cnpjData={formData.cnpjData} onUpdate={handleCnpjUpdate} onNext={nextStep} />
+              <RevenueModelStep
+                onNext={(data) => {
+                  updateFormData({
+                    revenueModel: data.revenueModel,
+                    customRevenueModel: data.customModel,
+                  });
+                  nextStep();
+                }}
+                initialData={formData}
+              />
             )}
 
             {currentStep === 3 && (
+              <CnpjStep cnpj={formData.cnpj} cnpjData={formData.cnpjData} onUpdate={handleCnpjUpdate} onNext={nextStep} />
+            )}
+
+            {currentStep === 4 && (
               <ObjectiveStep
                 mainGoal={formData.mainGoal}
                 biggestDifficulty={formData.biggestDifficulty}
@@ -211,50 +234,50 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
 
-            {currentStep === 4 && <CompanyDetailsStep formData={formData} onUpdate={updateFormData} />}
-            {currentStep === 5 && <FinancialDataStep formData={formData} onUpdate={updateFormData} />}
-            {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
+            {currentStep === 5 && <CompanyDetailsStep formData={formData} onUpdate={updateFormData} />}
+            {currentStep === 6 && <FinancialDataStep formData={formData} onUpdate={updateFormData} />}
+            {currentStep === 7 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
 
-            {currentStep === 7 && (
-              <SelfAssessmentStep areaKey="Financeiro" areaTitle="Financeiro & Caixa" stepNumber={6}
+            {currentStep === 8 && (
+              <SelfAssessmentStep areaKey="Financeiro" areaTitle="Financeiro & Caixa" stepNumber={7}
                 currentValue={formData.scoreFinanceiro}
                 onSelect={(val) => { updateFormData({ scoreFinanceiro: val }); nextStep(); }} />
             )}
-            {currentStep === 8 && (
-              <SelfAssessmentStep areaKey="Comercial" areaTitle="Comercial & Vendas" stepNumber={7}
+            {currentStep === 9 && (
+              <SelfAssessmentStep areaKey="Comercial" areaTitle="Comercial & Vendas" stepNumber={8}
                 currentValue={formData.scoreComercial}
                 onSelect={(val) => { updateFormData({ scoreComercial: val }); nextStep(); }} />
             )}
-            {currentStep === 9 && (
-              <SelfAssessmentStep areaKey="Operacao" areaTitle="Operação & Entrega" stepNumber={8}
+            {currentStep === 10 && (
+              <SelfAssessmentStep areaKey="Operacao" areaTitle="Operação & Entrega" stepNumber={9}
                 currentValue={formData.scoreOperacao}
                 onSelect={(val) => { updateFormData({ scoreOperacao: val }); nextStep(); }} />
             )}
-            {currentStep === 10 && (
-              <SelfAssessmentStep areaKey="Gestao" areaTitle="Gestão & Processos" stepNumber={9}
+            {currentStep === 11 && (
+              <SelfAssessmentStep areaKey="Gestao" areaTitle="Gestão & Processos" stepNumber={10}
                 currentValue={formData.scoreGestao}
                 onSelect={(val) => { updateFormData({ scoreGestao: val }); nextStep(); }} />
             )}
-            {currentStep === 11 && (
-              <SelfAssessmentStep areaKey="Pessoas" areaTitle="Pessoas & Liderança" stepNumber={10}
+            {currentStep === 12 && (
+              <SelfAssessmentStep areaKey="Pessoas" areaTitle="Pessoas & Liderança" stepNumber={11}
                 currentValue={formData.scorePessoas}
                 onSelect={(val) => { updateFormData({ scorePessoas: val }); nextStep(); }} />
             )}
-            {currentStep === 12 && (
-              <SelfAssessmentStep areaKey="Estrategia" areaTitle="Estratégia & Visão" stepNumber={11}
+            {currentStep === 13 && (
+              <SelfAssessmentStep areaKey="Estrategia" areaTitle="Estratégia & Visão" stepNumber={12}
                 currentValue={formData.scoreEstrategia}
                 onSelect={(val) => { updateFormData({ scoreEstrategia: val }); nextStep(); }} />
             )}
 
-            {currentStep === 13 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
+            {currentStep === 14 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
 
-            {currentStep === 14 && (
+            {currentStep === 15 && (
               <ReviewStep formData={formData} onUpdate={updateFormData} onRunDiagnostic={runDiagnosticCalculation} />
             )}
 
-            {currentStep === 15 && <ProcessingStep />}
+            {currentStep === 16 && <ProcessingStep />}
 
-            {currentStep === 16 && diagnosticResult && (
+            {currentStep === 17 && diagnosticResult && (
               <ReportDashboard result={diagnosticResult} onDownloadPdf={() => setShowPdfModal(true)} onRestart={resetAll} />
             )}
           </motion.div>
@@ -268,7 +291,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {currentStep > 1 && currentStep < 15 && (
+      {currentStep > 1 && currentStep < 16 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6 mt-6 border-t border-[#D8D3CB] flex items-center justify-between">
           <button type="button" onClick={prevStep}
             className="px-5 py-2.5 bg-white hover:bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-pointer shadow-sm">
@@ -277,7 +300,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           <span className="text-xs text-[#5A6270] font-medium hidden sm:inline">
             Etapa {currentStep - 1} de {totalWizardSteps - 3}
           </span>
-          {currentStep !== 14 && (
+          {currentStep !== 15 && (
             <button type="button" onClick={nextStep}
               className="px-6 py-2.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
               <span>Avançar</span><ArrowRight className="w-4 h-4 stroke-[2.5]" />
