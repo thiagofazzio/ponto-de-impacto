@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, CheckCircle, AlertTriangle, Building2, Users, DollarSign, Lightbulb, Sparkles } from 'lucide-react';
+import { Search, CheckCircle, AlertTriangle, Building2, Users, DollarSign, Lightbulb, Sparkles, Check } from 'lucide-react';
 
 interface CnpjStepProps {
   cnpj: string;
@@ -35,7 +35,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // 🔥 Função para identificar o modelo do CNAE (apenas para comparação)
+  // 🔥 Identifica o modelo do CNAE
   const identificarModeloPorCNAE = (cnae: string): string => {
     const cnaeLower = cnae.toLowerCase();
     
@@ -79,7 +79,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return 'Modelo de negócio híbrido';
   };
 
-  // 🔥 Função para obter o label do modelo selecionado
+  // 🔥 Obtém o label do modelo selecionado
   const getModeloLabel = (modeloId: string): string => {
     const labels: Record<string, string> = {
       venda_produtos: 'Venda de Produtos',
@@ -91,6 +91,68 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     };
     return labels[modeloId] || modeloId;
   };
+
+  // 🔥 Gera a mensagem de insight (sempre que houver dados)
+  const gerarInsight = () => {
+    if (!cnpjData || loading) return null;
+    
+    const modeloSelecionado = formData.revenueModel;
+    const cnae = cnpjData.cnaeDescricao || '';
+    const modeloSugeridoPorCNAE = cnae ? identificarModeloPorCNAE(cnae) : null;
+    const modeloSelecionadoLabel = modeloSelecionado ? getModeloLabel(modeloSelecionado) : null;
+
+    // Caso 1: Usuário ainda não selecionou um modelo de receita
+    if (!modeloSelecionado || modeloSelecionado === '') {
+      return {
+        tipo: 'informativo',
+        icone: '💡',
+        cor: 'bg-blue-50 border-blue-200',
+        titulo: 'Insight TFAZZIO',
+        mensagem: `Para o segmento da sua empresa (${modeloSugeridoPorCNAE || 'negócio'}), o modelo de receita mais comum é ${modeloSugeridoPorCNAE || 'híbrido'}.`,
+        detalhe: 'Na próxima etapa você poderá confirmar ou ajustar essa informação.',
+        tags: [`📋 CNAE: ${modeloSugeridoPorCNAE || 'Não identificado'}`]
+      };
+    }
+
+    // Caso 2: Modelo selecionado é "Outro"
+    if (modeloSelecionado === 'outros') {
+      return {
+        tipo: 'informativo',
+        icone: '💡',
+        cor: 'bg-blue-50 border-blue-200',
+        titulo: 'Insight TFAZZIO',
+        mensagem: `Você escolheu um modelo de receita personalizado para sua empresa.`,
+        detalhe: 'Vamos analisar seu negócio com base no modelo que você descreveu.',
+        tags: [`✅ Selecionado: ${formData.customRevenueModel || 'Modelo personalizado'}`]
+      };
+    }
+
+    // Caso 3: Modelo selecionado é igual ao sugerido pelo CNAE
+    if (modeloSelecionadoLabel === modeloSugeridoPorCNAE) {
+      return {
+        tipo: 'alinhado',
+        icone: '✅',
+        cor: 'bg-emerald-50 border-emerald-200',
+        titulo: 'Alinhamento Perfeito! 🎯',
+        mensagem: `Seu modelo de receita (${modeloSelecionadoLabel}) está alinhado com o seu segmento de mercado.`,
+        detalhe: 'Isso indica que você está no caminho certo para o seu tipo de negócio.',
+        tags: [`📋 CNAE: ${modeloSugeridoPorCNAE}`, `✅ Selecionado: ${modeloSelecionadoLabel}`]
+      };
+    }
+
+    // Caso 4: Modelo selecionado é DIFERENTE do sugerido pelo CNAE
+    return {
+      tipo: 'divergente',
+      icone: '✨',
+      cor: 'bg-amber-50 border-amber-200',
+      titulo: 'Estratégia Diferenciada! 🚀',
+      mensagem: `Percebemos que seu CNAE sugere ${modeloSugeridoPorCNAE}, mas você escolheu ${modeloSelecionadoLabel}.`,
+      detalhe: 'Isso é super válido! Pode ser uma evolução do seu negócio, uma estratégia fiscal ou um posicionamento único. Vamos basear nossa análise no modelo que você escolheu.',
+      tags: [`📋 CNAE: ${modeloSugeridoPorCNAE}`, `✅ Selecionado: ${modeloSelecionadoLabel}`]
+    };
+  };
+
+  const insight = gerarInsight();
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, '');
@@ -147,22 +209,6 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     }
     onNext();
   };
-
-  // 🔥 VERIFICA SE HÁ DIVERGÊNCIA ENTRE O MODELO SELECIONADO E O CNAE
-  const modeloSelecionado = formData.revenueModel;
-  const cnae = cnpjData?.cnaeDescricao || '';
-  const modeloSugeridoPorCNAE = cnae ? identificarModeloPorCNAE(cnae) : null;
-  const modeloSelecionadoLabel = modeloSelecionado ? getModeloLabel(modeloSelecionado) : null;
-
-  // Só mostra o insight se:
-  // 1. Tem modelo selecionado E modelo sugerido
-  // 2. Eles são diferentes
-  // 3. O modelo selecionado não é 'outros'
-  const mostrarInsight = 
-    modeloSelecionado && 
-    modeloSugeridoPorCNAE && 
-    modeloSelecionadoLabel !== modeloSugeridoPorCNAE &&
-    modeloSelecionado !== 'outros';
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -262,29 +308,32 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT DE VALIDAÇÃO DO MODELO DE RECEITA */}
-          {mostrarInsight && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          {/* 🔥 INSIGHT SEMPRE VISÍVEL */}
+          {insight && (
+            <div className={`p-4 rounded-xl border ${insight.cor}`}>
               <div className="flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">💡 Insight TFAZZIO</span>
+                <span className="text-2xl">{insight.icone}</span>
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">
+                    {insight.titulo}
+                  </span>
                   <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">
-                    Percebemos que seu CNAE sugere um modelo de <strong className="text-blue-700">{modeloSugeridoPorCNAE}</strong>, 
-                    mas você selecionou <strong className="text-[#6B0F1A]">{modeloSelecionadoLabel}</strong>.
+                    {insight.mensagem}
                   </p>
-                  <p className="text-sm text-[#5A6270] mt-1">
-                    Isso é super válido! Pode ser uma evolução do seu negócio, uma questão fiscal 
-                    ou uma estratégia diferenciada. Vamos basear nossa análise no modelo que você escolheu.
-                  </p>
-                  <div className="mt-2 flex items-center gap-3 text-xs text-[#5A6270]">
-                    <span className="bg-white px-2 py-0.5 rounded border border-blue-200">
-                      📋 CNAE: {modeloSugeridoPorCNAE}
-                    </span>
-                    <span className="bg-white px-2 py-0.5 rounded border border-[#6B0F1A] text-[#6B0F1A] font-semibold">
-                      ✅ Selecionado: {modeloSelecionadoLabel}
-                    </span>
-                  </div>
+                  {insight.detalhe && (
+                    <p className="text-sm text-[#5A6270] mt-1">
+                      {insight.detalhe}
+                    </p>
+                  )}
+                  {insight.tags && insight.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {insight.tags.map((tag, index) => (
+                        <span key={index} className="text-xs bg-white px-2 py-0.5 rounded border border-gray-200 text-[#5A6270]">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
