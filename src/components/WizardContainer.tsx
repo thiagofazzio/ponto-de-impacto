@@ -55,6 +55,8 @@ const INITIAL_FORM_DATA: DiagnosticFormData = {
   consentGiven: false,
   revenueModel: '',
   customRevenueModel: '',
+  areaAtuacao: '',
+  customArea: '',
 };
 
 interface WizardContainerProps {
@@ -77,6 +79,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       if (fields.companyName && onCompanyChange) {
         onCompanyChange(fields.companyName);
       }
+      console.log('📝 updateFormData:', fields); // DEBUG
       return updated;
     });
     setValidationError(null);
@@ -99,18 +102,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const validateStep = (): boolean => {
     setValidationError(null);
-
-    // Etapa 2: Modelo de Receita - validação feita no componente
-    // Etapa 3: Objetivo - validação feita no componente
-    
-    // Etapa 5: Dados Financeiros
-    if (currentStep === 5) {
-      if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
-        setValidationError('Por favor, informe um faturamento mensal válido.');
-        return false;
-      }
-    }
-
     return true;
   };
 
@@ -183,13 +174,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             {/* Etapa 1: Boas-vindas */}
             {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
 
-            {/* Etapa 2: Modelo de Receita */}
+            {/* Etapa 2: Modelo de Receita + Área */}
             {currentStep === 2 && (
               <RevenueModelStep
                 onNext={(data) => {
+                  console.log('📦 Dados do RevenueModelStep:', data);
                   updateFormData({
                     revenueModel: data.revenueModel,
                     customRevenueModel: data.customModel,
+                    areaAtuacao: data.areaAtuacao,
+                    customArea: data.customArea,
                   });
                   nextStep();
                 }}
@@ -206,7 +200,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
 
-            {/* Etapa 4: CNPJ + Dados da Empresa (unificado) */}
+            {/* Etapa 4: CNPJ + Dados da Empresa */}
             {currentStep === 4 && (
               <CnpjStep 
                 cnpj={formData.cnpj} 
@@ -224,7 +218,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             {/* Etapa 6: Dados Comerciais */}
             {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
 
-            {/* Etapas 7-12: Autoavaliação (6 áreas) */}
+            {/* Etapas 7-12: Autoavaliação */}
             {currentStep === 7 && (
               <SelfAssessmentStep areaKey="Financeiro" areaTitle="Financeiro & Caixa" stepNumber={7}
                 currentValue={formData.scoreFinanceiro}
@@ -289,7 +283,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             className="px-5 py-2.5 bg-white hover:bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-pointer shadow-sm">
             <ArrowLeft className="w-4 h-4" /><span>Voltar</span>
           </button>
-          {/* 🔥 CONTADOR REMOVIDO DO RODAPÉ - mantido apenas no cabeçalho */}
           {currentStep !== 14 && (
             <button type="button" onClick={nextStep}
               className="px-6 py-2.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
