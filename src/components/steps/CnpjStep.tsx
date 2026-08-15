@@ -35,39 +35,42 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // Identifica o modelo do CNAE
-  const identificarModeloPorCNAE = (cnae: string): string => {
+  // 🔥 Identifica o modelo do CNAE com mais precisão
+  const identificarModeloPorCNAE = (cnae: string): { modelo: string; icone: string; descricao: string } => {
     const cnaeLower = cnae.toLowerCase();
     
-    const mapeamento: Record<string, string> = {
-      'comercio': 'Venda de Produtos',
-      'varejista': 'Venda de Produtos',
-      'supermercados': 'Venda de Produtos',
-      'distribuição': 'Venda de Produtos',
-      'indústria': 'Venda de Produtos',
-      'alimentício': 'Venda de Produtos',
-      'varejo': 'Venda de Produtos',
-      'atacadista': 'Venda de Produtos',
-      'mercearia': 'Venda de Produtos',
-      'loja': 'Venda de Produtos',
-      'e-commerce': 'Venda de Produtos',
-      'fabricação': 'Venda de Produtos',
-      'consultoria': 'Prestação de Serviços',
-      'servicos': 'Prestação de Serviços',
-      'ensino': 'Prestação de Serviços',
-      'saúde': 'Prestação de Serviços',
-      'educação': 'Prestação de Serviços',
-      'treinamento': 'Prestação de Serviços',
-      'engenharia': 'Prestação de Serviços',
-      'advocacia': 'Prestação de Serviços',
-      'contabilidade': 'Prestação de Serviços',
-      'marketing': 'Prestação de Serviços',
-      'design': 'Prestação de Serviços',
-      'assinatura': 'Assinatura / Recorrência',
-      'software': 'Assinatura / Recorrência',
-      'saas': 'Assinatura / Recorrência',
-      'plataforma': 'Marketplace / Plataforma',
-      'marketplace': 'Marketplace / Plataforma',
+    const mapeamento: Record<string, { modelo: string; icone: string; descricao: string }> = {
+      // Venda de Produtos
+      'comercio': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Comércio de mercadorias e produtos' },
+      'varejista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Varejo de produtos' },
+      'supermercados': { modelo: 'Venda de Produtos', icone: '🛒', descricao: 'Varejo alimentício' },
+      'distribuição': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Distribuição de mercadorias' },
+      'indústria': { modelo: 'Venda de Produtos', icone: '🏭', descricao: 'Indústria e manufatura' },
+      'alimentício': { modelo: 'Venda de Produtos', icone: '🍎', descricao: 'Produtos alimentícios' },
+      'varejo': { modelo: 'Venda de Produtos', icone: '🛍️', descricao: 'Varejo em geral' },
+      'atacadista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Atacado e distribuição' },
+      'mercearia': { modelo: 'Venda de Produtos', icone: '🏪', descricao: 'Mercearia e alimentos' },
+      'loja': { modelo: 'Venda de Produtos', icone: '🏬', descricao: 'Loja física ou online' },
+      
+      // Prestação de Serviços
+      'consultoria': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Consultoria e assessoria' },
+      'servicos': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Prestação de serviços' },
+      'ensino': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e treinamento' },
+      'saúde': { modelo: 'Prestação de Serviços', icone: '🏥', descricao: 'Saúde e bem-estar' },
+      'educação': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e ensino' },
+      'treinamento': { modelo: 'Prestação de Serviços', icone: '🎯', descricao: 'Treinamento e capacitação' },
+      'engenharia': { modelo: 'Prestação de Serviços', icone: '📐', descricao: 'Engenharia e projetos' },
+      'advocacia': { modelo: 'Prestação de Serviços', icone: '⚖️', descricao: 'Serviços jurídicos' },
+      'contabilidade': { modelo: 'Prestação de Serviços', icone: '📊', descricao: 'Contabilidade e finanças' },
+      
+      // Assinatura
+      'assinatura': { modelo: 'Assinatura / Recorrência', icone: '🔄', descricao: 'Modelo de assinatura' },
+      'software': { modelo: 'Assinatura / Recorrência', icone: '💻', descricao: 'Software e tecnologia' },
+      'saas': { modelo: 'Assinatura / Recorrência', icone: '☁️', descricao: 'SaaS e plataformas' },
+      
+      // Marketplace
+      'plataforma': { modelo: 'Marketplace / Plataforma', icone: '🏪', descricao: 'Plataforma digital' },
+      'marketplace': { modelo: 'Marketplace / Plataforma', icone: '🏪', descricao: 'Marketplace' },
     };
 
     for (const [key, value] of Object.entries(mapeamento)) {
@@ -76,72 +79,23 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
       }
     }
 
-    return 'Modelo de negócio híbrido';
+    return { modelo: 'Modelo de negócio híbrido', icone: '💡', descricao: 'Modelo personalizado ou híbrido' };
   };
 
-  const getModeloLabel = (modeloId: string): string => {
-    const labels: Record<string, string> = {
-      venda_produtos: 'Venda de Produtos',
-      prestacao_servicos: 'Prestação de Serviços',
-      assinatura: 'Assinatura / Recorrência',
-      marketplace: 'Marketplace / Plataforma',
-      hibrido: 'Híbrido',
-      outros: 'Outro modelo',
-    };
-    return labels[modeloId] || modeloId;
-  };
-
+  // 🔥 Gera insight baseado APENAS no CNAE (não depende do modelo selecionado)
   const gerarInsight = () => {
     if (!cnpjData || loading) return null;
     
-    const modeloSelecionado = formData.revenueModel;
     const cnae = cnpjData.cnaeDescricao || '';
-    const modeloSugeridoPorCNAE = cnae ? identificarModeloPorCNAE(cnae) : null;
-    const modeloSelecionadoLabel = modeloSelecionado ? getModeloLabel(modeloSelecionado) : null;
-
-    // Caso 1: Usuário ainda não selecionou um modelo de receita (não deveria acontecer, mas seguro)
-    if (!modeloSelecionado || modeloSelecionado === '') {
-      return {
-        icone: '💡',
-        cor: 'bg-blue-50 border-blue-200 text-blue-800',
-        titulo: 'Seu negócio, seu modelo',
-        mensagem: `Empresas do seu segmento geralmente operam com ${modeloSugeridoPorCNAE || 'um modelo híbrido'}.`,
-        detalhe: 'Na etapa anterior você poderá confirmar qual modelo faz mais sentido para sua realidade.',
-      };
-    }
-
-    // Caso 2: Modelo selecionado é "Outro"
-    if (modeloSelecionado === 'outros') {
-      return {
-        icone: '🚀',
-        cor: 'bg-purple-50 border-purple-200 text-purple-800',
-        titulo: 'Modelo personalizado detectado',
-        mensagem: `Você escolheu um modelo de receita único para sua empresa.`,
-        detalhe: `"${formData.customRevenueModel || 'Modelo personalizado'}" , isso mostra que você tem uma visão clara do seu negócio.`,
-        tag: '🎯 Estratégia sob medida'
-      };
-    }
-
-    // Caso 3: Modelo selecionado é igual ao sugerido pelo CNAE
-    if (modeloSelecionadoLabel === modeloSugeridoPorCNAE) {
-      return {
-        icone: '🎯',
-        cor: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-        titulo: 'Alinhamento perfeito com seu segmento',
-        mensagem: `Seu modelo de receita (${modeloSelecionadoLabel}) está completamente alinhado com o mercado onde você atua.`,
-        detalhe: 'Isso significa que você está no caminho certo e pode focar em escalar o que já funciona.',
-        tag: '✅ Modelo validado pelo mercado'
-      };
-    }
-
-    // Caso 4: Modelo selecionado é DIFERENTE do sugerido pelo CNAE (O CASO MAIS INTERESSANTE!)
+    const info = identificarModeloPorCNAE(cnae);
+    
     return {
-      icone: '🔥',
-      cor: 'bg-amber-50 border-amber-200 text-amber-800',
-      titulo: 'Estratégia diferenciada detectada!',
-      mensagem: `Enquanto a maioria das empresas do seu setor opera com ${modeloSugeridoPorCNAE}, você escolheu ${modeloSelecionadoLabel}.`,
-      detalhe: 'Isso é um sinal de que você está inovando, se reposicionando ou aproveitando uma oportunidade única. Vamos analisar seu negócio com base na sua escolha.',
-      tag: '🚀 Inovação ou reposicionamento estratégico'
+      icone: info.icone,
+      cor: 'bg-blue-50 border-blue-200 text-blue-800',
+      titulo: '💡 Insight TFAZZIO',
+      mensagem: `Identificamos que seu negócio opera no modelo de **${info.modelo}**.`,
+      detalhe: `Este é o modelo mais comum para empresas do segmento "${cnpjData.cnaeDescricao?.slice(0, 60) || 'identificado'}..."`,
+      tag: info.descricao
     };
   };
 
@@ -301,7 +255,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT SEMPRE VISÍVEL - COM CONTEÚDO DE VERDADE */}
+          {/* 🔥 INSIGHT BASEADO NO CNAE (INDEPENDENTE DO MODELO SELECIONADO) */}
           {insight && (
             <div className={`p-4 rounded-xl border ${insight.cor}`}>
               <div className="flex items-start gap-3">
@@ -313,18 +267,14 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
                   <p className="text-sm font-medium mt-0.5">
                     {insight.mensagem}
                   </p>
-                  {insight.detalhe && (
-                    <p className="text-sm opacity-90 mt-1">
-                      {insight.detalhe}
-                    </p>
-                  )}
-                  {insight.tag && (
-                    <div className="mt-2">
-                      <span className="text-xs bg-white/70 px-2 py-0.5 rounded border border-current/20">
-                        {insight.tag}
-                      </span>
-                    </div>
-                  )}
+                  <p className="text-sm opacity-90 mt-1">
+                    {insight.detalhe}
+                  </p>
+                  <div className="mt-2">
+                    <span className="text-xs bg-white/70 px-2 py-0.5 rounded border border-current/20">
+                      📌 {insight.tag}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
