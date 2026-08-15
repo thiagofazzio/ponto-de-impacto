@@ -108,8 +108,8 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
         icone: '💡',
         cor: 'bg-blue-50 border-blue-200',
         titulo: 'Insight TFAZZIO',
-        mensagem: `Para o segmento da sua empresa (${modeloSugeridoPorCNAE || 'negócio'}), o modelo de receita mais comum é ${modeloSugeridoPorCNAE || 'híbrido'}.`,
-        detalhe: 'Na próxima etapa você poderá confirmar ou ajustar essa informação.',
+        mensagem: `Para o segmento da sua empresa, o modelo de receita mais comum é ${modeloSugeridoPorCNAE || 'híbrido'}.`,
+        detalhe: null,
         tags: [`📋 CNAE: ${modeloSugeridoPorCNAE || 'Não identificado'}`]
       };
     }
@@ -122,7 +122,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
         cor: 'bg-blue-50 border-blue-200',
         titulo: 'Insight TFAZZIO',
         mensagem: `Você escolheu um modelo de receita personalizado para sua empresa.`,
-        detalhe: 'Vamos analisar seu negócio com base no modelo que você descreveu.',
+        detalhe: 'Reconhecemos que cada negócio tem sua própria jornada e estratégia única.',
         tags: [`✅ Selecionado: ${formData.customRevenueModel || 'Modelo personalizado'}`]
       };
     }
@@ -131,9 +131,9 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     if (modeloSelecionadoLabel === modeloSugeridoPorCNAE) {
       return {
         tipo: 'alinhado',
-        icone: '✅',
+        icone: '🎯',
         cor: 'bg-emerald-50 border-emerald-200',
-        titulo: 'Alinhamento Perfeito! 🎯',
+        titulo: 'Alinhamento Perfeito!',
         mensagem: `Seu modelo de receita (${modeloSelecionadoLabel}) está alinhado com o seu segmento de mercado.`,
         detalhe: 'Isso indica que você está no caminho certo para o seu tipo de negócio.',
         tags: [`📋 CNAE: ${modeloSugeridoPorCNAE}`, `✅ Selecionado: ${modeloSelecionadoLabel}`]
@@ -143,11 +143,11 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     // Caso 4: Modelo selecionado é DIFERENTE do sugerido pelo CNAE
     return {
       tipo: 'divergente',
-      icone: '✨',
+      icone: '🚀',
       cor: 'bg-amber-50 border-amber-200',
-      titulo: 'Estratégia Diferenciada! 🚀',
-      mensagem: `Percebemos que seu CNAE sugere ${modeloSugeridoPorCNAE}, mas você escolheu ${modeloSelecionadoLabel}.`,
-      detalhe: 'Isso é super válido! Pode ser uma evolução do seu negócio, uma estratégia fiscal ou um posicionamento único. Vamos basear nossa análise no modelo que você escolheu.',
+      titulo: 'Estratégia Diferenciada!',
+      mensagem: `Seu CNAE sugere ${modeloSugeridoPorCNAE}, mas você escolheu ${modeloSelecionadoLabel}.`,
+      detalhe: 'Isso é super válido! Pode ser uma evolução do seu negócio, uma estratégia fiscal ou um posicionamento único. Vamos analisar sua empresa com base no modelo que você escolheu.',
       tags: [`📋 CNAE: ${modeloSugeridoPorCNAE}`, `✅ Selecionado: ${modeloSelecionadoLabel}`]
     };
   };
@@ -308,7 +308,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT SEMPRE VISÍVEL */}
+          {/* 🔥 INSIGHT SEMPRE VISÍVEL - APENAS INFORMATIVO */}
           {insight && (
             <div className={`p-4 rounded-xl border ${insight.cor}`}>
               <div className="flex items-start gap-3">
