@@ -11,7 +11,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onStart }) => {
       {/* Badge */}
       <div className="inline-flex items-center gap-2 bg-[#F9F7F3] border border-[#D8D3CB] rounded-full px-4 py-1.5 text-xs font-medium text-[#1A1A1A] mb-6">
         <Sparkles className="w-4 h-4 text-[#6B0F1A]" />
-        Diagnóstico Estratégico TFAZZIO • PMEs (300k a 5M/ano)
+        Diagnóstico Estratégico TFAZZIO • Clareza para sua próxima decisão
       </div>
 
       <h1 className="text-4xl sm:text-5xl font-extrabold text-[#1A1A1A] leading-tight">
