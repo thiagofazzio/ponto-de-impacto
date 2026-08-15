@@ -35,37 +35,37 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // 🔥 Identifica o modelo do CNAE com mais precisão
+  // 🔥 Identifica o modelo do CNAE
   const identificarModeloPorCNAE = (cnae: string): { modelo: string; icone: string; descricao: string } => {
     const cnaeLower = cnae.toLowerCase();
     
     const mapeamento: Record<string, { modelo: string; icone: string; descricao: string }> = {
       // Venda de Produtos
-      'comercio': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Comércio de mercadorias e produtos' },
-      'varejista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Varejo de produtos' },
+      'comercio': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Comércio e distribuição de mercadorias' },
+      'varejista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Varejo e comércio' },
       'supermercados': { modelo: 'Venda de Produtos', icone: '🛒', descricao: 'Varejo alimentício' },
-      'distribuição': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Distribuição de mercadorias' },
+      'distribuição': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Distribuição e logística' },
       'indústria': { modelo: 'Venda de Produtos', icone: '🏭', descricao: 'Indústria e manufatura' },
-      'alimentício': { modelo: 'Venda de Produtos', icone: '🍎', descricao: 'Produtos alimentícios' },
+      'alimentício': { modelo: 'Venda de Produtos', icone: '🍎', descricao: 'Alimentos e bebidas' },
       'varejo': { modelo: 'Venda de Produtos', icone: '🛍️', descricao: 'Varejo em geral' },
       'atacadista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Atacado e distribuição' },
       'mercearia': { modelo: 'Venda de Produtos', icone: '🏪', descricao: 'Mercearia e alimentos' },
-      'loja': { modelo: 'Venda de Produtos', icone: '🏬', descricao: 'Loja física ou online' },
+      'loja': { modelo: 'Venda de Produtos', icone: '🏬', descricao: 'Comércio varejista' },
       
       // Prestação de Serviços
-      'consultoria': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Consultoria e assessoria' },
-      'servicos': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Prestação de serviços' },
-      'ensino': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e treinamento' },
+      'consultoria': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Consultoria e assessoria empresarial' },
+      'servicos': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Prestação de serviços especializados' },
+      'ensino': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e capacitação' },
       'saúde': { modelo: 'Prestação de Serviços', icone: '🏥', descricao: 'Saúde e bem-estar' },
       'educação': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e ensino' },
-      'treinamento': { modelo: 'Prestação de Serviços', icone: '🎯', descricao: 'Treinamento e capacitação' },
+      'treinamento': { modelo: 'Prestação de Serviços', icone: '🎯', descricao: 'Treinamento e desenvolvimento' },
       'engenharia': { modelo: 'Prestação de Serviços', icone: '📐', descricao: 'Engenharia e projetos' },
       'advocacia': { modelo: 'Prestação de Serviços', icone: '⚖️', descricao: 'Serviços jurídicos' },
-      'contabilidade': { modelo: 'Prestação de Serviços', icone: '📊', descricao: 'Contabilidade e finanças' },
+      'contabilidade': { modelo: 'Prestação de Serviços', icone: '📊', descricao: 'Finanças e contabilidade' },
       
       // Assinatura
-      'assinatura': { modelo: 'Assinatura / Recorrência', icone: '🔄', descricao: 'Modelo de assinatura' },
-      'software': { modelo: 'Assinatura / Recorrência', icone: '💻', descricao: 'Software e tecnologia' },
+      'assinatura': { modelo: 'Assinatura / Recorrência', icone: '🔄', descricao: 'Modelo de receita recorrente' },
+      'software': { modelo: 'Assinatura / Recorrência', icone: '💻', descricao: 'Tecnologia e software' },
       'saas': { modelo: 'Assinatura / Recorrência', icone: '☁️', descricao: 'SaaS e plataformas' },
       
       // Marketplace
@@ -79,22 +79,53 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
       }
     }
 
-    return { modelo: 'Modelo de negócio híbrido', icone: '💡', descricao: 'Modelo personalizado ou híbrido' };
+    return { modelo: 'Modelo de negócio híbrido', icone: '💡', descricao: 'Modelo personalizado' };
   };
 
-  // 🔥 Gera insight baseado APENAS no CNAE (não depende do modelo selecionado)
+  // 🔥 Gera insight com texto ajustado
   const gerarInsight = () => {
     if (!cnpjData || loading) return null;
     
     const cnae = cnpjData.cnaeDescricao || '';
     const info = identificarModeloPorCNAE(cnae);
+    const nomeEmpresa = cnpjData.razaoSocial || cnpjData.nomeFantasia || 'Sua empresa';
     
+    // Diferentes mensagens para diferentes modelos
+    const mensagens: Record<string, { titulo: string; mensagem: string; detalhe: string }> = {
+      'Venda de Produtos': {
+        titulo: 'Modelo de negócio identificado: Venda de Produtos',
+        mensagem: `A ${nomeEmpresa} atua no mercado de produtos, onde o giro de estoque, a margem por categoria e a gestão de fornecedores são os motores do resultado.`,
+        detalhe: 'Empresas do seu segmento geralmente crescem acelerando o giro, otimizando a precificação e expandindo canais de venda.'
+      },
+      'Prestação de Serviços': {
+        titulo: 'Modelo de negócio identificado: Prestação de Serviços',
+        mensagem: `A ${nomeEmpresa} atua no mercado de serviços, onde a produtividade da equipe, a retenção de clientes e o ticket médio são os motores do resultado.`,
+        detalhe: 'Empresas do seu segmento geralmente crescem aumentando a eficiência operacional, fidelizando clientes e escalando a entrega.'
+      },
+      'Assinatura / Recorrência': {
+        titulo: 'Modelo de negócio identificado: Assinatura e Recorrência',
+        mensagem: `A ${nomeEmpresa} atua com receita recorrente, onde a retenção de clientes (churn), o Lifetime Value (LTV) e o custo de aquisição (CAC) são os motores do resultado.`,
+        detalhe: 'Empresas do seu segmento geralmente crescem reduzindo cancelamentos, aumentando o valor do cliente e otimizando a aquisição.'
+      },
+      'Marketplace / Plataforma': {
+        titulo: 'Modelo de negócio identificado: Marketplace / Plataforma',
+        mensagem: `A ${nomeEmpresa} atua como plataforma ou marketplace, onde o volume de transações, a liquidez e a taxa de conversão são os motores do resultado.`,
+        detalhe: 'Empresas do seu segmento geralmente crescem equilibrando oferta e demanda, aumentando a base de usuários e otimizando a comissão.'
+      },
+    };
+
+    const padrao = mensagens[info.modelo] || {
+      titulo: 'Modelo de negócio identificado',
+      mensagem: `A ${nomeEmpresa} tem um modelo de negócio único, com características próprias que merecem uma análise personalizada.`,
+      detalhe: 'Vamos aprofundar a análise para entender como sua empresa gera valor e onde estão as alavancas de crescimento.'
+    };
+
     return {
       icone: info.icone,
       cor: 'bg-blue-50 border-blue-200 text-blue-800',
-      titulo: '💡 Insight TFAZZIO',
-      mensagem: `Identificamos que seu negócio opera no modelo de **${info.modelo}**.`,
-      detalhe: `Este é o modelo mais comum para empresas do segmento "${cnpjData.cnaeDescricao?.slice(0, 60) || 'identificado'}..."`,
+      titulo: padrao.titulo,
+      mensagem: padrao.mensagem,
+      detalhe: padrao.detalhe,
       tag: info.descricao
     };
   };
@@ -255,23 +286,26 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT BASEADO NO CNAE (INDEPENDENTE DO MODELO SELECIONADO) */}
+          {/* 🔥 INSIGHT COM TEXTO AJUSTADO */}
           {insight && (
             <div className={`p-4 rounded-xl border ${insight.cor}`}>
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{insight.icone}</span>
                 <div className="flex-1">
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    {insight.titulo}
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-700">
+                    💡 Insight TFAZZIO
                   </span>
-                  <p className="text-sm font-medium mt-0.5">
+                  <p className="text-sm font-bold mt-0.5 text-blue-900">
+                    {insight.titulo}
+                  </p>
+                  <p className="text-sm text-blue-800 mt-1">
                     {insight.mensagem}
                   </p>
-                  <p className="text-sm opacity-90 mt-1">
+                  <p className="text-sm text-blue-700 mt-1 opacity-90">
                     {insight.detalhe}
                   </p>
                   <div className="mt-2">
-                    <span className="text-xs bg-white/70 px-2 py-0.5 rounded border border-current/20">
+                    <span className="text-xs bg-white/70 px-2 py-0.5 rounded border border-blue-200 text-blue-600">
                       📌 {insight.tag}
                     </span>
                   </div>
