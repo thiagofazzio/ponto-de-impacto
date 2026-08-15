@@ -22,7 +22,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔥 Função para formatar CNPJ
+  // 🔥 Formata CNPJ
   const formatCnpj = (value: string) => {
     const digits = value.replace(/\D/g, '');
     if (digits.length <= 14) {
@@ -36,57 +36,65 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // 🔥 Função para verificar divergência do modelo de receita
-  const verificarDivergenciaModelo = () => {
-    if (!cnpjData || !formData.revenueModel) return null;
+  // 🔥 Função para identificar o modelo de receita com base no CNAE
+  const identificarModeloPorCNAE = (cnae: string): { modelo: string; icone: string; descricao: string } => {
+    const cnaeLower = cnae.toLowerCase();
     
-    const cnae = cnpjData.cnaeDescricao || '';
-    const modelo = formData.revenueModel;
-    
-    // Mapeamento de palavras-chave do CNAE para modelos sugeridos
-    const palavrasChave: Record<string, string> = {
-      'comercio': 'venda_produtos',
-      'varejista': 'venda_produtos',
-      'supermercados': 'venda_produtos',
-      'consultoria': 'prestacao_servicos',
-      'servicos': 'prestacao_servicos',
-      'assinatura': 'assinatura',
-      'plataforma': 'marketplace',
-      'distribuição': 'venda_produtos',
-      'indústria': 'venda_produtos',
-      'ensino': 'prestacao_servicos',
-      'saúde': 'prestacao_servicos',
-      'alimentício': 'venda_produtos',
-      'varejo': 'venda_produtos',
+    // Mapeamento de palavras-chave para modelos
+    const mapeamento: Record<string, { modelo: string; icone: string; descricao: string }> = {
+      // Venda de Produtos
+      'comercio': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Comércio de mercadorias e produtos' },
+      'varejista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Varejo de produtos' },
+      'supermercados': { modelo: 'Venda de Produtos', icone: '🛒', descricao: 'Varejo alimentício' },
+      'distribuição': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Distribuição de mercadorias' },
+      'indústria': { modelo: 'Venda de Produtos', icone: '🏭', descricao: 'Indústria e manufatura' },
+      'alimentício': { modelo: 'Venda de Produtos', icone: '🍎', descricao: 'Produtos alimentícios' },
+      'varejo': { modelo: 'Venda de Produtos', icone: '🛍️', descricao: 'Varejo em geral' },
+      'atacadista': { modelo: 'Venda de Produtos', icone: '📦', descricao: 'Atacado e distribuição' },
+      'mercearia': { modelo: 'Venda de Produtos', icone: '🏪', descricao: 'Mercearia e alimentos' },
+      'loja': { modelo: 'Venda de Produtos', icone: '🏬', descricao: 'Loja física ou online' },
+      'e-commerce': { modelo: 'Venda de Produtos', icone: '🛒', descricao: 'Comércio eletrônico' },
+      'fabricação': { modelo: 'Venda de Produtos', icone: '🏭', descricao: 'Fabricação de produtos' },
+      
+      // Prestação de Serviços
+      'consultoria': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Consultoria e assessoria' },
+      'servicos': { modelo: 'Prestação de Serviços', icone: '💼', descricao: 'Prestação de serviços' },
+      'ensino': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e treinamento' },
+      'saúde': { modelo: 'Prestação de Serviços', icone: '🏥', descricao: 'Saúde e bem-estar' },
+      'educação': { modelo: 'Prestação de Serviços', icone: '📚', descricao: 'Educação e ensino' },
+      'treinamento': { modelo: 'Prestação de Serviços', icone: '🎯', descricao: 'Treinamento e capacitação' },
+      'engenharia': { modelo: 'Prestação de Serviços', icone: '📐', descricao: 'Engenharia e projetos' },
+      'advocacia': { modelo: 'Prestação de Serviços', icone: '⚖️', descricao: 'Serviços jurídicos' },
+      'contabilidade': { modelo: 'Prestação de Serviços', icone: '📊', descricao: 'Contabilidade e finanças' },
+      'marketing': { modelo: 'Prestação de Serviços', icone: '📱', descricao: 'Marketing e publicidade' },
+      'design': { modelo: 'Prestação de Serviços', icone: '🎨', descricao: 'Design e criação' },
+      'manutenção': { modelo: 'Prestação de Serviços', icone: '🔧', descricao: 'Manutenção e reparos' },
+      'limpeza': { modelo: 'Prestação de Serviços', icone: '🧹', descricao: 'Serviços de limpeza' },
+      'segurança': { modelo: 'Prestação de Serviços', icone: '🛡️', descricao: 'Segurança e vigilância' },
+      
+      // Assinatura
+      'assinatura': { modelo: 'Assinatura / Recorrência', icone: '🔄', descricao: 'Modelo de assinatura' },
+      'software': { modelo: 'Assinatura / Recorrência', icone: '💻', descricao: 'Software e tecnologia' },
+      'saas': { modelo: 'Assinatura / Recorrência', icone: '☁️', descricao: 'SaaS e plataformas' },
+      
+      // Marketplace
+      'plataforma': { modelo: 'Marketplace / Plataforma', icone: '🏪', descricao: 'Plataforma digital' },
+      'marketplace': { modelo: 'Marketplace / Plataforma', icone: '🏪', descricao: 'Marketplace' },
     };
-    
-    let modeloSugerido = 'outros';
-    for (const [key, value] of Object.entries(palavrasChave)) {
-      if (cnae.toLowerCase().includes(key)) {
-        modeloSugerido = value;
-        break;
+
+    // Busca a primeira palavra-chave que aparece no CNAE
+    for (const [key, value] of Object.entries(mapeamento)) {
+      if (cnaeLower.includes(key)) {
+        return value;
       }
     }
-    
-    // Se o modelo atual é diferente do sugerido E não é "outros"
-    if (modelo !== modeloSugerido && modeloSugerido !== 'outros' && modelo !== 'outros') {
-      const labels: Record<string, string> = {
-        venda_produtos: 'Venda de Produtos',
-        prestacao_servicos: 'Prestação de Serviços',
-        assinatura: 'Assinatura / Recorrência',
-        marketplace: 'Marketplace / Plataforma',
-        hibrido: 'Híbrido',
-        outros: 'Outro modelo',
-      };
-      
-      return {
-        modeloAtual: labels[modelo] || modelo,
-        modeloSugerido: labels[modeloSugerido] || modeloSugerido,
-        mensagem: `Seu modelo de receita (${labels[modelo] || modelo}) é diferente do usual para empresas do seu segmento (${labels[modeloSugerido] || modeloSugerido}). Isso pode indicar uma oportunidade de posicionamento diferenciado!`,
-      };
-    }
-    
-    return null;
+
+    // Se não encontrar nenhuma, retorna genérico
+    return {
+      modelo: 'Modelo de negócio híbrido',
+      icone: '💡',
+      descricao: 'Modelo de receita personalizado'
+    };
   };
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,7 +103,6 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     setLocalCnpj(formatted);
     setError(null);
     
-    // Se tiver 14 dígitos, busca automaticamente
     if (raw.length === 14) {
       handleSearch(raw);
     }
@@ -125,7 +132,6 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
       const data = await response.json();
       onUpdate(rawCnpj, data);
       
-      // Preenche os campos básicos automaticamente
       updateFormData({
         companyName: data.razaoSocial || data.nomeFantasia || '',
         segment: data.cnaeDescricao || '',
@@ -147,8 +153,9 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     onNext();
   };
 
-  // 🔥 Verifica divergência
-  const divergencia = verificarDivergenciaModelo();
+  // 🔥 IDENTIFICA O MODELO DE RECEITA COM BASE NO CNAE
+  const cnae = cnpjData?.cnaeDescricao || '';
+  const modeloIdentificado = cnae ? identificarModeloPorCNAE(cnae) : null;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -248,19 +255,24 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT DE DIVERGÊNCIA DO MODELO DE RECEITA */}
-          {divergencia && (
+          {/* 🔥 INSIGHT: Modelo de receita identificado pelo CNAE */}
+          {modeloIdentificado && (
             <div className="p-4 bg-[#F4E8C1] border border-[#D4AF37] rounded-xl">
               <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-[#6B0F1A] shrink-0 mt-0.5" />
+                <span className="text-2xl">{modeloIdentificado.icone}</span>
                 <div>
                   <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">💡 Insight TFAZZIO</span>
                   <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">
-                    {divergencia.mensagem}
+                    Modelo de geração de receita de acordo com o CNAE principal:
                   </p>
-                  <p className="text-xs text-[#5A6270] mt-1">
-                    Seu modelo atual: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloAtual}</span> • 
-                    Sugestão para o segmento: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloSugerido}</span>
+                  <p className="text-base font-bold text-[#6B0F1A] mt-1">
+                    {modeloIdentificado.modelo}
+                  </p>
+                  <p className="text-xs text-[#5A6270] mt-0.5">
+                    {modeloIdentificado.descricao}
+                  </p>
+                  <p className="text-xs text-[#5A6270] mt-1 italic">
+                    Este é o modelo de receita mais comum para empresas do seu segmento.
                   </p>
                 </div>
               </div>
