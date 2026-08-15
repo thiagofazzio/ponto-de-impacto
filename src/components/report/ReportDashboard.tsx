@@ -59,6 +59,19 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
   const secondaryBottleneck = result.secondaryBottleneck;
   const evidence = result.evidenceData;
 
+  // 🔥 Função para exibir o nome do modelo de receita
+  const getModeloReceitaLabel = (modelo: string) => {
+    const labels: Record<string, string> = {
+      venda_produtos: 'Venda de Produtos',
+      prestacao_servicos: 'Prestação de Serviços',
+      assinatura: 'Assinatura / Recorrência',
+      marketplace: 'Marketplace / Plataforma',
+      hibrido: 'Híbrido',
+      outros: 'Outro modelo',
+    };
+    return labels[modelo] || modelo;
+  };
+
   // Trigger confetti on initial load
   React.useEffect(() => {
     confetti({
@@ -142,6 +155,23 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
+      {/* 🔥 NOVO: MODELO DE RECEITA - Seção */}
+      {result.revenueModel && (
+        <div className="bg-[#F9F7F3] border border-[#D8D3CB] rounded-2xl p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-[#5A6270]">
+            <span className="font-bold text-[#1A1A1A]">📊 Modelo de Receita:</span>
+            <span className="font-semibold text-[#6B0F1A]">
+              {getModeloReceitaLabel(result.revenueModel)}
+            </span>
+            {result.prioridadeModelo && (
+              <span className="text-xs bg-white px-3 py-1 rounded-full border border-[#D8D3CB]">
+                🎯 Prioridade: {result.prioridadeModelo}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* SECTION 1: CLARITY INDEX & BOTTLENECK CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -163,7 +193,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               </span>
             </div>
 
-            {/* Score Ring / Display */}
             <div className="flex items-baseline gap-2 py-2">
               <span className="text-6xl font-black tracking-tight text-[#6B0F1A]">{result.clarityIndex}</span>
               <span className="text-2xl font-bold text-[#5A6270]">/100</span>
@@ -242,7 +271,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* NEW SECTION: EVIDÊNCIAS COLETADAS (CNPJ, Google Places & News) */}
+      {/* Evidências Coletadas */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -654,6 +683,26 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ))}
           </div>
         </div>
+
+        {/* 🔥 NOVO: Recomendações personalizadas pelo modelo de receita */}
+        {result.recomendacoesPersonalizadas && result.recomendacoesPersonalizadas.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-[#D8D3CB]">
+            <h4 className="font-bold text-[#1A1A1A] text-sm uppercase tracking-wider flex items-center gap-2">
+              <span>🎯 Recomendações específicas para seu modelo de receita</span>
+              <span className="text-xs font-normal text-[#5A6270]">
+                ({getModeloReceitaLabel(result.revenueModel || 'outros')})
+              </span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+              {result.recomendacoesPersonalizadas.map((rec: string, index: number) => (
+                <div key={index} className="p-3 rounded-xl bg-[#F4E8C1] border border-[#D4AF37]/40 flex items-start gap-2">
+                  <span className="text-[#6B0F1A] font-bold text-sm">•</span>
+                  <p className="text-xs text-[#1A1A1A] font-medium leading-relaxed">{rec}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SECTION 6: STRATEGIC SESSION CTA */}

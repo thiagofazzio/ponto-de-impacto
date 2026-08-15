@@ -49,6 +49,75 @@ export const AREA_DESCRIPTIONS: Record<string, { description: string; impact: st
   },
 };
 
+// 🔥 NOVA FUNÇÃO: Aplica ajustes baseados no modelo de receita
+function aplicarModeloReceita(resultado: any, modeloReceita: string): any {
+  const ajustes: Record<string, any> = {
+    venda_produtos: {
+      recomendacoes: [
+        'Otimizar gestão de estoque e giro de mercadorias',
+        'Revisar precificação e margem bruta por categoria',
+        'Estruturar negociação com fornecedores para melhorar custo',
+        'Implementar gestão de categorias (GC) para aumentar ticket médio',
+      ],
+      prioridade: 'Eficiência operacional e margem',
+    },
+    prestacao_servicos: {
+      recomendacoes: [
+        'Aumentar horas faturáveis por colaborador',
+        'Estruturar pacotes e precificação por projeto',
+        'Fortalecer retenção de clientes recorrentes',
+        'Criar processos de entrega padronizados para escalar',
+      ],
+      prioridade: 'Produtividade e ticket médio',
+    },
+    assinatura: {
+      recomendacoes: [
+        'Reduzir churn (taxa de cancelamento) com programa de fidelização',
+        'Aumentar Lifetime Value (LTV) com upsell e cross-sell',
+        'Otimizar custo de aquisição (CAC) com marketing de performance',
+        'Criar planos e níveis de serviço para diferentes perfis',
+      ],
+      prioridade: 'Recorrência e retenção',
+    },
+    marketplace: {
+      recomendacoes: [
+        'Aumentar volume de transações e liquidez da plataforma',
+        'Equilibrar oferta e demanda com campanhas direcionadas',
+        'Otimizar comissão e taxa de conversão por categoria',
+        'Investir em ferramentas de precificação dinâmica',
+      ],
+      prioridade: 'Volume e escala',
+    },
+    hibrido: {
+      recomendacoes: [
+        'Integrar fluxos de receita (produtos + serviços) para sinergia',
+        'Criar ofertas combinadas para aumentar ticket médio',
+        'Diversificar fontes de receita para reduzir riscos',
+        'Estruturar equipes especializadas por modelo',
+      ],
+      prioridade: 'Sinergia entre modelos',
+    },
+    outros: {
+      recomendacoes: [
+        'Estruturar modelo de receita com clareza e métricas',
+        'Definir KPIs específicos para o modelo identificado',
+        'Validar escalabilidade do modelo atual',
+        'Criar plano de migração para modelo mais previsível',
+      ],
+      prioridade: 'Estruturação do modelo',
+    },
+  };
+
+  const ajuste = ajustes[modeloReceita] || ajustes.outros;
+  
+  return {
+    ...resultado,
+    recomendacoesPersonalizadas: ajuste.recomendacoes,
+    prioridadeModelo: ajuste.prioridade,
+    modeloReceitaAplicado: modeloReceita,
+  };
+}
+
 export function calculateBreakEven(data: DiagnosticFormData): BreakEvenAnalysis {
   const monthlyRevenue = Math.max(1, data.monthlyRevenue || 1);
   const fixedCostsTotal = (data.fixedCosts || 0) + (data.ownerSalary || 0);
@@ -56,21 +125,14 @@ export function calculateBreakEven(data: DiagnosticFormData): BreakEvenAnalysis 
   const taxPercent = Math.min(95, Math.max(0, data.taxesPercent || 0));
 
   const totalVarTaxPercent = Math.min(98, varPercent + taxPercent);
-  const contributionMarginPercent = Math.max(2, 100 - totalVarTaxPercent); // Margem de contribuição %
+  const contributionMarginPercent = Math.max(2, 100 - totalVarTaxPercent);
 
   const variableCostsTotal = (monthlyRevenue * varPercent) / 100;
   const taxesTotal = (monthlyRevenue * taxPercent) / 100;
 
-  // Faturamento Necessário para Break-Even = Custos Fixos / (% Margem Contribuição / 100)
   const breakEvenRevenue = Math.round(fixedCostsTotal / (contributionMarginPercent / 100));
-
-  // % do Faturamento ocupado pelo Break Even
   const breakEvenPercentage = Math.min(200, Math.round((breakEvenRevenue / monthlyRevenue) * 100));
-
-  // Margem de Segurança = (Faturamento Atual - Break Even) / Faturamento Atual * 100
   const marginOfSafetyPercent = Math.round(((monthlyRevenue - breakEvenRevenue) / monthlyRevenue) * 100);
-
-  // Lucro Líquido Estimado = (Faturamento * Margem Contribuição%) - Custos Fixos
   const estimatedNetProfit = Math.round((monthlyRevenue * contributionMarginPercent) / 100 - fixedCostsTotal);
   const estimatedNetMarginPercent = Math.round((estimatedNetProfit / monthlyRevenue) * 100);
 
@@ -107,10 +169,8 @@ export function calculateAreaScores(data: DiagnosticFormData): Record<string, Ar
 
   keys.forEach((key) => {
     const raw = rawScores[key];
-    // Convert 1-5 raw score to 0-10 score with domain adjustments
     let adjustedScore = raw * 2;
 
-    // Apply domain specific bonus/penalties based on strategic boolean questions
     if (key === 'Financeiro') {
       if (data.knowsNetMargin) adjustedScore += 0.5;
       if (data.hasProjectedCashFlow) adjustedScore += 0.5;
@@ -148,16 +208,15 @@ export function calculateClarityIndex(areaScores: Record<string, AreaScoreInfo>,
   clarityDescription: string;
 } {
   const scores = Object.values(areaScores).map((a) => a.score);
-  const averageAreaScore = scores.reduce((sum, s) => sum + s, 0) / scores.length; // 0 to 10
+  const averageAreaScore = scores.reduce((sum, s) => sum + s, 0) / scores.length;
 
-  // Key strategic boolean bonus (up to 10 bonus points)
   let strategicBonus = 0;
   if (data.runsWithoutOwner30Days) strategicBonus += 2.5;
   if (data.knowsNetMargin) strategicBonus += 2.5;
   if (data.hasProjectedCashFlow) strategicBonus += 2.5;
   if (data.hasGrowthGoalsAndPlan) strategicBonus += 2.5;
 
-  const rawClarity = averageAreaScore * 9 + strategicBonus; // 0 to 100
+  const rawClarity = averageAreaScore * 9 + strategicBonus;
   const clarityIndex = Math.min(100, Math.max(10, Math.round(rawClarity)));
 
   let clarityStatus: 'Crítico' | 'Atenção' | 'Saudável' | 'Excelente' = 'Atenção';
@@ -732,7 +791,9 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     breakEven
   );
 
-  return {
+  // 🔥 APLICA O MODELO DE RECEITA
+  const modeloReceita = data.revenueModel || 'outros';
+  const resultadoBase = {
     formSummary: data,
     clarityIndex,
     clarityStatus,
@@ -753,5 +814,31 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
       hour: '2-digit',
       minute: '2-digit',
     }),
+  };
+
+  const resultadoComModelo = aplicarModeloReceita(resultadoBase, modeloReceita);
+
+  return {
+    ...resultadoComModelo,
+    // Mantém os campos originais que não devem ser sobrescritos
+    formSummary: resultadoBase.formSummary,
+    clarityIndex: resultadoBase.clarityIndex,
+    clarityStatus: resultadoBase.clarityStatus,
+    clarityDescription: resultadoBase.clarityDescription,
+    areaScores: resultadoBase.areaScores,
+    primaryBottleneck: resultadoBase.primaryBottleneck,
+    secondaryBottleneck: resultadoBase.secondaryBottleneck,
+    breakEven: resultadoBase.breakEven,
+    actionPlan90Days: resultadoBase.actionPlan90Days,
+    textualDiagnosis: resultadoBase.textualDiagnosis,
+    executiveSummary: resultadoBase.executiveSummary,
+    strategicRecommendations: resultadoBase.strategicRecommendations,
+    aiGenerated: resultadoBase.aiGenerated,
+    generatedAt: resultadoBase.generatedAt,
+    // Campos adicionados pelo modelo de receita
+    revenueModel: modeloReceita,
+    recomendacoesPersonalizadas: resultadoComModelo.recomendacoesPersonalizadas,
+    prioridadeModelo: resultadoComModelo.prioridadeModelo,
+    modeloReceitaAplicado: resultadoComModelo.modeloReceitaAplicado,
   };
 }
