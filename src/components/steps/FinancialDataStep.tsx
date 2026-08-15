@@ -12,15 +12,12 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
   };
 
-  // 🔥 CORREÇÃO: Usa o faturamento da etapa anterior (CNPJ)
+  // Usa o faturamento da etapa anterior (CNPJ)
   const monthlyRevenue = formData.monthlyRevenue || 150000;
-
-  // Atualiza o faturamento se veio da etapa anterior
-  useEffect(() => {
-    if (formData.monthlyRevenue && formData.monthlyRevenue > 0) {
-      // Já está preenchido, não faz nada
-    }
-  }, [formData.monthlyRevenue]);
+  
+  // Calcula o ticket médio sugerido
+  const monthlyClients = formData.monthlyClients || 60;
+  const suggestedTicket = monthlyClients > 0 ? Math.round(monthlyRevenue / monthlyClients) : 0;
 
   return (
     <div className="space-y-6">
@@ -183,22 +180,30 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
         </div>
 
-        {/* 🔥 NOVO: Sugestão de valores baseados no faturamento */}
-        <div className="mt-4 p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-[#6B0F1A] shrink-0 mt-0.5" />
-            <div>
-              <span className="text-xs font-bold text-[#1A1A1A]">💡 Dica TFAZZIO</span>
-              <p className="text-xs text-[#5A6270] mt-1">
-                Com base no seu faturamento de <strong className="text-[#6B0F1A]">{formatCurrency(monthlyRevenue)}</strong>, 
-                sugerimos um ticket médio de aproximadamente <strong className="text-[#6B0F1A]">{formatCurrency(Math.round(monthlyRevenue / 60))}</strong> 
-                e um pró-labore de <strong className="text-[#6B0F1A]">{formatCurrency(Math.round(monthlyRevenue * 0.08))}</strong>.
-                <br />
-                <span className="text-[#5A6270]">Ajuste os valores conforme sua realidade.</span>
-              </p>
+        {/* 🔥 NOVO: Informação útil sobre ticket médio */}
+        {monthlyRevenue > 0 && monthlyClients > 0 && (
+          <div className="mt-4 p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-[#6B0F1A] shrink-0 mt-0.5" />
+              <div>
+                <span className="text-xs font-bold text-[#1A1A1A]">💡 Ticket Médio Atual</span>
+                <p className="text-xs text-[#5A6270] mt-1">
+                  Com {monthlyClients} clientes/mês e faturamento de {formatCurrency(monthlyRevenue)}, 
+                  seu ticket médio é de <strong className="text-[#6B0F1A]">{formatCurrency(suggestedTicket)}</strong>.
+                  {suggestedTicket > 0 && (
+                    <span className="block mt-1 text-[#5A6270]">
+                      {suggestedTicket < 1000 
+                        ? '🔍 Ticket médio baixo. Considere estratégias de upsell e cross-sell para aumentar o valor por cliente.'
+                        : suggestedTicket < 5000
+                        ? '📈 Ticket médio saudável. Continue investindo em relacionamento e fidelização.'
+                        : '🚀 Ticket médio alto! Foque em manter a qualidade e explorar novos canais de aquisição.'}
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
       </div>
     </div>
