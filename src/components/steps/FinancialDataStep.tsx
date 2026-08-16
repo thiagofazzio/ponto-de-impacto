@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { DiagnosticFormData } from '../../types';
-import { DollarSign, PieChart, Info, Landmark, Users } from 'lucide-react';
+import { DollarSign, PieChart, Info, Landmark, Users, User, Briefcase, Clipboard } from 'lucide-react';
 
 interface FinancialDataStepProps {
   formData: DiagnosticFormData;
@@ -180,7 +180,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
         </div>
 
-        {/* 🔥 NOVO: Informação útil sobre ticket médio */}
+        {/* 🔥 Informação útil sobre ticket médio */}
         {monthlyRevenue > 0 && monthlyClients > 0 && (
           <div className="mt-4 p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
             <div className="flex items-start gap-2">
@@ -204,6 +204,68 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             </div>
           </div>
         )}
+
+        {/* 🔥 NOVO: Responsável pelo Financeiro */}
+        <div className="border-t border-[#D8D3CB] pt-5 mt-5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
+            🧑‍💼 Quem é o responsável pela gestão financeira?
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelFinanceiro: 'socio' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelFinanceiro === 'socio'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">🧑‍💼</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Sócio</div>
+                  <div className="text-xs text-gray-500">Decisões financeiras passam pelo dono</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelFinanceiro: 'head' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelFinanceiro === 'head'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📊</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">CFO / Head / Gerente</div>
+                  <div className="text-xs text-gray-500">Gestor dedicado da área financeira</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelFinanceiro: 'analista' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelFinanceiro === 'analista'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📋</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Analista / Assistente</div>
+                  <div className="text-xs text-gray-500">Suporte operacional financeiro</div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
 
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DiagnosticFormData } from '../../types';
-import { ShoppingCart, Users, CheckSquare, XSquare, Zap } from 'lucide-react';
+import { ShoppingCart, Users, CheckSquare, XSquare, Zap, User, Briefcase, Clipboard } from 'lucide-react';
 
 interface CommercialDataStepProps {
   formData: DiagnosticFormData;
@@ -11,7 +11,7 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 5 de 16 • Estrutura Comercial</span>
+        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 6 de 16 • Estrutura Comercial</span>
         <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Como funciona seu processo de vendas?</h2>
         <p className="text-[#5A6270] text-sm mt-1">
           A previsibilidade de faturamento depende da maturidade do funil de vendas e da equipe comercial.
@@ -101,6 +101,130 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
                 {item.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* 🔥 NOVO: Responsável pelo Comercial */}
+        <div className="border-t border-[#D8D3CB] pt-5 mt-5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
+            🧑‍💼 Quem é o responsável pela área comercial?
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelComercial: 'socio' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelComercial === 'socio'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">🧑‍💼</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Sócio</div>
+                  <div className="text-xs text-gray-500">Vendas dependem do dono</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelComercial: 'head' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelComercial === 'head'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📊</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">CCO / Head / Gerente</div>
+                  <div className="text-xs text-gray-500">Líder comercial dedicado</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelComercial: 'vendedor' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelComercial === 'vendedor'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📋</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Vendedor / SDR / Closer</div>
+                  <div className="text-xs text-gray-500">Execução de vendas</div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* 🔥 NOVO: Responsável por Operações */}
+        <div className="border-t border-[#D8D3CB] pt-5 mt-5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
+            🧑‍💼 Quem é o responsável pelas operações?
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelOperacoes: 'socio' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelOperacoes === 'socio'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">🧑‍💼</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Sócio</div>
+                  <div className="text-xs text-gray-500">Operação depende do dono</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelOperacoes: 'head' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelOperacoes === 'head'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📊</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">COO / Head / Gerente</div>
+                  <div className="text-xs text-gray-500">Gestor dedicado da operação</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onUpdate({ responsavelOperacoes: 'analista' })}
+              className={`p-3 text-left border-2 rounded-xl transition-all duration-200 ${
+                formData.responsavelOperacoes === 'analista'
+                  ? 'border-[#6B0F1A] bg-[#F9F7F3] shadow-md'
+                  : 'border-gray-200 hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📋</span>
+                <div>
+                  <div className="font-semibold text-gray-800 text-sm">Analista / Assistente</div>
+                  <div className="text-xs text-gray-500">Suporte operacional</div>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
 
