@@ -13,8 +13,27 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <div className="bg-white rounded-xl p-6 max-w-4xl mx-auto">
-      {/* Conteúdo do relatório para impressão */}
-      <div id="pdf-content" className="space-y-6 text-[#1A1A1A]">
+      <style>{`
+        @media print {
+          body { background: white !important; }
+          .no-print { display: none !important; }
+          #pdf-content { 
+            max-width: 100% !important;
+            padding: 20px !important;
+            font-size: 12px !important;
+          }
+          #pdf-content h1 { font-size: 18px !important; }
+          #pdf-content h2 { font-size: 16px !important; }
+          #pdf-content h3 { font-size: 14px !important; }
+          #pdf-content .break-inside { page-break-inside: avoid; }
+        }
+        @page {
+          margin: 2cm;
+          size: A4;
+        }
+      `}</style>
+
+      <div id="pdf-content" className="space-y-4 text-[#1A1A1A]">
         <h1 className="text-2xl font-bold text-[#6B0F1A]">
           Relatório Executivo TFAZZIO
         </h1>
@@ -29,26 +48,37 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
           <p><strong>Segmento:</strong> {result.formSummary.segment || 'Não informado'}</p>
         </div>
 
-        <div className="border-t border-[#D8D3CB] pt-4">
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
+          <h3 className="font-bold text-lg">🎯 Objetivo Reportado</h3>
+          <p className="text-sm">{result.formSummary.mainGoal || 'Não informado'}</p>
+        </div>
+
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
+          <h3 className="font-bold text-lg">🚧 Principal Dor</h3>
+          <p className="text-sm">{result.formSummary.biggestDifficulty || 'Não informado'}</p>
+        </div>
+
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
           <h3 className="font-bold text-lg">Índice de Clareza: {result.clarityIndex}/100</h3>
           <p className="text-sm">{result.clarityDescription}</p>
         </div>
 
-        <div className="border-t border-[#D8D3CB] pt-4">
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
           <h3 className="font-bold text-lg">Gargalo Principal</h3>
           <p><strong>Área:</strong> {result.primaryBottleneck.name}</p>
           <p><strong>Nota:</strong> {result.primaryBottleneck.score}/10</p>
           <p className="text-sm">{result.primaryBottleneck.description}</p>
+          <p className="text-sm font-bold text-[#6B0F1A]">Ação Imediata: {result.primaryBottleneck.immediateAction}</p>
         </div>
 
-        <div className="border-t border-[#D8D3CB] pt-4">
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
           <h3 className="font-bold text-lg">Gargalo Secundário</h3>
           <p><strong>Área:</strong> {result.secondaryBottleneck.name}</p>
           <p><strong>Nota:</strong> {result.secondaryBottleneck.score}/10</p>
           <p className="text-sm">{result.secondaryBottleneck.description}</p>
         </div>
 
-        <div className="border-t border-[#D8D3CB] pt-4">
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
           <h3 className="font-bold text-lg">Engenharia Financeira</h3>
           <p><strong>Faturamento Mensal:</strong> R$ {result.breakEven.monthlyRevenue.toLocaleString('pt-BR')}</p>
           <p><strong>Break-Even:</strong> R$ {result.breakEven.breakEvenRevenue.toLocaleString('pt-BR')}</p>
@@ -56,12 +86,12 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
           <p><strong>Lucro Líquido Estimado:</strong> R$ {result.breakEven.estimatedNetProfit.toLocaleString('pt-BR')}</p>
         </div>
 
-        <div className="border-t border-[#D8D3CB] pt-4">
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
           <h3 className="font-bold text-lg">Síntese do Consultor</h3>
           <p className="text-sm">{result.executiveSummary}</p>
         </div>
 
-        <div className="border-t border-[#D8D3CB] pt-4">
+        <div className="border-t border-[#D8D3CB] pt-4 break-inside">
           <h3 className="font-bold text-lg">Recomendações Estratégicas</h3>
           <ul className="list-disc pl-5 space-y-1 text-sm">
             {result.strategicRecommendations.map((rec, idx) => (
