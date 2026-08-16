@@ -14,7 +14,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail);
   
-  // 🔥 VALIDAÇÃO CORRIGIDA: 10 a 12 dígitos
+  // Validação de telefone com 10 a 12 dígitos
   const phoneDigits = formData.contactPhone.replace(/\D/g, '');
   const isValidPhone = phoneDigits.length >= 10 && phoneDigits.length <= 12;
   
@@ -24,7 +24,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
     isValidPhone &&
     formData.consentGiven;
 
-  // 🔥 Função para formatar telefone enquanto digita (opcional, mas melhora UX)
+  // 🔥 Função para formatar telefone enquanto digita
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '');
     if (digits.length === 0) return '';
@@ -42,7 +42,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
       </div>
 
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
-        {/* Dados da Empresa */}
         <div className="p-4 rounded-xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-2">
           <div className="flex items-center gap-2 text-[#6B0F1A] font-extrabold text-sm">
             <Building className="w-4 h-4" />
@@ -51,12 +50,11 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-[#1A1A1A] pt-1">
             <div><span className="text-[#5A6270] block">CNPJ:</span> {formData.cnpj || 'Não informado'}</div>
             <div><span className="text-[#5A6270] block">Segmento:</span> {formData.segment}</div>
-            <div><span className="text-[#5A6270] block">Funcionários:</span> {formData.employeesCount}</div>
+            <div><span className="text-[#5A6270] block">Funcionários:</span> {formData.employeesCount.replace('_', ' ~ ')}</div>
             <div><span className="text-[#5A6270] block">Regime:</span> {formData.taxRegime}</div>
           </div>
         </div>
 
-        {/* Cards Financeiros */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB] text-xs">
             <span className="text-[#5A6270] block">Faturamento Mensal</span>
@@ -76,7 +74,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
           </div>
         </div>
 
-        {/* Autoavaliação */}
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#5A6270] mb-3">Notas da Autoavaliação (1 a 5★):</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -89,7 +86,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
           </div>
         </div>
 
-        {/* Formulário de Contato */}
         <div className="p-4 rounded-xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#5A6270] flex items-center gap-2">
             <Mail className="w-4 h-4 text-[#6B0F1A]" /> Para onde enviamos o seu diagnóstico?
@@ -111,7 +107,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
                 type="tel" 
                 value={formData.contactPhone} 
                 onChange={(e) => {
-                  // 🔥 Permite apenas dígitos e formata
                   const raw = e.target.value.replace(/\D/g, '');
                   if (raw.length <= 11) {
                     onUpdate({ contactPhone: formatPhone(raw) });
@@ -132,7 +127,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
           </label>
         </div>
 
-        {/* Botão Final */}
         <div className="pt-2">
           <button 
             id="btn-generate-report-final" 

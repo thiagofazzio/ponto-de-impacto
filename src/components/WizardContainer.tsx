@@ -125,7 +125,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
 
-    // Etapa 6: Comercial + Responsáveis Comercial e Operações
+    // Etapa 6: Comercial + Responsáveis + Equipe
     if (currentStep === 6) {
       if (!formData.responsavelComercial) {
         setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
@@ -133,6 +133,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
       if (!formData.responsavelOperacoes) {
         setValidationError('Por favor, selecione quem é o responsável pelas operações.');
+        return false;
+      }
+      if (formData.salesTeamSize === undefined || formData.salesTeamSize === null) {
+        setValidationError('Por favor, selecione o tamanho da equipe comercial.');
         return false;
       }
     }

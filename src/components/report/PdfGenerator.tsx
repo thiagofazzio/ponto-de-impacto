@@ -21,11 +21,19 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             max-width: 100% !important;
             padding: 20px !important;
             font-size: 12px !important;
+            font-family: Arial, sans-serif !important;
           }
-          #pdf-content h1 { font-size: 18px !important; }
-          #pdf-content h2 { font-size: 16px !important; }
-          #pdf-content h3 { font-size: 14px !important; }
+          #pdf-content h1 { 
+            font-size: 20px !important; 
+            color: #6B0F1A !important;
+          }
+          #pdf-content h2 { font-size: 18px !important; }
+          #pdf-content h3 { font-size: 16px !important; }
           #pdf-content .break-inside { page-break-inside: avoid; }
+          #pdf-content .text-sm { font-size: 12px !important; }
+          #pdf-content .text-xs { font-size: 10px !important; }
+          #pdf-content ul { padding-left: 20px !important; }
+          #pdf-content li { margin-bottom: 4px !important; }
         }
         @page {
           margin: 2cm;
