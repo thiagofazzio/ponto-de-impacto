@@ -113,7 +113,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
 
-    // 🔥 Etapa 5: Financeiro + Responsável Financeiro
+    // Etapa 5: Financeiro + Responsável Financeiro
     if (currentStep === 5) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
@@ -125,7 +125,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
 
-    // 🔥 Etapa 6: Comercial + Responsáveis Comercial e Operações
+    // Etapa 6: Comercial + Responsáveis Comercial e Operações
     if (currentStep === 6) {
       if (!formData.responsavelComercial) {
         setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
