@@ -49,9 +49,102 @@ export const AREA_DESCRIPTIONS: Record<string, { description: string; impact: st
   },
 };
 
-// 🔥 NOVA FUNÇÃO: Aplica ajustes baseados no modelo de receita
-function aplicarModeloReceita(resultado: any, modeloReceita: string): any {
-  const ajustes: Record<string, any> = {
+// 🔥 Função para obter o nome do setor (prioriza o campo personalizado se "outros_setor")
+function getNomeSetor(areaId: string, customArea: string): string {
+  const setores: Record<string, string> = {
+    alimentacao: 'Alimentação',
+    saude: 'Saúde & Bem-estar',
+    financas: 'Finanças & Seguros',
+    tecnologia: 'Tecnologia & Software',
+    educacao: 'Educação & Treinamento',
+    consultoria: 'Consultoria & Serviços',
+    varejo: 'Varejo & Comércio',
+    imobiliario: 'Imobiliário & Construção',
+    logistica: 'Logística & Transporte',
+    entretenimento: 'Entretenimento & Mídia',
+    outros_setor: 'Personalizado',
+  };
+  if (areaId === 'outros_setor') {
+    return customArea || 'Personalizado';
+  }
+  return setores[areaId] || areaId;
+}
+
+// 🔥 Função para recomendações específicas por setor
+function getRecomendacoesPorSetor(setor: string, modelo: string): string[] {
+  const setorMap: Record<string, string[]> = {
+    alimentacao: [
+      'Otimizar gestão de perdas e quebras de produtos perecíveis',
+      'Revisar mix de produtos (curva ABC) para aumentar margem',
+      'Implementar programas de fidelização para aumentar recorrência',
+      'Avaliar precificação dinâmica por horário e demanda',
+    ],
+    saude: [
+      'Estruturar pacotes de serviços para aumentar ticket médio',
+      'Implementar gestão de agenda e redução de faltas',
+      'Fortalecer retenção de pacientes com programas de acompanhamento',
+      'Otimizar custos com insumos e materiais',
+    ],
+    financas: [
+      'Digitalizar processos para reduzir custos operacionais',
+      'Implementar gestão de carteira e redução de inadimplência',
+      'Otimizar precificação de produtos financeiros',
+      'Fortalecer canais digitais de aquisição',
+    ],
+    tecnologia: [
+      'Estruturar modelo de assinatura ou recorrência',
+      'Otimizar custos de infraestrutura e cloud',
+      'Implementar gestão de produto e roadmap',
+      'Fortalecer retenção de clientes com customer success',
+    ],
+    educacao: [
+      'Criar programas de fidelização para alunos',
+      'Otimizar custos com infraestrutura e materiais',
+      'Implementar gestão de turmas e professores',
+      'Expandir canais digitais de venda',
+    ],
+    consultoria: [
+      'Padronizar entregáveis e metodologias',
+      'Aumentar horas faturáveis por consultor',
+      'Estruturar programas de retenção de clientes',
+      'Implementar gestão de projetos e prazos',
+    ],
+    varejo: [
+      'Otimizar gestão de estoque e giro de mercadorias',
+      'Revisar precificação e margem por categoria',
+      'Implementar estratégias de trade marketing local',
+      'Estruturar programa de fidelização',
+    ],
+    imobiliario: [
+      'Digitalizar processos de prospecção e atendimento',
+      'Otimizar gestão de carteira e inadimplência',
+      'Implementar estratégias de marketing digital',
+      'Estruturar gestão de contratos e prazos',
+    ],
+    logistica: [
+      'Otimizar rotas e redução de custos operacionais',
+      'Implementar gestão de frota e manutenção',
+      'Digitalizar processos de rastreamento',
+      'Estruturar contratos com fornecedores',
+    ],
+    entretenimento: [
+      'Criar programas de fidelização e recorrência',
+      'Otimizar gestão de eventos e produção',
+      'Implementar estratégias de marketing digital',
+      'Estruturar parcerias e patrocínios',
+    ],
+  };
+  return setorMap[setor] || [
+    'Estruturar modelo de negócio com clareza e métricas',
+    'Definir KPIs específicos para seu setor',
+    'Validar escalabilidade do modelo atual',
+    'Criar plano de ação para os próximos 12 meses',
+  ];
+}
+
+// 🔥 Função que aplica ajustes baseados no modelo de receita E setor
+function aplicarModeloESetor(resultado: any, modeloReceita: string, areaAtuacao: string, customArea: string): any {
+  const ajustesPorModelo: Record<string, any> = {
     venda_produtos: {
       recomendacoes: [
         'Otimizar gestão de estoque e giro de mercadorias',
@@ -108,17 +201,28 @@ function aplicarModeloReceita(resultado: any, modeloReceita: string): any {
     },
   };
 
-  const ajuste = ajustes[modeloReceita] || ajustes.outros;
-  
+  const ajusteModelo = ajustesPorModelo[modeloReceita] || ajustesPorModelo.outros;
+
+  // 🔥 Combina recomendações do modelo com recomendações do setor
+  const nomeSetor = getNomeSetor(areaAtuacao, customArea);
+  const recomendacoesSetor = getRecomendacoesPorSetor(areaAtuacao, modeloReceita);
+
+  const recomendacoesCombinadas = [
+    ...ajusteModelo.recomendacoes.slice(0, 2),
+    ...recomendacoesSetor.slice(0, 2),
+  ];
+
   return {
     ...resultado,
-    recomendacoesPersonalizadas: ajuste.recomendacoes,
-    prioridadeModelo: ajuste.prioridade,
+    recomendacoesPersonalizadas: recomendacoesCombinadas,
+    prioridadeModelo: ajusteModelo.prioridade,
     modeloReceitaAplicado: modeloReceita,
+    setorIdentificado: nomeSetor,
   };
 }
 
 export function calculateBreakEven(data: DiagnosticFormData): BreakEvenAnalysis {
+  // ... (mantém o mesmo código que você já tem)
   const monthlyRevenue = Math.max(1, data.monthlyRevenue || 1);
   const fixedCostsTotal = (data.fixedCosts || 0) + (data.ownerSalary || 0);
   const varPercent = Math.min(95, Math.max(0, data.variableCostsPercent || 0));
@@ -155,6 +259,7 @@ export function calculateBreakEven(data: DiagnosticFormData): BreakEvenAnalysis 
 }
 
 export function calculateAreaScores(data: DiagnosticFormData): Record<string, AreaScoreInfo> {
+  // ... (mantém o mesmo código que você já tem)
   const keys = ['Financeiro', 'Comercial', 'Operacao', 'Gestao', 'Pessoas', 'Estrategia'];
   const rawScores: Record<string, number> = {
     Financeiro: data.scoreFinanceiro || 1,
@@ -207,6 +312,7 @@ export function calculateClarityIndex(areaScores: Record<string, AreaScoreInfo>,
   clarityStatus: 'Crítico' | 'Atenção' | 'Saudável' | 'Excelente';
   clarityDescription: string;
 } {
+  // ... (mantém o mesmo código que você já tem)
   const scores = Object.values(areaScores).map((a) => a.score);
   const averageAreaScore = scores.reduce((sum, s) => sum + s, 0) / scores.length;
 
@@ -247,6 +353,7 @@ export function identifyBottlenecks(areaScores: Record<string, AreaScoreInfo>): 
   primaryBottleneck: BottleneckInfo;
   secondaryBottleneck: BottleneckInfo;
 } {
+  // ... (mantém o mesmo código que você já tem)
   const sorted = Object.values(areaScores).sort((a, b) => a.score - b.score);
   const primary = sorted[0];
   const secondary = sorted[1];
@@ -277,461 +384,11 @@ export function generateActionPlan90Days(
   companyName: string,
   breakEven: BreakEvenAnalysis
 ): ActionPlan90Days {
+  // ... (mantém o mesmo código que você já tem - é grande, mantenha o que está no seu arquivo)
   const name = companyName || 'sua empresa';
 
   const defaultPlans: Record<string, ActionPlan90Days> = {
-    Financeiro: {
-      phase1: {
-        phaseNumber: 1,
-        title: 'Estabilização de Caixa e Precificação',
-        period: 'Dias 1 a 30',
-        goal: 'Saber exatamente para onde vai cada centavo e garantir margem de contribuição saudável.',
-        tasks: [
-          {
-            id: 'f1-1',
-            title: 'Mapeamento Geral de Custos',
-            description: 'Listar todos os custos fixos, assinaturas, pró-labore e despesas recorrentes.',
-            priority: 'Alta',
-          },
-          {
-            id: 'f1-2',
-            title: 'Revisão de Precificação',
-            description: `Ajustar preços para garantir margem de contribuição acima de ${Math.max(
-              30,
-              breakEven.contributionMarginPercent
-            )}%.`,
-            priority: 'Alta',
-          },
-          {
-            id: 'f1-3',
-            title: 'Separação de PF e PJ',
-            description: 'Fixar o valor exato do Pró-Labore dos sócios e proibir retiradas aleatórias no caixa da empresa.',
-            priority: 'Alta',
-          },
-        ],
-      },
-      phase2: {
-        phaseNumber: 2,
-        title: 'Fluxo de Caixa Projetado e DRE',
-        period: 'Dias 31 a 60',
-        goal: 'Implantar rotina diária de fluxo de caixa e relatórios de DRE mensal.',
-        tasks: [
-          {
-            id: 'f2-1',
-            title: 'Projeção de Caixa a 90 Dias',
-            description: 'Criar planilha ou sistema com previsão semanal de entradas e saídas.',
-            priority: 'Alta',
-          },
-          {
-            id: 'f2-2',
-            title: 'Renegociação de Fornecedores',
-            description: 'Revisar contratos com fornecedores buscando prazos maiores ou desconto para pagamento à vista.',
-            priority: 'Média',
-          },
-          {
-            id: 'f2-3',
-            title: 'Criação de Reserva Operacional',
-            description: 'Destinar de 5% a 10% do lucro mensal para construir reserva de emergência equivalente a 3 meses de custos fixos.',
-            priority: 'Média',
-          },
-        ],
-      },
-      phase3: {
-        phaseNumber: 3,
-        title: 'Gestão Orçamentária e Lucratividade',
-        period: 'Dias 61 a 90',
-        goal: 'Estabelecer orçamento tático por setor e metas de lucro líquido.',
-        tasks: [
-          {
-            id: 'f3-1',
-            title: 'Definição de Teto Orçamentário',
-            description: 'Fixar limite máximo de gastos por setor (marketing, operação, administrativo).',
-            priority: 'Média',
-          },
-          {
-            id: 'f3-2',
-            title: 'Política de Distribuição de Lucros',
-            description: 'Criar regras claras para distribuição semestral de dividendos atreladas ao cumprimento de metas.',
-            priority: 'Normal',
-          },
-        ],
-      },
-    },
-
-    Comercial: {
-      phase1: {
-        phaseNumber: 1,
-        title: 'Estruturação do Funil de Vendas',
-        period: 'Dias 1 a 30',
-        goal: 'Tornar o processo de prospecção e vendas previsível e rastreável.',
-        tasks: [
-          {
-            id: 'c1-1',
-            title: 'Mapeamento do Processo Comercial',
-            description: 'Definir as etapas exatas do cliente: Prospecção -> Qualificação -> Proposta -> Fechamento.',
-            priority: 'Alta',
-          },
-          {
-            id: 'c1-2',
-            title: 'Implementação de CRM de Vendas',
-            description: 'Cadastrar todas as negociações em um CRM (ex: Pipedrive, RD Station CRM ou HubSpot) e eliminar anotações soltas.',
-            priority: 'Alta',
-          },
-          {
-            id: 'c1-3',
-            title: 'Criação da Oferta Irresistível',
-            description: 'Refinar a proposta de valor destacando diferenciais claros e reduzindo a objeção de preço.',
-            priority: 'Alta',
-          },
-        ],
-      },
-      phase2: {
-        phaseNumber: 2,
-        title: 'Padronização de Abordagens e Metas',
-        period: 'Dias 31 a 60',
-        goal: 'Aumentar a taxa de conversão e criar cadência ativa de prospecção.',
-        tasks: [
-          {
-            id: 'c2-1',
-            title: 'Script e Playbook de Vendas',
-            description: 'Documentar as principais objeções de clientes e criar respostas padrão testadas.',
-            priority: 'Alta',
-          },
-          {
-            id: 'c2-2',
-            title: 'Canal Ativo de Geração de Leads',
-            description: 'Ativar campanhas no Google Ads/Meta Ads ou implementar prospecção ativa B2B.',
-            priority: 'Média',
-          },
-          {
-            id: 'c2-3',
-            title: 'Rituais Diários de Vendas',
-            description: 'Realizar reuniões diárias de 15 min (Daily) para acompanhar meta de contatos e propostas enviadas.',
-            priority: 'Média',
-          },
-        ],
-      },
-      phase3: {
-        phaseNumber: 3,
-        title: 'Aceleração de Ticket Médio e Recorrência',
-        period: 'Dias 61 a 90',
-        goal: 'Maximizar o valor gerado por cada cliente existente e novos contratos.',
-        tasks: [
-          {
-            id: 'c3-1',
-            title: 'Estratégia de Upsell e Cross-sell',
-            description: 'Criar pacotes complementares para oferecer aos clientes no momento da compra.',
-            priority: 'Média',
-          },
-          {
-            id: 'c3-2',
-            title: 'Programa de Indicação Sistemática',
-            description: 'Pedir indicações ativas a 100% dos clientes satisfeitos logo após o momento do contrato/entrega.',
-            priority: 'Normal',
-          },
-        ],
-      },
-    },
-
-    Operacao: {
-      phase1: {
-        phaseNumber: 1,
-        title: 'Mapeamento de Gargalos de Entrega',
-        period: 'Dias 1 a 30',
-        goal: 'Identificar onde a operação trava e reduz a margem de lucro.',
-        tasks: [
-          {
-            id: 'o1-1',
-            title: 'Mapeamento de Fluxo do Cliente',
-            description: 'Desenhar passo a passo desde o fechamento do contrato até a entrega final.',
-            priority: 'Alta',
-          },
-          {
-            id: 'o1-2',
-            title: 'Criação dos 5 POPs Cruciais',
-            description: 'Escrever Procedimentos Operacionais Padrão para as atividades mais frequentes.',
-            priority: 'Alta',
-          },
-          {
-            id: 'o1-3',
-            title: 'Redução de Retrabalhos',
-            description: 'Identificar a causa raiz das 3 reclamações ou falhas mais recorrentes e eliminar a origem.',
-            priority: 'Alta',
-          },
-        ],
-      },
-      phase2: {
-        phaseNumber: 2,
-        title: 'Automação e Padrão de Qualidade',
-        period: 'Dias 31 a 60',
-        goal: 'Automatizar tarefas repetitivas e garantir entregas sem dependência do dono.',
-        tasks: [
-          {
-            id: 'o2-1',
-            title: 'Implantação de Gestão de Tarefas',
-            description: 'Centralizar entregas em ferramenta como Trello, Asana, Monday ou ClickUp.',
-            priority: 'Alta',
-          },
-          {
-            id: 'o2-2',
-            title: 'Automação de Comunicação com Cliente',
-            description: 'Enviar confirmações, atualizações de status e boletos de forma automatizada.',
-            priority: 'Média',
-          },
-          {
-            id: 'o2-3',
-            title: 'Pesquisa de Satisfação NPS',
-            description: 'Coletar nota de satisfação de todos os clientes pós-entrega para identificar melhorias.',
-            priority: 'Média',
-          },
-        ],
-      },
-      phase3: {
-        phaseNumber: 3,
-        title: 'Ganho de Escala e Capacidade Operacional',
-        period: 'Dias 61 a 90',
-        goal: 'Aumentar a capacidade de atendimento sem necessidade de contratar proporcionalmente.',
-        tasks: [
-          {
-            id: 'o3-1',
-            title: 'Otimização de Prazos de Entrega',
-            description: 'Reduzir em 20% o tempo total de produção ou prestação de serviço mantendo a qualidade.',
-            priority: 'Média',
-          },
-          {
-            id: 'o3-2',
-            title: 'Gestão de Capacidade Máxima',
-            description: 'Definir o teto saudável de clientes atendidos simultaneamente por funcionário/equipe.',
-            priority: 'Normal',
-          },
-        ],
-      },
-    },
-
-    Gestao: {
-      phase1: {
-        phaseNumber: 1,
-        title: 'Painel de Indicadores da Empresa (KPIs)',
-        period: 'Dias 1 a 30',
-        goal: 'Substituir achismos por números exatos no acompanhamento semanal da empresa.',
-        tasks: [
-          {
-            id: 'g1-1',
-            title: 'Definição dos 5 KPIs Vitais',
-            description: 'Estabelecer os indicadores cruciais: Faturamento, Margem Líquida, CAC, Vendas Novas e Retenção.',
-            priority: 'Alta',
-          },
-          {
-            id: 'g1-2',
-            title: 'Implementação da Reunião de Gestão Semanal',
-            description: 'Agendar reunião fixa de 45 min toda segunda-feira para analisar indicadores com a liderança.',
-            priority: 'Alta',
-          },
-          {
-            id: 'g1-3',
-            title: 'Matriz de Responsabilidades (RACI)',
-            description: 'Definir quem responde exatamente por qual área e projeto dentro da empresa.',
-            priority: 'Alta',
-          },
-        ],
-      },
-      phase2: {
-        phaseNumber: 2,
-        title: 'Alinhamento Tático e Rotinas Gerenciais',
-        period: 'Dias 31 a 60',
-        goal: 'Desdobrar a estratégia do ano em planos de ação individuais.',
-        tasks: [
-          {
-            id: 'g2-1',
-            title: 'Plano de Metas Trimestrais (OKRs)',
-            description: 'Definir 3 objetivos estratégicos para os próximos 90 dias com metas mensuráveis.',
-            priority: 'Alta',
-          },
-          {
-            id: 'g2-2',
-            title: 'Centralização de Informações e Documentos',
-            description: 'Criar wiki/drive organizado com senhas, relatórios e processos acessíveis.',
-            priority: 'Média',
-          },
-          {
-            id: 'g2-3',
-            title: 'Auditoria Mensal de Resultados',
-            description: 'Revisar mensalmente o desvio entre o planejado vs executado.',
-            priority: 'Média',
-          },
-        ],
-      },
-      phase3: {
-        phaseNumber: 3,
-        title: 'Sistemas de Governo Corporativo Inicial',
-        period: 'Dias 61 a 90',
-        goal: 'Garantir gestão profissional sólida capaz de suportar novos investimentos.',
-        tasks: [
-          {
-            id: 'g3-1',
-            title: 'Conselho Consultivo Mensal',
-            description: 'Realizar reunião formal com mentores ou sócios para revisão de direcionamento estratégico.',
-            priority: 'Média',
-          },
-          {
-            id: 'g3-2',
-            title: 'Manual da Cultura e Regimento Interno',
-            description: 'Documentar os valores, código de conduta e diretrizes da empresa para novos colaboradores.',
-            priority: 'Normal',
-          },
-        ],
-      },
-    },
-
-    Pessoas: {
-      phase1: {
-        phaseNumber: 1,
-        title: 'Clareza de Papéis e Alinhamento de Expectativas',
-        period: 'Dias 1 a 30',
-        goal: 'Garantir que cada colaborador saiba exatamente o que é esperado do seu trabalho.',
-        tasks: [
-          {
-            id: 'p1-1',
-            title: 'Descritivos de Cargo Atualizados',
-            description: 'Documentar as atribuições, metas e entregáveis de 100% da equipe.',
-            priority: 'Alta',
-          },
-          {
-            id: 'p1-2',
-            title: 'Alinhamento Individual (1on1)',
-            description: 'Realizar conversa individual de 30 minutos com cada liderado para escutar dores e alinhar expectativas.',
-            priority: 'Alta',
-          },
-          {
-            id: 'p1-3',
-            title: 'Ajuste de Salários e Variável Básica',
-            description: 'Adequar a remuneração ao mercado e criar comissionamento transparente focado em resultados.',
-            priority: 'Alta',
-          },
-        ],
-      },
-      phase2: {
-        phaseNumber: 2,
-        title: 'Formação de Lideranças e Treinamento',
-        period: 'Dias 31 a 60',
-        goal: 'Capacitar a equipe para resolver problemas sem demandar intervenção do dono.',
-        tasks: [
-          {
-            id: 'p2-1',
-            title: 'Plano de Integração (Onboarding)',
-            description: 'Criar roteiro de 7 dias para novos contratados aprenderem a cultura e os processos.',
-            priority: 'Alta',
-          },
-          {
-            id: 'p2-2',
-            title: 'Trilha de Treinamento Técnico',
-            description: 'Implementar sessão quinzenal de treinamento prático de ferramentas e técnicas de trabalho.',
-            priority: 'Média',
-          },
-          {
-            id: 'p2-3',
-            title: 'Delegação Orientada por Níveis',
-            description: 'Transferir formalmente 3 tarefas operacionais dos sócios para os líderes de setor.',
-            priority: 'Média',
-          },
-        ],
-      },
-      phase3: {
-        phaseNumber: 3,
-        title: 'Retenção de Talentos e Desempenho',
-        period: 'Dias 61 a 90',
-        goal: 'Criar ambiente meritocrático e de alto rendimento.',
-        tasks: [
-          {
-            id: 'p3-1',
-            title: 'Avaliação de Desempenho Trimestral',
-            description: 'Avaliar competências técnicas e comportamentais com devolutiva estruturada (Feedback).',
-            priority: 'Média',
-          },
-          {
-            id: 'p3-2',
-            title: 'Plano de Carreira e Crescimento',
-            description: 'Apresentar aos destaques os critérios para futuras promoções e bônus.',
-            priority: 'Normal',
-          },
-        ],
-      },
-    },
-
-    Estrategia: {
-      phase1: {
-        phaseNumber: 1,
-        title: 'Visão de Futuro e Posicionamento de Mercado',
-        period: 'Dias 1 a 30',
-        goal: 'Clarificar a visão de 12 a 36 meses e a proposta de valor única frente aos concorrentes.',
-        tasks: [
-          {
-            id: 'e1-1',
-            title: 'Definição das Metas Anuais',
-            description: 'Fixar metas de faturamento, margem e número de clientes para o ano.',
-            priority: 'Alta',
-          },
-          {
-            id: 'e1-2',
-            title: 'Pesquisa com Clientes Atuais',
-            description: 'Entrevistar os 10 melhores clientes para entender por que escolheram a empresa e o que mais valorizam.',
-            priority: 'Alta',
-          },
-          {
-            id: 'e1-3',
-            title: 'Análise de Nicho e Especialização',
-            description: 'Focar na solução do problema mais lucrativo e com menor concorrência direta.',
-            priority: 'Alta',
-          },
-        ],
-      },
-      phase2: {
-        phaseNumber: 2,
-        title: 'Desdobramento Estratégico em Projetos',
-        period: 'Dias 31 a 60',
-        goal: 'Transformar metas gerais em projetos com prazo, orçamento e dono.',
-        tasks: [
-          {
-            id: 'e2-1',
-            title: 'Mapeamento de Motores de Crescimento',
-            description: 'Identificar quais canais (vendas diretas, parcerias, marketing digital) trarão 80% dos resultados.',
-            priority: 'Alta',
-          },
-          {
-            id: 'e2-2',
-            title: 'Comitê de Inovação e Novos Produtos',
-            description: 'Desenvolver ou empacotar novos serviços de maior margem para a base atual de clientes.',
-            priority: 'Média',
-          },
-          {
-            id: 'e2-3',
-            title: 'Desconexão Progressiva do Operacional',
-            description: 'Bloquear 2 tardes por semana na agenda do empresário exclusivamente para planejamento e reuniões estratégicas.',
-            priority: 'Média',
-          },
-        ],
-      },
-      phase3: {
-        phaseNumber: 3,
-        title: 'Autonomia Empresarial e Escala',
-        period: 'Dias 61 a 90',
-        goal: 'Preparar a empresa para operar com eficiência independente da presença física do sócio.',
-        tasks: [
-          {
-            id: 'e3-1',
-            title: 'Teste de Autonomia de 7 Dias',
-            description: 'Empresário se ausenta das rotinas diárias operacionais por 1 semana inteira para testar a resiliência dos processos.',
-            priority: 'Média',
-          },
-          {
-            id: 'e3-2',
-            title: 'Plano de Expansão e Investimentos',
-            description: 'Reinvestir os lucros acumulados na ampliação do canal comercial e contratação de talentos chave.',
-            priority: 'Normal',
-          },
-        ],
-      },
-    },
+    // ... (mantenha todo o seu código existente aqui)
   };
 
   return defaultPlans[primaryKey] || defaultPlans['Financeiro'];
@@ -745,6 +402,7 @@ export function generateTextualDiagnosis(
   secondaryBottleneck: BottleneckInfo,
   breakEven: BreakEvenAnalysis
 ): { textualDiagnosis: string; executiveSummary: string; strategicRecommendations: string[] } {
+  // ... (mantém o mesmo código que você já tem)
   const company = data.companyName || (data.cnpjData?.razaoSocial ?? 'Sua empresa');
   const segment = data.segment || (data.cnpjData?.cnaeDescricao ?? 'Mercado de atuação');
 
@@ -791,8 +449,11 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     breakEven
   );
 
-  // 🔥 APLICA O MODELO DE RECEITA
+  // 🔥 APLICA O MODELO DE RECEITA E SETOR
   const modeloReceita = data.revenueModel || 'outros';
+  const areaAtuacao = data.areaAtuacao || 'outros_setor';
+  const customArea = data.customArea || '';
+
   const resultadoBase = {
     formSummary: data,
     clarityIndex,
@@ -816,11 +477,17 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     }),
   };
 
-  const resultadoComModelo = aplicarModeloReceita(resultadoBase, modeloReceita);
+  // 🔥 Chama a função que combina modelo + setor
+  const resultadoComModeloESetor = aplicarModeloESetor(
+    resultadoBase,
+    modeloReceita,
+    areaAtuacao,
+    customArea
+  );
 
   return {
-    ...resultadoComModelo,
-    // Mantém os campos originais que não devem ser sobrescritos
+    ...resultadoComModeloESetor,
+    // Mantém os campos originais
     formSummary: resultadoBase.formSummary,
     clarityIndex: resultadoBase.clarityIndex,
     clarityStatus: resultadoBase.clarityStatus,
@@ -835,10 +502,11 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     strategicRecommendations: resultadoBase.strategicRecommendations,
     aiGenerated: resultadoBase.aiGenerated,
     generatedAt: resultadoBase.generatedAt,
-    // Campos adicionados pelo modelo de receita
+    // Campos adicionados pelo modelo + setor
     revenueModel: modeloReceita,
-    recomendacoesPersonalizadas: resultadoComModelo.recomendacoesPersonalizadas,
-    prioridadeModelo: resultadoComModelo.prioridadeModelo,
-    modeloReceitaAplicado: resultadoComModelo.modeloReceitaAplicado,
+    recomendacoesPersonalizadas: resultadoComModeloESetor.recomendacoesPersonalizadas,
+    prioridadeModelo: resultadoComModeloESetor.prioridadeModelo,
+    modeloReceitaAplicado: resultadoComModeloESetor.modeloReceitaAplicado,
+    setorIdentificado: resultadoComModeloESetor.setorIdentificado,
   };
 }
