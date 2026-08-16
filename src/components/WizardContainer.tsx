@@ -57,6 +57,9 @@ const INITIAL_FORM_DATA: DiagnosticFormData = {
   customRevenueModel: '',
   areaAtuacao: '',
   customArea: '',
+  responsavelFinanceiro: '',
+  responsavelComercial: '',
+  responsavelOperacoes: '',
 };
 
 interface WizardContainerProps {
@@ -79,7 +82,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       if (fields.companyName && onCompanyChange) {
         onCompanyChange(fields.companyName);
       }
-      console.log('📝 updateFormData:', fields); // DEBUG
       return updated;
     });
     setValidationError(null);
@@ -102,6 +104,23 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const validateStep = (): boolean => {
     setValidationError(null);
+
+    // 🔥 Etapa 3: Objetivo
+    if (currentStep === 3) {
+      if (!formData.mainGoal || !formData.biggestDifficulty) {
+        setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
+        return false;
+      }
+    }
+
+    // Etapa 5: Dados Financeiros
+    if (currentStep === 5) {
+      if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
+        setValidationError('Por favor, informe um faturamento mensal válido.');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -178,7 +197,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             {currentStep === 2 && (
               <RevenueModelStep
                 onNext={(data) => {
-                  console.log('📦 Dados do RevenueModelStep:', data);
                   updateFormData({
                     revenueModel: data.revenueModel,
                     customRevenueModel: data.customModel,
@@ -218,7 +236,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             {/* Etapa 6: Dados Comerciais */}
             {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
 
-            {/* Etapas 7-12: Autoavaliação */}
+            {/* Etapas 7-12: Autoavaliação (6 áreas) */}
             {currentStep === 7 && (
               <SelfAssessmentStep areaKey="Financeiro" areaTitle="Financeiro & Caixa" stepNumber={7}
                 currentValue={formData.scoreFinanceiro}
@@ -276,7 +294,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* Rodapé com navegação - SEM CONTADOR DUPLICADO */}
+      {/* Rodapé com navegação */}
       {currentStep > 1 && currentStep < 15 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6 mt-6 border-t border-[#D8D3CB] flex items-center justify-between">
           <button type="button" onClick={prevStep}

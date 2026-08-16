@@ -35,6 +35,7 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 🔥 VALIDAÇÃO
     if (!selectedGoal) {
       setError('Selecione um objetivo para continuar');
       return;
