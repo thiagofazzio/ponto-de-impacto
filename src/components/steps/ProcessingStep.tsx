@@ -15,7 +15,7 @@ export const ProcessingStep: React.FC = () => {
     'Avaliando o Índice de Clareza das 6 áreas...',
     'Identificando o Gargalo Principal de crescimento...',
     'Estruturando o Plano de Ação de 90 Dias...',
-    'Sintetizando recomendações executivas TFAZZIO com IA...',
+    'Sintetizando recomendações executivas TFAZZIO...',
   ];
 
   useEffect(() => {
