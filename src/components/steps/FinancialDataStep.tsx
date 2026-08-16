@@ -12,18 +12,17 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
   };
 
-  // Usa o faturamento da etapa anterior (CNPJ)
   const monthlyRevenue = formData.monthlyRevenue || 150000;
-  
-  // Calcula o ticket médio sugerido
   const monthlyClients = formData.monthlyClients || 60;
   const suggestedTicket = monthlyClients > 0 ? Math.round(monthlyRevenue / monthlyClients) : 0;
 
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 5 de 16 • Estrutura Financeira</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Números Financeiros da Empresa</h2>
+        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 5 de 16</span>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
+          <span className="text-[#6B0F1A]">Números Financeiros</span> da Empresa
+        </h2>
         <p className="text-[#5A6270] text-sm mt-1">
           Usamos esses números para calcular com precisão o seu <strong className="text-[#6B0F1A] font-bold">Ponto de Equilíbrio (Break-Even)</strong> e Margem de Segurança.
         </p>
@@ -180,7 +179,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
         </div>
 
-        {/* 🔥 Informação útil sobre ticket médio */}
+        {/* Ticket médio info */}
         {monthlyRevenue > 0 && monthlyClients > 0 && (
           <div className="mt-4 p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
             <div className="flex items-start gap-2">
@@ -205,7 +204,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         )}
 
-        {/* 🔥 NOVO: Responsável pelo Financeiro */}
+        {/* Responsável pelo Financeiro */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
             🧑‍💼 Quem é o responsável pela gestão financeira?

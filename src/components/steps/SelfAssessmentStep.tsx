@@ -85,7 +85,7 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
     <div className="space-y-6">
       <div>
         <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Autoavaliação</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Como você avalia a área de {areaTitle}?</h2>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1"><span className="text-[#6B0F1A]">{areaTitle}</span>?</h2>
         <p className="text-[#5A6270] text-sm mt-1">{guide.subtitle}</p>
       </div>
 

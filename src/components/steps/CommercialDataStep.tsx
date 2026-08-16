@@ -11,8 +11,10 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 6 de 16 • Estrutura Comercial</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Como funciona seu processo de vendas?</h2>
+        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 6 de 16</span>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
+          <span className="text-[#6B0F1A]">Estrutura Comercial</span> e Processo de Vendas
+        </h2>
         <p className="text-[#5A6270] text-sm mt-1">
           A previsibilidade de faturamento depende da maturidade do funil de vendas e da equipe comercial.
         </p>
@@ -104,7 +106,7 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
           </div>
         </div>
 
-        {/* 🔥 NOVO: Responsável pelo Comercial */}
+        {/* Responsável pelo Comercial */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
             🧑‍💼 Quem é o responsável pela área comercial?
@@ -166,7 +168,7 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
           </div>
         </div>
 
-        {/* 🔥 NOVO: Responsável por Operações */}
+        {/* Responsável por Operações */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
             🧑‍💼 Quem é o responsável pelas operações?
