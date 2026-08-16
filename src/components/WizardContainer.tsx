@@ -105,7 +105,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const validateStep = (): boolean => {
     setValidationError(null);
 
-    // 🔥 Etapa 3: Objetivo
+    // Etapa 3: Objetivo - validação feita no componente
     if (currentStep === 3) {
       if (!formData.mainGoal || !formData.biggestDifficulty) {
         setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
