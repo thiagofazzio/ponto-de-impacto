@@ -105,7 +105,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const validateStep = (): boolean => {
     setValidationError(null);
 
-    // Etapa 3: Objetivo - validação feita no componente
+    // Etapa 3: Objetivo
     if (currentStep === 3) {
       if (!formData.mainGoal || !formData.biggestDifficulty) {
         setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
@@ -113,10 +113,26 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
 
-    // Etapa 5: Dados Financeiros
+    // 🔥 Etapa 5: Financeiro + Responsável Financeiro
     if (currentStep === 5) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
+        return false;
+      }
+      if (!formData.responsavelFinanceiro) {
+        setValidationError('Por favor, selecione quem é o responsável pela gestão financeira.');
+        return false;
+      }
+    }
+
+    // 🔥 Etapa 6: Comercial + Responsáveis Comercial e Operações
+    if (currentStep === 6) {
+      if (!formData.responsavelComercial) {
+        setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
+        return false;
+      }
+      if (!formData.responsavelOperacoes) {
+        setValidationError('Por favor, selecione quem é o responsável pelas operações.');
         return false;
       }
     }
