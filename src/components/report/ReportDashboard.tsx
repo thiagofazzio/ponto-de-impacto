@@ -59,7 +59,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
   const secondaryBottleneck = result.secondaryBottleneck;
   const evidence = result.evidenceData;
 
-  // 🔥 Função para exibir o nome do modelo de receita
   const getModeloReceitaLabel = (modelo: string) => {
     const labels: Record<string, string> = {
       venda_produtos: 'Venda de Produtos',
@@ -155,7 +154,27 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* 🔥 NOVO: MODELO DE RECEITA - Seção */}
+      {/* 🔥 NOVO: OBJETIVO E DOR */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+          <h4 className="text-xs font-bold uppercase text-[#5A6270] flex items-center gap-2">
+            <span>🎯</span> Objetivo Reportado
+          </h4>
+          <p className="text-sm font-medium text-[#1A1A1A] mt-1">
+            {form.mainGoal || 'Não informado'}
+          </p>
+        </div>
+        <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+          <h4 className="text-xs font-bold uppercase text-[#5A6270] flex items-center gap-2">
+            <span>🚧</span> Principal Dor
+          </h4>
+          <p className="text-sm font-medium text-[#1A1A1A] mt-1">
+            {form.biggestDifficulty || 'Não informado'}
+          </p>
+        </div>
+      </div>
+
+      {/* Modelo de Receita */}
       {result.revenueModel && (
         <div className="bg-[#F9F7F3] border border-[#D8D3CB] rounded-2xl p-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-[#5A6270]">
@@ -684,7 +703,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           </div>
         </div>
 
-        {/* 🔥 NOVO: Recomendações personalizadas pelo modelo de receita */}
+        {/* Recomendações personalizadas pelo modelo de receita */}
         {result.recomendacoesPersonalizadas && result.recomendacoesPersonalizadas.length > 0 && (
           <div className="mt-6 pt-4 border-t border-[#D8D3CB]">
             <h4 className="font-bold text-[#1A1A1A] text-sm uppercase tracking-wider flex items-center gap-2">
