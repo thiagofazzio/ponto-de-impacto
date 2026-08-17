@@ -106,6 +106,39 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
           </div>
         </div>
 
+        {/* 🔥 NOVO: Gerente de Vendas */}
+        <div className="border-t border-[#D8D3CB] pt-5 mt-5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
+            👔 A equipe comercial possui um gestor/coordenador dedicado?
+          </h4>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => onUpdate({ hasSalesManager: true })}
+              className={`p-4 rounded-xl border flex items-center justify-center gap-3 transition cursor-pointer font-bold text-sm ${
+                formData.hasSalesManager === true
+                  ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
+                  : 'bg-[#F9F7F3] border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
+              }`}
+            >
+              <span>✅</span>
+              <span>Sim, temos um gestor comercial</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdate({ hasSalesManager: false })}
+              className={`p-4 rounded-xl border flex items-center justify-center gap-3 transition cursor-pointer font-bold text-sm ${
+                formData.hasSalesManager === false
+                  ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
+                  : 'bg-[#F9F7F3] border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
+              }`}
+            >
+              <span>❌</span>
+              <span>Não, as vendas são gerenciadas pelos sócios</span>
+            </button>
+          </div>
+        </div>
+
         {/* Responsável pelo Comercial */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">

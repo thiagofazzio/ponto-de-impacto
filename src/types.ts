@@ -11,52 +11,21 @@ export interface CompanyCNPJData {
   situacaoCadastral: string;
   capitalSocial: number;
   dataAbertura: string;
-}
-
-export type TimeInMarket = 'menos_1' | '1_3' | '3_5' | '5_10' | 'mais_10';
-export type EmployeesCount = '1_5' | '6_15' | '16_30' | '31_50' | 'mais_50';
-export type TaxRegime = 'Simples Nacional' | 'Lucro Presumido' | 'Lucro Real' | 'MEI';
-
-export interface GooglePlacesEvidence {
-  name?: string;
-  rating: number | null;
-  userRatingsTotal: number | null;
-  address?: string;
-  status: string;
-}
-
-export interface NewsItemEvidence {
-  title: string;
   source: string;
-  date: string;
-  link?: string;
-  snippet?: string;
-}
-
-export interface EvidenceData {
-  googlePlaces?: GooglePlacesEvidence | null;
-  news?: NewsItemEvidence[];
-  fetchedAt?: string;
 }
 
 export interface DiagnosticFormData {
-  // Step 2: CNPJ
+  // Dados da empresa
   cnpj: string;
   cnpjData: CompanyCNPJData | null;
-
-  // Step 3 & 4: Objectives & Difficulties
-  mainGoal: string;
-  biggestDifficulty: string;
-
-  // Step 5: Company details
   companyName: string;
   segment: string;
   cityState: string;
-  timeInMarket: TimeInMarket;
-  employeesCount: EmployeesCount;
-  taxRegime: TaxRegime;
+  timeInMarket: string;
+  employeesCount: string;
+  taxRegime: string;
 
-  // Step 6: Financial data
+  // Dados financeiros
   monthlyRevenue: number;
   fixedCosts: number;
   variableCostsPercent: number;
@@ -65,12 +34,13 @@ export interface DiagnosticFormData {
   averageTicket: number;
   monthlyClients: number;
 
-  // Step 7: Commercial data
+  // Dados comerciais
   conversionRate: number;
   hasCRM: boolean;
   salesTeamSize: number;
+  hasSalesManager?: boolean; // 🔥 NOVO
 
-  // Step 8-13: Self Evaluation (1 to 5)
+  // Autoavaliação (1 a 5)
   scoreFinanceiro: number;
   scoreComercial: number;
   scoreOperacao: number;
@@ -78,20 +48,46 @@ export interface DiagnosticFormData {
   scorePessoas: number;
   scoreEstrategia: number;
 
-  // Step 14-17: Key Strategic Questions (Yes/No)
+  // Perguntas estratégicas
   runsWithoutOwner30Days: boolean;
   knowsNetMargin: boolean;
   hasProjectedCashFlow: boolean;
   hasGrowthGoalsAndPlan: boolean;
 
-  // Contato (capturado na etapa de Revisão, antes de processar)
+  // Objetivo e Dor
+  mainGoal: string;
+  biggestDifficulty: string;
+
+  // Contato
   contactName: string;
   contactEmail: string;
   contactPhone: string;
   consentGiven: boolean;
 
-  // Evidence data
-  evidenceData?: EvidenceData;
+  // Modelo de receita e setor
+  revenueModel: string;
+  customRevenueModel: string;
+  areaAtuacao: string;
+  customArea: string;
+
+  // Responsáveis por área
+  responsavelFinanceiro: string;
+  responsavelComercial: string;
+  responsavelOperacoes: string;
+}
+
+export interface BreakEvenAnalysis {
+  monthlyRevenue: number;
+  fixedCostsTotal: number;
+  variableCostsTotal: number;
+  taxesTotal: number;
+  contributionMarginPercent: number;
+  breakEvenRevenue: number;
+  breakEvenPercentage: number;
+  estimatedNetProfit: number;
+  estimatedNetMarginPercent: number;
+  marginOfSafetyPercent: number;
+  breakEvenClientsNeeded: number;
 }
 
 export interface AreaScoreInfo {
@@ -112,38 +108,47 @@ export interface BottleneckInfo {
   immediateAction: string;
 }
 
-export interface BreakEvenAnalysis {
-  monthlyRevenue: number;
-  fixedCostsTotal: number;
-  variableCostsTotal: number;
-  taxesTotal: number;
-  contributionMarginPercent: number;
-  breakEvenRevenue: number;
-  breakEvenPercentage: number;
-  estimatedNetProfit: number;
-  estimatedNetMarginPercent: number;
-  marginOfSafetyPercent: number;
-  breakEvenClientsNeeded: number;
+export interface ActionPlanTask {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'Alta' | 'Média' | 'Normal';
 }
 
 export interface ActionPlanPhase {
-  phaseNumber: 1 | 2 | 3;
+  phaseNumber: number;
   title: string;
   period: string;
   goal: string;
-  tasks: Array<{
-    id: string;
-    title: string;
-    description: string;
-    priority: 'Alta' | 'Média' | 'Normal';
-    completed?: boolean;
-  }>;
+  tasks: ActionPlanTask[];
 }
 
 export interface ActionPlan90Days {
   phase1: ActionPlanPhase;
   phase2: ActionPlanPhase;
   phase3: ActionPlanPhase;
+}
+
+export interface GooglePlacesEvidence {
+  name?: string;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  address?: string;
+  status: 'success' | 'not_found' | 'error' | 'no_api_key';
+}
+
+export interface NewsItemEvidence {
+  title: string;
+  source: string;
+  date: string;
+  link?: string;
+  snippet?: string;
+}
+
+export interface EvidenceData {
+  googlePlaces: GooglePlacesEvidence;
+  news: NewsItemEvidence[];
+  fetchedAt: string;
 }
 
 export interface DiagnosticResult {
@@ -159,7 +164,29 @@ export interface DiagnosticResult {
   textualDiagnosis: string;
   executiveSummary: string;
   strategicRecommendations: string[];
+  evidenceData?: EvidenceData;
   aiGenerated: boolean;
   generatedAt: string;
-  evidenceData?: EvidenceData;
+  // Campos adicionados pelo modelo de receita
+  revenueModel?: string;
+  recomendacoesPersonalizadas?: string[];
+  prioridadeModelo?: string;
+  modeloReceitaAplicado?: string;
+  // Campos adicionados pelos responsáveis
+  responsaveis?: {
+    financeiro: string;
+    comercial: string;
+    operacoes: string;
+  };
+  // Análise de custos
+  costAnalysis?: {
+    topCost: { name: string; value: number };
+    distribution: Array<{ name: string; value: number; percent: number }>;
+    hasConcentration: boolean;
+    costPerEmployee: number;
+    rentPercentOfRevenue: number;
+    totalItems: number;
+    concentrationMessage: string | null;
+    rentInsight: string | null;
+  };
 }

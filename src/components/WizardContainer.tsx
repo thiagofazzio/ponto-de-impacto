@@ -39,6 +39,7 @@ const INITIAL_FORM_DATA: DiagnosticFormData = {
   conversionRate: 25,
   hasCRM: true,
   salesTeamSize: 2,
+  hasSalesManager: false,
   scoreFinanceiro: 3,
   scoreComercial: 2,
   scoreOperacao: 3,
@@ -125,7 +126,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
 
-    // Etapa 6: Comercial + Responsáveis + Equipe
+    // Etapa 6: Comercial + Responsáveis + Equipe + Gerente de Vendas
     if (currentStep === 6) {
       if (!formData.responsavelComercial) {
         setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
@@ -137,6 +138,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
       if (formData.salesTeamSize === undefined || formData.salesTeamSize === null) {
         setValidationError('Por favor, selecione o tamanho da equipe comercial.');
+        return false;
+      }
+      if (formData.hasSalesManager === undefined || formData.hasSalesManager === null) {
+        setValidationError('Por favor, informe se a equipe possui um gestor comercial dedicado.');
         return false;
       }
     }

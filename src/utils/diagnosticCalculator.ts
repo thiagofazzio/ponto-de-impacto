@@ -209,6 +209,17 @@ function aplicarResponsaveis(resultado: any, data: DiagnosticFormData): any {
     );
   }
 
+  // === GERENTE DE VENDAS (NOVO) ===
+  if (data.hasSalesManager === false) {
+    recomendacoesExtras.push(
+      '👔 A equipe comercial não possui um gestor dedicado. Recomendamos a contratação ou capacitação de um líder comercial para estruturar o funil, treinar a equipe e aumentar a previsibilidade de vendas.'
+    );
+  } else if (data.hasSalesManager === true) {
+    recomendacoesExtras.push(
+      '👔 Sua equipe comercial já possui um gestor dedicado. Foque em capacitar esse líder com ferramentas de gestão (CRM, metas, acompanhamento) e dar autonomia para ele executar o plano de vendas.'
+    );
+  }
+
   const recomendacoesAtuais = resultado.recomendacoesPersonalizadas || resultado.strategicRecommendations || [];
   const recomendacoesCombinadas = [...recomendacoesAtuais, ...recomendacoesExtras];
 
