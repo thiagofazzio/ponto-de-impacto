@@ -49,6 +49,125 @@ export const AREA_DESCRIPTIONS: Record<string, { description: string; impact: st
   },
 };
 
+// 🔥 NOVA FUNÇÃO: Analisa os custos fixos detalhados
+export function analyzeFixedCosts(costItems: Array<{ name: string; value: number }>, totalFixedCosts: number, monthlyRevenue: number, employeesCount: string) {
+  if (!costItems || costItems.length === 0 || totalFixedCosts === 0) return null;
+
+  // Ordena do maior para o menor
+  const sorted = [...costItems].sort((a, b) => b.value - a.value);
+  
+  // Maior custo
+  const topCost = sorted[0];
+  
+  // Distribuição percentual
+  const distribution = sorted.map(item => ({
+    ...item,
+    percent: totalFixedCosts > 0 ? Math.round((item.value / totalFixedCosts) * 100) : 0
+  }));
+
+  // Alerta de concentração (se um item > 40% do total)
+  const hasConcentration = topCost && (topCost.value / totalFixedCosts) > 0.4;
+
+  // Custo fixo por funcionário (aproximado)
+  let employees = 6;
+  if (employeesCount === '1_5') employees = 3;
+  else if (employeesCount === '6_15') employees = 10;
+  else if (employeesCount === '16_50') employees = 30;
+  else if (employeesCount === '51_100') employees = 75;
+  else if (employeesCount === '100+') employees = 120;
+  
+  const costPerEmployee = employees > 0 ? Math.round(totalFixedCosts / employees) : 0;
+
+  // Análise de aluguel (se existir)
+  const rentItem = costItems.find(item => item.name === 'Aluguel');
+  const rentPercentOfRevenue = monthlyRevenue > 0 && rentItem ? Math.round((rentItem.value / monthlyRevenue) * 100) : 0;
+
+  return {
+    topCost,
+    distribution,
+    hasConcentration,
+    costPerEmployee,
+    rentPercentOfRevenue,
+    totalItems: costItems.length,
+    concentrationMessage: hasConcentration 
+      ? `⚠️ Atenção: ${topCost.name} representa ${Math.round((topCost.value / totalFixedCosts) * 100)}% dos seus custos fixos. Considere revisar essa despesa.` 
+      : null,
+    rentInsight: rentItem && rentPercentOfRevenue > 20 
+      ? `🏢 Seu aluguel representa ${rentPercentOfRevenue}% do faturamento. O ideal é que esse valor fique abaixo de 20%. Considere renegociar ou buscar uma opção mais adequada.`
+      : rentItem ? `✅ Seu aluguel representa ${rentPercentOfRevenue}% do faturamento, dentro do recomendado.` 
+      : null,
+  };
+}
+
+// 🔥 Função para aplicar ajustes baseados no modelo de receita
+function aplicarModeloReceita(resultado: any, modeloReceita: string): any {
+  const ajustes: Record<string, any> = {
+    venda_produtos: {
+      recomendacoes: [
+        'Otimizar gestão de estoque e giro de mercadorias',
+        'Revisar precificação e margem bruta por categoria',
+        'Estruturar negociação com fornecedores para melhorar custo',
+        'Implementar gestão de categorias (GC) para aumentar ticket médio',
+      ],
+      prioridade: 'Eficiência operacional e margem',
+    },
+    prestacao_servicos: {
+      recomendacoes: [
+        'Aumentar horas faturáveis por colaborador',
+        'Estruturar pacotes e precificação por projeto',
+        'Fortalecer retenção de clientes recorrentes',
+        'Criar processos de entrega padronizados para escalar',
+      ],
+      prioridade: 'Produtividade e ticket médio',
+    },
+    assinatura: {
+      recomendacoes: [
+        'Reduzir churn (taxa de cancelamento) com programa de fidelização',
+        'Aumentar Lifetime Value (LTV) com upsell e cross-sell',
+        'Otimizar custo de aquisição (CAC) com marketing de performance',
+        'Criar planos e níveis de serviço para diferentes perfis',
+      ],
+      prioridade: 'Recorrência e retenção',
+    },
+    marketplace: {
+      recomendacoes: [
+        'Aumentar volume de transações e liquidez da plataforma',
+        'Equilibrar oferta e demanda com campanhas direcionadas',
+        'Otimizar comissão e taxa de conversão por categoria',
+        'Investir em ferramentas de precificação dinâmica',
+      ],
+      prioridade: 'Volume e escala',
+    },
+    hibrido: {
+      recomendacoes: [
+        'Integrar fluxos de receita (produtos + serviços) para sinergia',
+        'Criar ofertas combinadas para aumentar ticket médio',
+        'Diversificar fontes de receita para reduzir riscos',
+        'Estruturar equipes especializadas por modelo',
+      ],
+      prioridade: 'Sinergia entre modelos',
+    },
+    outros: {
+      recomendacoes: [
+        'Estruturar modelo de receita com clareza e métricas',
+        'Definir KPIs específicos para o modelo identificado',
+        'Validar escalabilidade do modelo atual',
+        'Criar plano de migração para modelo mais previsível',
+      ],
+      prioridade: 'Estruturação do modelo',
+    },
+  };
+
+  const ajuste = ajustes[modeloReceita] || ajustes.outros;
+  
+  return {
+    ...resultado,
+    recomendacoesPersonalizadas: ajuste.recomendacoes,
+    prioridadeModelo: ajuste.prioridade,
+    modeloReceitaAplicado: modeloReceita,
+  };
+}
+
 export function calculateBreakEven(data: DiagnosticFormData): BreakEvenAnalysis {
   const monthlyRevenue = Math.max(1, data.monthlyRevenue || 1);
   const fixedCostsTotal = (data.fixedCosts || 0) + (data.ownerSalary || 0);
@@ -519,13 +638,28 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     breakEven
   );
 
-  return {
-    formSummary: {
-      ...data,
-      // 🔥 Adiciona os campos de objetivo e dor para serem exibidos no relatório
-      mainGoal: data.mainGoal,
-      biggestDifficulty: data.biggestDifficulty,
-    },
+  // 🔥 APLICA O MODELO DE RECEITA
+  const modeloReceita = data.revenueModel || 'outros';
+  
+  // 🔥 ANALISA OS CUSTOS FIXOS (se houver itens detalhados)
+  // Nota: Os itens de custo não estão no DiagnosticFormData atualmente,
+  // então vamos criar um placeholder. Em uma implementação futura, você pode
+  // adicionar um campo `costItems` no formData.
+  const costItems: Array<{ name: string; value: number }> = [];
+  // Se você quiser simular itens para teste, pode descomentar a linha abaixo:
+  // costItems.push({ name: 'Aluguel', value: 12000 }, { name: 'Salários', value: 18000 });
+  
+  const costAnalysis = data.fixedCosts && data.fixedCosts > 0 
+    ? analyzeFixedCosts(
+        costItems.length > 0 ? costItems : [{ name: 'Custos fixos', value: data.fixedCosts }],
+        data.fixedCosts,
+        data.monthlyRevenue || 1,
+        data.employeesCount || '6_15'
+      )
+    : null;
+
+  const resultadoBase = {
+    formSummary: data,
     clarityIndex,
     clarityStatus,
     clarityDescription,
@@ -545,5 +679,33 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
       hour: '2-digit',
       minute: '2-digit',
     }),
+    costAnalysis,
+  };
+
+  const resultadoComModelo = aplicarModeloReceita(resultadoBase, modeloReceita);
+
+  return {
+    ...resultadoComModelo,
+    // Mantém os campos originais que não devem ser sobrescritos
+    formSummary: resultadoBase.formSummary,
+    clarityIndex: resultadoBase.clarityIndex,
+    clarityStatus: resultadoBase.clarityStatus,
+    clarityDescription: resultadoBase.clarityDescription,
+    areaScores: resultadoBase.areaScores,
+    primaryBottleneck: resultadoBase.primaryBottleneck,
+    secondaryBottleneck: resultadoBase.secondaryBottleneck,
+    breakEven: resultadoBase.breakEven,
+    actionPlan90Days: resultadoBase.actionPlan90Days,
+    textualDiagnosis: resultadoBase.textualDiagnosis,
+    executiveSummary: resultadoBase.executiveSummary,
+    strategicRecommendations: resultadoBase.strategicRecommendations,
+    aiGenerated: resultadoBase.aiGenerated,
+    generatedAt: resultadoBase.generatedAt,
+    costAnalysis: resultadoBase.costAnalysis,
+    // Campos adicionados pelo modelo de receita
+    revenueModel: modeloReceita,
+    recomendacoesPersonalizadas: resultadoComModelo.recomendacoesPersonalizadas,
+    prioridadeModelo: resultadoComModelo.prioridadeModelo,
+    modeloReceitaAplicado: resultadoComModelo.modeloReceitaAplicado,
   };
 }

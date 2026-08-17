@@ -547,6 +547,77 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Engenharia Financeira</span>
             <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Análise do Ponto de Equilíbrio (Break-Even)</h2>
           </div>
+      {/* 🔥 NOVA SEÇÃO: ANÁLISE DE CUSTOS FIXOS */}
+      {result.costAnalysis && result.costAnalysis.distribution && result.costAnalysis.distribution.length > 0 && (
+        <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="border-b border-[#D8D3CB] pb-4">
+            <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Análise de Custos</span>
+            <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Detalhamento dos Custos Fixos</h2>
+            <p className="text-xs text-[#5A6270]">Distribuição detalhada dos seus custos fixos mensais</p>
+          </div>
+
+          {/* Cards de métricas */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+              <span className="text-[10px] text-[#5A6270] block font-medium">Total de Itens</span>
+              <span className="text-lg font-black text-[#6B0F1A]">{result.costAnalysis.totalItems}</span>
+            </div>
+            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+              <span className="text-[10px] text-[#5A6270] block font-medium">Maior Custo</span>
+              <span className="text-sm font-bold text-[#1A1A1A] truncate block">{result.costAnalysis.topCost?.name || '-'}</span>
+            </div>
+            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+              <span className="text-[10px] text-[#5A6270] block font-medium">Custo por Funcionário</span>
+              <span className="text-lg font-black text-[#6B0F1A]">{formatCurrency(result.costAnalysis.costPerEmployee)}</span>
+            </div>
+            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+              <span className="text-[10px] text-[#5A6270] block font-medium">% do Faturamento</span>
+              <span className="text-lg font-black text-[#6B0F1A]">{Math.round((breakEven.fixedCostsTotal / breakEven.monthlyRevenue) * 100)}%</span>
+            </div>
+          </div>
+
+          {/* Maior custo e alertas */}
+          {result.costAnalysis.topCost && (
+            <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-[#5A6270]">🔴 Maior custo fixo</span>
+                <span className="text-sm font-bold text-[#6B0F1A]">
+                  {result.costAnalysis.topCost.name}: {formatCurrency(result.costAnalysis.topCost.value)}
+                </span>
+              </div>
+              {result.costAnalysis.concentrationMessage && (
+                <p className="text-xs text-amber-700 mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                  {result.costAnalysis.concentrationMessage}
+                </p>
+              )}
+              {result.costAnalysis.rentInsight && (
+                <p className="text-xs text-blue-700 mt-1 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                  {result.costAnalysis.rentInsight}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Distribuição percentual */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#5A6270]">Distribuição dos Custos</h4>
+            {result.costAnalysis.distribution.map((item: any) => (
+              <div key={item.name} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="font-medium text-[#1A1A1A]">{item.name}</span>
+                  <span className="font-bold text-[#6B0F1A]">{item.percent}%</span>
+                </div>
+                <div className="w-full bg-[#E8E2D8] h-2 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#6B0F1A] rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, item.percent)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
           <div className="text-right">
             <span className="text-xs text-[#5A6270] block font-medium">Faturamento Atual Informado</span>
             <span className="text-xl font-mono font-bold text-[#6B0F1A]">{formatCurrency(breakEven.monthlyRevenue)}</span>
