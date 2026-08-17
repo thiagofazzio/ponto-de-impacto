@@ -17,69 +17,8 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
   };
 
   return (
-    <>
-      {/* 🔥 ESTILOS - SEPARANDO PRÉ-VISUALIZAÇÃO E IMPRESSÃO */}
+    <div className="bg-white rounded-xl p-4 max-w-4xl mx-auto" style={{ overflow: 'auto', maxHeight: '90vh' }}>
       <style>{`
-        /* 🔥 ESTILOS PARA A PRÉ-VISUALIZAÇÃO (DENTRO DO SITE) */
-        #pdf-content {
-          max-width: 100% !important;
-          padding: 20px !important;
-          background: white !important;
-          color: #1A1A1A !important;
-          font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
-          font-size: 12px !important;
-          line-height: 1.5 !important;
-        }
-        #pdf-content .card {
-          background: #F9F7F3 !important;
-          border: 1px solid #D8D3CB !important;
-          border-radius: 8px !important;
-          padding: 12px !important;
-          margin-bottom: 10px !important;
-        }
-        #pdf-content .card-rose {
-          border: 2px solid #fca5a5 !important;
-          background: #fef2f2 !important;
-        }
-        #pdf-content .card-gold {
-          border: 2px solid #D4AF37 !important;
-          background: #F4E8C1 !important;
-        }
-        #pdf-content .badge {
-          display: inline-block !important;
-          background: #F4E8C1 !important;
-          color: #6B0F1A !important;
-          font-size: 10px !important;
-          font-weight: 700 !important;
-          padding: 2px 10px !important;
-          border-radius: 12px !important;
-          border: 1px solid #D4AF37 !important;
-        }
-        #pdf-content h1 { font-size: 20px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 4px !important; }
-        #pdf-content h2 { font-size: 16px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 10px !important; margin-bottom: 4px !important; }
-        #pdf-content h3 { font-size: 14px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 8px !important; margin-bottom: 3px !important; }
-        #pdf-content p { font-size: 12px !important; line-height: 1.5 !important; color: #1A1A1A !important; margin: 2px 0 !important; }
-        #pdf-content .text-muted { color: #5A6270 !important; font-size: 11px !important; }
-        #pdf-content .text-red { color: #6B0F1A !important; }
-        #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-        #pdf-content .grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 10px !important; }
-        #pdf-content .border-top { border-top: 1px solid #D8D3CB !important; padding-top: 8px !important; margin-top: 8px !important; }
-        #pdf-content ul { padding-left: 16px !important; margin: 4px 0 !important; }
-        #pdf-content li { font-size: 12px !important; margin-bottom: 2px !important; }
-        #pdf-content .flex { display: flex !important; align-items: center !important; gap: 6px !important; }
-        #pdf-content .flex-between { display: flex !important; justify-content: space-between !important; align-items: center !important; }
-        #pdf-content .gap-2 { gap: 6px !important; }
-        #pdf-content .mb-2 { margin-bottom: 6px !important; }
-        #pdf-content .mb-4 { margin-bottom: 10px !important; }
-        #pdf-content .mt-2 { margin-top: 6px !important; }
-        #pdf-content .text-center { text-align: center !important; }
-        #pdf-content .text-right { text-align: right !important; }
-        #pdf-content .font-bold { font-weight: 700 !important; }
-        #pdf-content .font-mono { font-family: monospace !important; }
-        .no-print { display: flex !important; }
-        #pdf-content .break-inside { page-break-inside: avoid !important; }
-
-        /* 🔥 ESTILOS PARA A IMPRESSÃO (QUANDO CLICA EM "IMPRIMIR") */
         @media print {
           body * {
             visibility: hidden !important;
@@ -94,22 +33,61 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             width: 100% !important;
             max-width: 100% !important;
             padding: 15px !important;
+            background: white !important;
+            color: #1A1A1A !important;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
             font-size: 10px !important;
             line-height: 1.4 !important;
-            transform: scale(0.85) !important;
-            transform-origin: top left !important;
           }
-          #pdf-content h1 { font-size: 16px !important; }
-          #pdf-content h2 { font-size: 13px !important; }
-          #pdf-content h3 { font-size: 11px !important; }
-          #pdf-content p { font-size: 9px !important; }
-          #pdf-content li { font-size: 9px !important; }
-          #pdf-content .text-muted { font-size: 8px !important; }
-          #pdf-content .badge { font-size: 8px !important; }
-          #pdf-content .card { padding: 8px !important; margin-bottom: 6px !important; }
-          #pdf-content .grid-2 { gap: 6px !important; }
-          #pdf-content .grid-3 { gap: 6px !important; }
+          #pdf-content .card {
+            background: #F9F7F3 !important;
+            border: 1px solid #D8D3CB !important;
+            border-radius: 6px !important;
+            padding: 8px !important;
+            margin-bottom: 6px !important;
+            page-break-inside: avoid !important;
+          }
+          #pdf-content .card-rose {
+            border: 2px solid #fca5a5 !important;
+            background: #fef2f2 !important;
+          }
+          #pdf-content .card-gold {
+            border: 2px solid #D4AF37 !important;
+            background: #F4E8C1 !important;
+          }
+          #pdf-content .badge {
+            display: inline-block !important;
+            background: #F4E8C1 !important;
+            color: #6B0F1A !important;
+            font-size: 8px !important;
+            font-weight: 700 !important;
+            padding: 1px 6px !important;
+            border-radius: 10px !important;
+            border: 1px solid #D4AF37 !important;
+          }
+          #pdf-content h1 { font-size: 16px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 2px !important; }
+          #pdf-content h2 { font-size: 13px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 6px !important; margin-bottom: 2px !important; }
+          #pdf-content h3 { font-size: 11px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 4px !important; margin-bottom: 2px !important; }
+          #pdf-content p { font-size: 9px !important; line-height: 1.4 !important; color: #1A1A1A !important; margin: 1px 0 !important; }
+          #pdf-content .text-muted { color: #5A6270 !important; font-size: 8px !important; }
+          #pdf-content .text-red { color: #6B0F1A !important; }
+          #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+          #pdf-content .grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 6px !important; }
+          #pdf-content .border-top { border-top: 1px solid #D8D3CB !important; padding-top: 4px !important; margin-top: 4px !important; }
+          #pdf-content ul { padding-left: 12px !important; margin: 2px 0 !important; }
+          #pdf-content li { font-size: 9px !important; margin-bottom: 1px !important; }
+          #pdf-content .flex { display: flex !important; align-items: center !important; gap: 4px !important; }
+          #pdf-content .flex-between { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+          #pdf-content .gap-2 { gap: 4px !important; }
+          #pdf-content .mb-2 { margin-bottom: 4px !important; }
+          #pdf-content .mb-4 { margin-bottom: 6px !important; }
+          #pdf-content .mt-2 { margin-top: 4px !important; }
+          #pdf-content .text-center { text-align: center !important; }
+          #pdf-content .text-right { text-align: right !important; }
+          #pdf-content .font-bold { font-weight: 700 !important; }
+          #pdf-content .font-mono { font-family: monospace !important; }
           .no-print { display: none !important; }
+          #pdf-content .break-inside { page-break-inside: avoid !important; }
         }
         @page {
           margin: 1cm;
@@ -117,30 +95,30 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         }
       `}</style>
 
-      <div id="pdf-content" className="max-w-4xl mx-auto">
+      <div id="pdf-content" className="max-w-4xl mx-auto" style={{ padding: '15px' }}>
         
         {/* Cabeçalho */}
-        <div className="flex-between mb-4">
+        <div className="flex-between mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <div>
-            <div className="badge">
+            <div className="badge" style={{ display: 'inline-block', background: '#F4E8C1', color: '#6B0F1A', fontSize: '9px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px', border: '1px solid #D4AF37' }}>
               Relatório Executivo TFAZZIO
             </div>
-            <h1>
+            <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#1A1A1A', marginTop: '2px' }}>
               Diagnóstico Ponto de Impacto
             </h1>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p className="text-muted">Gerado em: {result.generatedAt}</p>
+            <p style={{ fontSize: '10px', color: '#5A6270' }}>Gerado em: {result.generatedAt}</p>
           </div>
         </div>
 
         {/* Empresa */}
-        <div className="card">
-          <div className="flex">
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
+          <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Building2 size={16} color="#6B0F1A" />
             <strong style={{ fontSize: '14px', color: '#6B0F1A' }}>{result.formSummary.companyName || 'Empresa PME'}</strong>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '11px', marginTop: '4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '10px', marginTop: '4px' }}>
             <span><strong>CNPJ:</strong> {result.formSummary.cnpj || 'Não informado'}</span>
             <span><strong>Segmento:</strong> {result.formSummary.segment}</span>
             <span><strong>Porte:</strong> {result.formSummary.cnpjData?.porte || 'PME'}</span>
@@ -148,57 +126,57 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </div>
 
         {/* Objetivo e Dor */}
-        <div className="grid-2">
-          <div className="card">
-            <p className="text-muted" style={{ fontWeight: '700' }}>🎯 Objetivo Reportado</p>
-            <p style={{ fontSize: '14px', fontWeight: '600' }}>{result.formSummary.mainGoal || 'Não informado'}</p>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+          <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '10px', pageBreakInside: 'avoid' }}>
+            <p style={{ fontSize: '9px', fontWeight: '700', color: '#5A6270', marginBottom: '2px' }}>🎯 Objetivo Reportado</p>
+            <p style={{ fontSize: '13px', fontWeight: '600', color: '#1A1A1A' }}>{result.formSummary.mainGoal || 'Não informado'}</p>
           </div>
-          <div className="card">
-            <p className="text-muted" style={{ fontWeight: '700' }}>🚧 Principal Dor</p>
-            <p style={{ fontSize: '14px', fontWeight: '600' }}>{result.formSummary.biggestDifficulty || 'Não informado'}</p>
+          <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '10px', pageBreakInside: 'avoid' }}>
+            <p style={{ fontSize: '9px', fontWeight: '700', color: '#5A6270', marginBottom: '2px' }}>🚧 Principal Dor</p>
+            <p style={{ fontSize: '13px', fontWeight: '600', color: '#1A1A1A' }}>{result.formSummary.biggestDifficulty || 'Não informado'}</p>
           </div>
         </div>
 
         {/* Índice de Clareza */}
-        <div className="card">
-          <div className="flex-between">
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
+          <div className="flex-between" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: '700', color: '#5A6270' }}>Índice de Clareza</span>
             <span style={{ fontSize: '28px', fontWeight: '900', color: '#6B0F1A' }}>{result.clarityIndex}</span>
           </div>
-          <p style={{ fontSize: '12px', color: '#5A6270', marginTop: '2px' }}>{result.clarityDescription}</p>
+          <p style={{ fontSize: '11px', color: '#5A6270', marginTop: '2px' }}>{result.clarityDescription}</p>
         </div>
 
         {/* Gargalos */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
           {/* Gargalo Principal */}
-          <div className="card card-rose">
-            <div className="flex">
-              <AlertTriangle size={16} color="#dc2626" />
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#dc2626' }}>Gargalo Principal</span>
+          <div className="card-rose" style={{ border: '2px solid #fca5a5', background: '#fef2f2', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
+            <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <AlertTriangle size={14} color="#dc2626" />
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#dc2626' }}>Gargalo Principal</span>
             </div>
-            <p style={{ fontSize: '14px', fontWeight: '700', margin: '2px 0' }}>{result.primaryBottleneck.name}</p>
-            <p style={{ fontSize: '12px' }}>Nota: {result.primaryBottleneck.score}/10</p>
-            <p style={{ fontSize: '11px', color: '#5A6270' }}>{result.primaryBottleneck.description}</p>
-            <p style={{ fontSize: '11px', fontWeight: '700', color: '#6B0F1A', marginTop: '2px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
+            <p style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A', margin: '2px 0' }}>{result.primaryBottleneck.name}</p>
+            <p style={{ fontSize: '11px', color: '#1A1A1A' }}>Nota: {result.primaryBottleneck.score}/10</p>
+            <p style={{ fontSize: '10px', color: '#5A6270' }}>{result.primaryBottleneck.description}</p>
+            <p style={{ fontSize: '10px', fontWeight: '700', color: '#6B0F1A', marginTop: '2px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
           </div>
 
           {/* Gargalo Secundário */}
-          <div className="card card-gold">
-            <div className="flex">
-              <Zap size={16} color="#6B0F1A" />
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#6B0F1A' }}>Gargalo Secundário</span>
+          <div className="card-gold" style={{ border: '2px solid #D4AF37', background: '#F4E8C1', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
+            <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Zap size={14} color="#6B0F1A" />
+              <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B0F1A' }}>Gargalo Secundário</span>
             </div>
-            <p style={{ fontSize: '14px', fontWeight: '700', margin: '2px 0' }}>{result.secondaryBottleneck.name}</p>
-            <p style={{ fontSize: '12px' }}>Nota: {result.secondaryBottleneck.score}/10</p>
-            <p style={{ fontSize: '11px', color: '#5A6270' }}>{result.secondaryBottleneck.description}</p>
+            <p style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A', margin: '2px 0' }}>{result.secondaryBottleneck.name}</p>
+            <p style={{ fontSize: '11px', color: '#1A1A1A' }}>Nota: {result.secondaryBottleneck.score}/10</p>
+            <p style={{ fontSize: '10px', color: '#5A6270' }}>{result.secondaryBottleneck.description}</p>
           </div>
         </div>
 
         {/* Engenharia Financeira */}
-        <div className="card">
-          <div className="flex">
-            <TrendingUp size={18} color="#6B0F1A" />
-            <span style={{ fontSize: '14px', fontWeight: '700' }}>Engenharia Financeira</span>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
+          <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <TrendingUp size={16} color="#6B0F1A" />
+            <span style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A' }}>Engenharia Financeira</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '4px' }}>
             <div><strong>Faturamento:</strong> {formatCurrency(result.breakEven.monthlyRevenue)}</div>
@@ -209,15 +187,15 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </div>
 
         {/* Síntese do Consultor */}
-        <div className="card">
-          <h3 style={{ fontSize: '14px', fontWeight: '700' }}>🧠 Síntese do Consultor</h3>
-          <p style={{ fontSize: '12px', color: '#5A6270', marginTop: '2px' }}>{result.executiveSummary}</p>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A' }}>🧠 Síntese do Consultor</h3>
+          <p style={{ fontSize: '11px', color: '#5A6270', marginTop: '2px' }}>{result.executiveSummary}</p>
         </div>
 
         {/* Recomendações */}
-        <div className="card">
-          <h3 style={{ fontSize: '14px', fontWeight: '700' }}>🎯 Recomendações Estratégicas</h3>
-          <ul style={{ paddingLeft: '16px', margin: '4px 0' }}>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A' }}>🎯 Recomendações Estratégicas</h3>
+          <ul style={{ paddingLeft: '16px', margin: '4px 0', fontSize: '11px' }}>
             {result.strategicRecommendations.slice(0, 4).map((rec, idx) => (
               <li key={idx} style={{ marginBottom: '2px' }}>{rec}</li>
             ))}
@@ -240,7 +218,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
           Baixar PDF (Imprimir)
         </button>
       </div>
-    </>
+    </div>
   );
 };
 
