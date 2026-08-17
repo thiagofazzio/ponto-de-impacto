@@ -48,6 +48,31 @@ interface ReportDashboardProps {
   onRestart: () => void;
 }
 
+// 🔥 MAPEAMENTO DOS LABELS PARA EXIBIÇÃO
+const getGoalLabel = (goalId: string) => {
+  const labels: Record<string, string> = {
+    crescer_faturamento: 'Crescer Faturamento',
+    aumentar_margem: 'Aumentar Margem',
+    profissionalizar_gestao: 'Profissionalizar Gestão',
+    reduzir_dependencia: 'Reduzir Dependência',
+    expandir_operacao: 'Expandir Operação',
+    outro_objetivo: 'Outro objetivo',
+  };
+  return labels[goalId] || goalId || 'Não informado';
+};
+
+const getDifficultyLabel = (difficultyId: string) => {
+  const labels: Record<string, string> = {
+    comercial: 'Comercial',
+    financeiro: 'Financeiro',
+    operacional: 'Operacional',
+    gestao: 'Gestão',
+    pessoas: 'Pessoas',
+    outro_desafio: 'Outro desafio',
+  };
+  return labels[difficultyId] || difficultyId || 'Não informado';
+};
+
 export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDownloadPdf, onRestart }) => {
   const [activePhaseTab, setActivePhaseTab] = useState<1 | 2 | 3>(1);
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
@@ -154,14 +179,14 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* 🔥 NOVO: OBJETIVO E DOR */}
+      {/* 🔥 OBJETIVO E DOR - COM LABELS CORRIGIDOS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
           <h4 className="text-xs font-bold uppercase text-[#5A6270] flex items-center gap-2">
             <span>🎯</span> Objetivo Reportado
           </h4>
           <p className="text-sm font-medium text-[#1A1A1A] mt-1">
-            {form.mainGoal || 'Não informado'}
+            {getGoalLabel(form.mainGoal)}
           </p>
         </div>
         <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
@@ -169,7 +194,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <span>🚧</span> Principal Dor
           </h4>
           <p className="text-sm font-medium text-[#1A1A1A] mt-1">
-            {form.biggestDifficulty || 'Não informado'}
+            {getDifficultyLabel(form.biggestDifficulty)}
           </p>
         </div>
       </div>
