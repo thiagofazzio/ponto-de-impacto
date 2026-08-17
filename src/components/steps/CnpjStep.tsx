@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, CheckCircle, AlertTriangle, Building2, Users, DollarSign, Lightbulb, Sparkles, Check, TrendingUp, Rocket } from 'lucide-react';
+import { Search, CheckCircle, AlertTriangle, Building2, Users, DollarSign, Lightbulb } from 'lucide-react';
 
 interface CnpjStepProps {
   cnpj: string;
@@ -35,119 +35,56 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // 🔥 Identifica o modelo do CNAE
-  const identificarModeloPorCNAE = (cnae: string): string => {
-    const cnaeLower = cnae.toLowerCase();
+  // Função para verificar divergência do modelo de receita
+  const verificarDivergenciaModelo = () => {
+    if (!cnpjData || !formData.revenueModel) return null;
     
-    const mapeamento: Record<string, string> = {
-      'comercio': 'Varejo e comércio',
-      'varejista': 'Varejo e comércio',
-      'supermercados': 'Varejo e comércio',
-      'distribuição': 'Varejo e comércio',
-      'indústria': 'Varejo e comércio',
-      'alimentício': 'Varejo e comércio',
-      'varejo': 'Varejo e comércio',
-      'atacadista': 'Varejo e comércio',
-      'mercearia': 'Varejo e comércio',
-      'loja': 'Varejo e comércio',
-      'consultoria': 'Prestação de serviços',
-      'servicos': 'Prestação de serviços',
-      'ensino': 'Prestação de serviços',
-      'saúde': 'Prestação de serviços',
-      'educação': 'Prestação de serviços',
-      'treinamento': 'Prestação de serviços',
-      'engenharia': 'Prestação de serviços',
-      'advocacia': 'Prestação de serviços',
-      'contabilidade': 'Prestação de serviços',
-      'assinatura': 'Assinatura / Recorrência',
-      'software': 'Assinatura / Recorrência',
-      'saas': 'Assinatura / Recorrência',
-      'plataforma': 'Marketplace / Plataforma',
-      'marketplace': 'Marketplace / Plataforma',
+    const cnae = cnpjData.cnaeDescricao || '';
+    const modelo = formData.revenueModel;
+    
+    const palavrasChave: Record<string, string> = {
+      'comercio': 'venda_produtos',
+      'varejista': 'venda_produtos',
+      'supermercados': 'venda_produtos',
+      'consultoria': 'prestacao_servicos',
+      'servicos': 'prestacao_servicos',
+      'assinatura': 'assinatura',
+      'plataforma': 'marketplace',
+      'distribuição': 'venda_produtos',
+      'indústria': 'venda_produtos',
+      'ensino': 'prestacao_servicos',
+      'saúde': 'prestacao_servicos',
+      'alimentício': 'venda_produtos',
+      'varejo': 'venda_produtos',
     };
-
-    for (const [key, value] of Object.entries(mapeamento)) {
-      if (cnaeLower.includes(key)) {
-        return value;
+    
+    let modeloSugerido = 'outros';
+    for (const [key, value] of Object.entries(palavrasChave)) {
+      if (cnae.toLowerCase().includes(key)) {
+        modeloSugerido = value;
+        break;
       }
     }
-
-    return 'Modelo híbrido ou personalizado';
-  };
-
-  // 🔥 Obtém o label do modelo selecionado
-  const getModeloLabel = (modeloId: string): string => {
-    const labels: Record<string, string> = {
-      venda_produtos: 'Varejo e comércio',
-      prestacao_servicos: 'Prestação de serviços',
-      assinatura: 'Assinatura / Recorrência',
-      marketplace: 'Marketplace / Plataforma',
-      hibrido: 'Modelo híbrido',
-      outros: 'Modelo personalizado',
-    };
-    return labels[modeloId] || modeloId;
-  };
-
-  // 🔥 Gera insight DIRETO E COMPARATIVO
-  const gerarInsight = () => {
-    if (!cnpjData || loading) return null;
     
-    const modeloSelecionado = formData.revenueModel;
-    const cnae = cnpjData.cnaeDescricao || '';
-    const modeloSugeridoPorCNAE = cnae ? identificarModeloPorCNAE(cnae) : null;
-    const modeloSelecionadoLabel = modeloSelecionado ? getModeloLabel(modeloSelecionado) : null;
-
-    // Se não tem modelo selecionado, mostra apenas o CNAE
-    if (!modeloSelecionado || modeloSelecionado === '') {
+    if (modelo !== modeloSugerido && modeloSugerido !== 'outros' && modelo !== 'outros') {
+      const labels: Record<string, string> = {
+        venda_produtos: 'Venda de Produtos',
+        prestacao_servicos: 'Prestação de Serviços',
+        assinatura: 'Assinatura / Recorrência',
+        marketplace: 'Marketplace / Plataforma',
+        hibrido: 'Híbrido',
+        outros: 'Outro modelo',
+      };
+      
       return {
-        icone: '📋',
-        titulo: 'Modelo de negócio identificado pelo CNAE',
-        linhas: [
-          `📌 CNAE: ${modeloSugeridoPorCNAE || 'Não identificado'}`
-        ],
-        nota: 'Na etapa anterior você pode informar qual modelo de receita faz mais sentido para sua empresa.'
+        modeloAtual: labels[modelo] || modelo,
+        modeloSugerido: labels[modeloSugerido] || modeloSugerido,
+        mensagem: `Seu modelo de receita (${labels[modelo] || modelo}) é diferente do usual para empresas do seu segmento (${labels[modeloSugerido] || modeloSugerido}). Isso pode indicar uma oportunidade de posicionamento!`,
       };
     }
-
-    // Se selecionou "Outro"
-    if (modeloSelecionado === 'outros') {
-      return {
-        icone: '💡',
-        titulo: 'Modelo de negócio personalizado',
-        linhas: [
-          `✅ Informado: ${formData.customRevenueModel || 'Modelo personalizado'}`,
-          `📌 CNAE: ${modeloSugeridoPorCNAE || 'Não identificado'}`
-        ],
-        nota: 'Vamos basear o diagnóstico no modelo personalizado que você informou.'
-      };
-    }
-
-    // Se o modelo selecionado é igual ao CNAE
-    if (modeloSelecionadoLabel === modeloSugeridoPorCNAE) {
-      return {
-        icone: '✅',
-        titulo: 'Modelo de negócio alinhado',
-        linhas: [
-          `✅ Informado: ${modeloSelecionadoLabel}`,
-          `📌 CNAE: ${modeloSugeridoPorCNAE}`
-        ],
-        nota: 'Seu modelo de receita está alinhado com seu segmento de mercado.'
-      };
-    }
-
-    // 🔥 CASO PRINCIPAL: Modelo selecionado é DIFERENTE do CNAE
-    return {
-      icone: '💡',
-      titulo: 'Estratégia diferenciada detectada',
-      linhas: [
-        `✅ Informado: ${modeloSelecionadoLabel}`,
-        `📌 CNAE: ${modeloSugeridoPorCNAE}`
-      ],
-      nota: 'Isso pode ser uma evolução do negócio, uma opção fiscal ou inovação. Vamos basear o diagnóstico no modelo que você informou.'
-    };
+    
+    return null;
   };
-
-  const insight = gerarInsight();
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, '');
@@ -204,6 +141,8 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     }
     onNext();
   };
+
+  const divergencia = verificarDivergenciaModelo();
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -303,73 +242,27 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT DIRETO E COMPARATIVO - CORES TFAZZIO */}
-          {insight && (
-            <div className="p-4 rounded-xl border border-[#D4AF37] bg-[#F4E8C1]">
+          {/* Insight de divergência do modelo de receita */}
+          {divergencia && (
+            <div className="p-4 bg-[#F4E8C1] border border-[#D4AF37] rounded-xl">
               <div className="flex items-start gap-3">
-                <span className="text-xl shrink-0">{insight.icone}</span>
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#6B0F1A]">
-                    💡 Insight TFAZZIO
+                <Lightbulb className="w-5 h-5 text-[#6B0F1A] shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">💡 Insight TFAZZIO</span>
+                  <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">
+                    {divergencia.mensagem}
                   </p>
-                  <p className="text-sm font-bold text-[#1A1A1A] mt-0.5">
-                    {insight.titulo}
+                  <p className="text-xs text-[#5A6270] mt-1">
+                    Seu modelo atual: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloAtual}</span> • 
+                    Sugestão para o segmento: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloSugerido}</span>
                   </p>
-                  {insight.linhas && insight.linhas.map((linha, index) => (
-                    <p key={index} className="text-sm text-[#1A1A1A] mt-0.5">
-                      {linha}
-                    </p>
-                  ))}
-                  {insight.nota && (
-                    <p className="text-xs text-[#5A6270] mt-1 italic">
-                      {insight.nota}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Campos de confirmação adicionais */}
-          <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 shadow-sm">
-            <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-              <Users size={18} className="text-[#6B0F1A]" />
-              Confirme os dados operacionais
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600">
-                  Número de Funcionários
-                </label>
-                <select
-                  value={formData.employeesCount || '6_15'}
-                  onChange={(e) => updateFormData({ employeesCount: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
-                >
-                  <option value="1_5">1 a 5</option>
-                  <option value="6_15">6 a 15</option>
-                  <option value="16_50">16 a 50</option>
-                  <option value="51_100">51 a 100</option>
-                  <option value="100+">Mais de 100</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-600 flex items-center gap-1">
-                  <DollarSign size={16} />
-                  Faturamento Mensal (R$)
-                </label>
-                <input
-                  type="number"
-                  value={formData.monthlyRevenue || 150000}
-                  onChange={(e) => updateFormData({ monthlyRevenue: Number(e.target.value) })}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B0F1A] focus:border-[#6B0F1A]"
-                />
-              </div>
-            </div>
-          </div>
-
+          {/* 🔥 CAMPOS REMOVIDOS - Funcionários e Faturamento agora estão na etapa 5 (FinancialDataStep) */}
+          {/* Apenas o botão de confirmar permanece */}
           <button
             onClick={handleConfirm}
             className="w-full px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors flex items-center justify-center gap-2"
