@@ -18,7 +18,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <>
-      {/* 🔥 ESTILOS DE IMPRESSÃO - MANTÉM O DESIGN */}
+      {/* 🔥 ESTILOS DE IMPRESSÃO - COM ZOOM AJUSTADO */}
       <style>{`
         @media print {
           body * {
@@ -82,6 +82,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         @page {
           margin: 1.5cm;
           size: A4;
+          zoom: 100%;
         }
       `}</style>
 
