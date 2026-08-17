@@ -25,7 +25,6 @@ import {
   Newspaper,
   MapPin,
   ExternalLink,
-  Info,
 } from 'lucide-react';
 import {
   Radar,
@@ -49,30 +48,6 @@ interface ReportDashboardProps {
   onRestart: () => void;
 }
 
-const getGoalLabel = (goalId: string) => {
-  const labels: Record<string, string> = {
-    crescer_faturamento: 'Crescer Faturamento',
-    aumentar_margem: 'Aumentar Margem',
-    profissionalizar_gestao: 'Profissionalizar Gestão',
-    reduzir_dependencia: 'Reduzir Dependência',
-    expandir_operacao: 'Expandir Operação',
-    outro_objetivo: 'Outro objetivo',
-  };
-  return labels[goalId] || goalId || 'Não informado';
-};
-
-const getDifficultyLabel = (difficultyId: string) => {
-  const labels: Record<string, string> = {
-    comercial: 'Comercial',
-    financeiro: 'Financeiro',
-    operacional: 'Operacional',
-    gestao: 'Gestão',
-    pessoas: 'Pessoas',
-    outro_desafio: 'Outro desafio',
-  };
-  return labels[difficultyId] || difficultyId || 'Não informado';
-};
-
 export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDownloadPdf, onRestart }) => {
   const [activePhaseTab, setActivePhaseTab] = useState<1 | 2 | 3>(1);
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
@@ -83,18 +58,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
   const primaryBottleneck = result.primaryBottleneck;
   const secondaryBottleneck = result.secondaryBottleneck;
   const evidence = result.evidenceData;
-
-  const getModeloReceitaLabel = (modelo: string) => {
-    const labels: Record<string, string> = {
-      venda_produtos: 'Venda de Produtos',
-      prestacao_servicos: 'Prestação de Serviços',
-      assinatura: 'Assinatura / Recorrência',
-      marketplace: 'Marketplace / Plataforma',
-      hibrido: 'Híbrido',
-      outros: 'Outro modelo',
-    };
-    return labels[modelo] || modelo;
-  };
 
   React.useEffect(() => {
     confetti({
@@ -177,43 +140,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* OBJETIVO E DOR */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-          <h4 className="text-xs font-bold uppercase text-[#5A6270] flex items-center gap-2">
-            <span>🎯</span> Objetivo Reportado
-          </h4>
-          <p className="text-sm font-medium text-[#1A1A1A] mt-1">
-            {getGoalLabel(form.mainGoal)}
-          </p>
-        </div>
-        <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-          <h4 className="text-xs font-bold uppercase text-[#5A6270] flex items-center gap-2">
-            <span>🚧</span> Principal Dor
-          </h4>
-          <p className="text-sm font-medium text-[#1A1A1A] mt-1">
-            {getDifficultyLabel(form.biggestDifficulty)}
-          </p>
-        </div>
-      </div>
-
-      {/* Modelo de Receita */}
-      {result.revenueModel && (
-        <div className="bg-[#F9F7F3] border border-[#D8D3CB] rounded-2xl p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-[#5A6270]">
-            <span className="font-bold text-[#1A1A1A]">📊 Modelo de Receita:</span>
-            <span className="font-semibold text-[#6B0F1A]">
-              {getModeloReceitaLabel(result.revenueModel)}
-            </span>
-            {result.prioridadeModelo && (
-              <span className="text-xs bg-white px-3 py-1 rounded-full border border-[#D8D3CB]">
-                🎯 Prioridade: {result.prioridadeModelo}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* SECTION 1: CLARITY INDEX & BOTTLENECK CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -226,7 +152,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 result.clarityStatus === 'Excelente'
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                   : result.clarityStatus === 'Saudável'
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                  ? 'bg-blue-50 border-blue-300 text-blue-800'
                   : result.clarityStatus === 'Atenção'
                   ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
                   : 'bg-rose-50 border-rose-300 text-rose-800'
@@ -313,7 +239,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* Evidências Coletadas - CARDS ORGANIZADOS */}
+      {/* Evidências Coletadas - CARDS HORIZONTAIS */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -331,11 +257,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           )}
         </div>
 
-        {/* GRID RESPONSIVO: 1 coluna no mobile, 2 no tablet, 3 no desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Card 1: BrasilAPI / CNPJ */}
-          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
+          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Building2 className="w-4 h-4" /> Dados Públicos (CNPJ)
@@ -348,11 +272,11 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <div className="space-y-2 text-xs text-[#1A1A1A]">
               <div>
                 <span className="text-[#5A6270] block font-medium">Razão Social:</span>
-                <span className="font-bold text-sm text-[#1A1A1A] break-words">{form.cnpjData?.razaoSocial || form.companyName}</span>
+                <span className="font-bold text-sm text-[#1A1A1A]">{form.cnpjData?.razaoSocial || form.companyName}</span>
               </div>
               <div>
                 <span className="text-[#5A6270] block font-medium">Nome Fantasia:</span>
-                <span className="font-semibold break-words">{form.cnpjData?.nomeFantasia || 'Não informado'}</span>
+                <span className="font-semibold">{form.cnpjData?.nomeFantasia || 'Não informado'}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <div>
@@ -366,24 +290,28 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               </div>
               <div className="pt-1">
                 <span className="text-[#5A6270] block font-medium">Atividade Principal (CNAE):</span>
-                <span className="text-[11px] font-medium text-[#1A1A1A] break-words">{form.cnpjData?.cnaeCodigo} - {form.cnpjData?.cnaeDescricao || form.segment}</span>
+                <span className="text-[11px] font-medium text-[#1A1A1A]">{form.cnpjData?.cnaeCodigo} - {form.cnpjData?.cnaeDescricao || form.segment}</span>
               </div>
               {form.cnpjData?.logradouro && (
                 <div className="pt-1">
                   <span className="text-[#5A6270] block font-medium">Endereço Registrado:</span>
-                  <span className="text-[11px] text-[#5A6270] break-words">{form.cnpjData.logradouro}, {form.cnpjData.municipio} - {form.cnpjData.uf}</span>
+                  <span className="text-[11px] text-[#5A6270]">{form.cnpjData.logradouro}, {form.cnpjData.municipio} - {form.cnpjData.uf}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Card 2: Google Places Evidence */}
-          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
+          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" /> Reputação (Google Places)
               </span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${evidence?.googlePlaces?.status === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                evidence?.googlePlaces?.status === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-amber-50 text-amber-800 border-amber-200'
+              }`}>
                 {evidence?.googlePlaces?.status === 'success' ? 'Verificado' : 'Não Vinculado'}
               </span>
             </div>
@@ -396,12 +324,14 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                     <span className="text-[10px] block text-[#5A6270] font-bold">★ de 5.0</span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-[#1A1A1A] break-words">{evidence.googlePlaces.name}</h4>
-                    <p className="text-xs font-semibold text-emerald-800 mt-0.5">{evidence.googlePlaces.userRatingsTotal} avaliações reais de clientes</p>
+                    <h4 className="font-bold text-sm text-[#1A1A1A]">{evidence.googlePlaces.name}</h4>
+                    <p className="text-xs font-semibold text-emerald-800 mt-0.5">
+                      {evidence.googlePlaces.userRatingsTotal} avaliações reais de clientes
+                    </p>
                     {evidence.googlePlaces.address && (
                       <p className="text-[11px] text-[#5A6270] mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-[#6B0F1A]" />
-                        <span className="break-words">{evidence.googlePlaces.address}</span>
+                        <span className="truncate max-w-[200px]">{evidence.googlePlaces.address}</span>
                       </p>
                     )}
                   </div>
@@ -414,14 +344,18 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ) : (
               <div className="p-4 bg-white rounded-xl border border-[#D8D3CB] text-center space-y-2">
                 <Globe className="w-8 h-8 text-[#5A6270] mx-auto opacity-50" />
-                <p className="text-xs text-[#5A6270]">Não foi localizado perfil verificado de avaliações públicas para este nome no Google Places.</p>
-                <p className="text-[11px] text-[#6B0F1A] font-semibold">Recomendação: Criar e otimizar o perfil no Google Meu Negócio.</p>
+                <p className="text-xs text-[#5A6270]">
+                  Não foi localizado perfil verificado de avaliações públicas para este nome no Google Places ou a chave de API não foi configurada.
+                </p>
+                <p className="text-[11px] text-[#6B0F1A] font-semibold">
+                  Recomendação: Criar e otimizar o perfil no Google Meu Negócio.
+                </p>
               </div>
             )}
           </div>
 
           {/* Card 3: News / Imprensa */}
-          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
+          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Newspaper className="w-4 h-4" /> Imprensa & Menções
@@ -441,7 +375,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                       rel="noreferrer"
                       className="font-bold text-xs text-[#1A1A1A] hover:text-[#6B0F1A] flex items-center justify-between gap-1 group"
                     >
-                      <span className="line-clamp-2 break-words">{item.title}</span>
+                      <span className="line-clamp-2">{item.title}</span>
                       <ExternalLink className="w-3 h-3 text-[#5A6270] group-hover:text-[#6B0F1A] shrink-0" />
                     </a>
                     <div className="flex items-center justify-between text-[10px] text-[#5A6270]">
@@ -454,8 +388,12 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ) : (
               <div className="p-4 bg-white rounded-xl border border-[#D8D3CB] text-center space-y-2">
                 <Newspaper className="w-8 h-8 text-[#5A6270] mx-auto opacity-50" />
-                <p className="text-xs text-[#5A6270]">Nenhuma menção ou notícia pública recente foi encontrada.</p>
-                <p className="text-[11px] text-[#6B0F1A] font-semibold">Oportunidade: Desenvolver ações de assessoria de imprensa e PR.</p>
+                <p className="text-xs text-[#5A6270]">
+                  Nenhuma menção ou notícia pública recente foi encontrada nos portais monitorados para a marca.
+                </p>
+                <p className="text-[11px] text-[#6B0F1A] font-semibold">
+                  Oportunidade: Desenvolver ações de assessoria de imprensa e PR.
+                </p>
               </div>
             )}
           </div>
@@ -539,86 +477,35 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           </div>
         </div>
 
-        {/* Análise de Custos */}
-        {result.costAnalysis && result.costAnalysis.distribution && result.costAnalysis.distribution.length > 0 && (
-          <div className="bg-[#F9F7F3] rounded-xl p-4 border border-[#D8D3CB] space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[#1A1A1A]">📊 Análise de Custos</h3>
-              <span className="text-xs text-[#5A6270]">Total: {formatCurrency(breakEven.fixedCostsTotal)}</span>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
-                <span className="text-[10px] text-[#5A6270] block">Itens</span>
-                <span className="text-sm font-bold text-[#6B0F1A]">{result.costAnalysis.totalItems}</span>
-              </div>
-              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
-                <span className="text-[10px] text-[#5A6270] block">Maior Custo</span>
-                <span className="text-xs font-bold text-[#1A1A1A] truncate block">{result.costAnalysis.topCost?.name || '-'}</span>
-              </div>
-              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
-                <span className="text-[10px] text-[#5A6270] block">Custo/Func.</span>
-                <span className="text-sm font-bold text-[#6B0F1A]">{formatCurrency(result.costAnalysis.costPerEmployee)}</span>
-              </div>
-              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
-                <span className="text-[10px] text-[#5A6270] block">% Fat.</span>
-                <span className="text-sm font-bold text-[#6B0F1A]">{Math.round((breakEven.fixedCostsTotal / breakEven.monthlyRevenue) * 100)}%</span>
-              </div>
-            </div>
-
-            {/* Mensagem de estímulo se os custos NÃO foram detalhados */}
-            {result.costAnalysis && !result.costAnalysis.isDetailed && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
-                <Info className="w-4 h-4 shrink-0" />
-                <span>💡 Para uma análise mais precisa, detalhe seus custos fixos e variáveis na etapa financeira.</span>
-              </div>
-            )}
-
-            {/* Mensagens de insight */}
-            {result.costAnalysis.topCost && (
-              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-xs">
-                <span className="font-bold text-[#1A1A1A]">🔴 Maior custo:</span>
-                <span className="text-[#5A6270]"> {result.costAnalysis.topCost.name} ({formatCurrency(result.costAnalysis.topCost.value)})</span>
-                {result.costAnalysis.concentrationMessage && (
-                  <p className="text-amber-700 mt-1">{result.costAnalysis.concentrationMessage}</p>
-                )}
-                {result.costAnalysis.rentInsight && (
-                  <p className="text-blue-700 mt-1">{result.costAnalysis.rentInsight}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Ponto de Equilíbrio</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Ponto de Equilíbrio (Break-Even)</span>
             <span className="text-xl font-mono font-extrabold text-[#6B0F1A]">{formatCurrency(breakEven.breakEvenRevenue)}</span>
-            <p className="text-[11px] text-[#5A6270]">Mínimo p/ zerar custos</p>
+            <p className="text-[11px] text-[#5A6270]">Mínimo necessário p/ zerar custos</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Ocupação</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Ocupação do Faturamento</span>
             <span className={`text-xl font-mono font-extrabold ${breakEven.breakEvenPercentage > 85 ? 'text-rose-700' : 'text-emerald-700'}`}>
               {breakEven.breakEvenPercentage}%
             </span>
-            <p className="text-[11px] text-[#5A6270]">% da receita em custos</p>
+            <p className="text-[11px] text-[#5A6270]">% da receita gasta em custos</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Margem de Contribuição</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Margem de Contribuição %</span>
             <span className="text-xl font-mono font-extrabold text-[#6B0F1A]">{breakEven.contributionMarginPercent}%</span>
-            <p className="text-[11px] text-[#5A6270]">Margem pós variáveis</p>
+            <p className="text-[11px] text-[#5A6270]">Margem que sobra pós variáveis</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Lucro Líquido</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Lucro Líquido Estimado</span>
             <span className={`text-xl font-mono font-extrabold ${breakEven.estimatedNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
               {formatCurrency(breakEven.estimatedNetProfit)}
             </span>
-            <p className="text-[11px] text-[#5A6270]">Margem: {breakEven.estimatedNetMarginPercent}%</p>
+            <p className="text-[11px] text-[#5A6270]">Margem líquida: {breakEven.estimatedNetMarginPercent}%</p>
           </div>
 
         </div>
@@ -654,8 +541,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
             <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Execução Tática</span>
-            <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Plano de Ação de 90 Dias</h2>
-            <p className="text-[#5A6270] text-xs">(3 Fases) • Focado em eliminar o gargalo de {primaryBottleneck.name}</p>
+            <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Plano de Ação de 90 Dias (3 Fases)</h2>
+            <p className="text-[#5A6270] text-xs">Focado em eliminar o gargalo de {primaryBottleneck.name}</p>
           </div>
 
           {/* Phase Tabs */}
@@ -670,10 +557,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                     : 'text-[#5A6270] hover:text-[#1A1A1A]'
                 }`}
               >
-                Fase {ph}
-                <span className="block text-[9px] font-normal opacity-75">
-                  {ph === 1 ? '1-30d' : ph === 2 ? '31-60d' : '61-90d'}
-                </span>
+                Fase {ph} ({ph === 1 ? '1-30d' : ph === 2 ? '31-60d' : '61-90d'})
               </button>
             ))}
           </div>
@@ -757,7 +641,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         <div className="space-y-3">
           <h4 className="font-bold text-[#1A1A1A] text-sm uppercase tracking-wider">Recomendações Estratégicas Prioritárias:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {result.strategicRecommendations.slice(0, 4).map((rec, idx) => (
+            {result.strategicRecommendations.map((rec, idx) => (
               <div key={idx} className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] flex items-start gap-3">
                 <div className="w-6 h-6 rounded-lg bg-[#6B0F1A] text-white font-bold text-xs flex items-center justify-center shrink-0 border border-[#500B13]">
                   {idx + 1}
@@ -767,26 +651,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ))}
           </div>
         </div>
-
-        {/* Recomendações personalizadas pelo modelo de receita */}
-        {result.recomendacoesPersonalizadas && result.recomendacoesPersonalizadas.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-[#D8D3CB]">
-            <h4 className="font-bold text-[#1A1A1A] text-sm uppercase tracking-wider flex items-center gap-2">
-              <span>🎯 Recomendações específicas para seu modelo de receita</span>
-              <span className="text-xs font-normal text-[#5A6270]">
-                ({getModeloReceitaLabel(result.revenueModel || 'outros')})
-              </span>
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-              {result.recomendacoesPersonalizadas.slice(0, 4).map((rec: string, index: number) => (
-                <div key={index} className="p-3 rounded-xl bg-[#F4E8C1] border border-[#D4AF37]/40 flex items-start gap-2">
-                  <span className="text-[#6B0F1A] font-bold text-sm">•</span>
-                  <p className="text-xs text-[#1A1A1A] font-medium leading-relaxed">{rec}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* SECTION 6: STRATEGIC SESSION CTA */}
