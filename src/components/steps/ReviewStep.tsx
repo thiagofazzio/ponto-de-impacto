@@ -33,6 +33,18 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   };
 
+  // 🔥 Função para exibir funcionários com formato amigável
+  const getEmployeesLabel = (value: string) => {
+    const labels: Record<string, string> = {
+      '1_5': '1 a 5',
+      '6_15': '6 a 15',
+      '16_50': '16 a 50',
+      '51_100': '51 a 100',
+      '100+': 'Mais de 100',
+    };
+    return labels[value] || value;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,7 +62,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-[#1A1A1A] pt-1">
             <div><span className="text-[#5A6270] block">CNPJ:</span> {formData.cnpj || 'Não informado'}</div>
             <div><span className="text-[#5A6270] block">Segmento:</span> {formData.segment}</div>
-            <div><span className="text-[#5A6270] block">Funcionários:</span> {formData.employeesCount.replace('_', ' ~ ')}</div>
+            <div><span className="text-[#5A6270] block">Funcionários:</span> {getEmployeesLabel(formData.employeesCount)}</div>
             <div><span className="text-[#5A6270] block">Regime:</span> {formData.taxRegime}</div>
           </div>
         </div>

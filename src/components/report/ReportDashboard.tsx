@@ -48,7 +48,6 @@ interface ReportDashboardProps {
   onRestart: () => void;
 }
 
-// 🔥 MAPEAMENTO DOS LABELS PARA EXIBIÇÃO
 const getGoalLabel = (goalId: string) => {
   const labels: Record<string, string> = {
     crescer_faturamento: 'Crescer Faturamento',
@@ -96,7 +95,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
     return labels[modelo] || modelo;
   };
 
-  // Trigger confetti on initial load
   React.useEffect(() => {
     confetti({
       particleCount: 80,
@@ -112,7 +110,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
     }));
   };
 
-  // Prepare Radar Chart Data
   const radarData = (Object.values(result.areaScores) as AreaScoreInfo[]).map((area) => ({
     area: area.name,
     Nota: area.score,
@@ -179,7 +176,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* 🔥 OBJETIVO E DOR - COM LABELS CORRIGIDOS */}
+      {/* OBJETIVO E DOR */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
           <h4 className="text-xs font-bold uppercase text-[#5A6270] flex items-center gap-2">
@@ -315,7 +312,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* Evidências Coletadas */}
+      {/* Evidências Coletadas - HORIZONTAL */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -430,7 +427,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             )}
           </div>
 
-          {/* Card 3: News / Imprensa */}
+          {/* Card 3: News / Imprensa - HORIZONTAL */}
           <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
@@ -547,112 +544,84 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Engenharia Financeira</span>
             <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Análise do Ponto de Equilíbrio (Break-Even)</h2>
           </div>
-      {/* 🔥 NOVA SEÇÃO: ANÁLISE DE CUSTOS FIXOS */}
-      {result.costAnalysis && result.costAnalysis.distribution && result.costAnalysis.distribution.length > 0 && (
-        <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          <div className="border-b border-[#D8D3CB] pb-4">
-            <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Análise de Custos</span>
-            <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Detalhamento dos Custos Fixos</h2>
-            <p className="text-xs text-[#5A6270]">Distribuição detalhada dos seus custos fixos mensais</p>
-          </div>
-
-          {/* Cards de métricas */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-              <span className="text-[10px] text-[#5A6270] block font-medium">Total de Itens</span>
-              <span className="text-lg font-black text-[#6B0F1A]">{result.costAnalysis.totalItems}</span>
-            </div>
-            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-              <span className="text-[10px] text-[#5A6270] block font-medium">Maior Custo</span>
-              <span className="text-sm font-bold text-[#1A1A1A] truncate block">{result.costAnalysis.topCost?.name || '-'}</span>
-            </div>
-            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-              <span className="text-[10px] text-[#5A6270] block font-medium">Custo por Funcionário</span>
-              <span className="text-lg font-black text-[#6B0F1A]">{formatCurrency(result.costAnalysis.costPerEmployee)}</span>
-            </div>
-            <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-              <span className="text-[10px] text-[#5A6270] block font-medium">% do Faturamento</span>
-              <span className="text-lg font-black text-[#6B0F1A]">{Math.round((breakEven.fixedCostsTotal / breakEven.monthlyRevenue) * 100)}%</span>
-            </div>
-          </div>
-
-          {/* Maior custo e alertas */}
-          {result.costAnalysis.topCost && (
-            <div className="p-4 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[#5A6270]">🔴 Maior custo fixo</span>
-                <span className="text-sm font-bold text-[#6B0F1A]">
-                  {result.costAnalysis.topCost.name}: {formatCurrency(result.costAnalysis.topCost.value)}
-                </span>
-              </div>
-              {result.costAnalysis.concentrationMessage && (
-                <p className="text-xs text-amber-700 mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200">
-                  {result.costAnalysis.concentrationMessage}
-                </p>
-              )}
-              {result.costAnalysis.rentInsight && (
-                <p className="text-xs text-blue-700 mt-1 bg-blue-50 p-2 rounded-lg border border-blue-200">
-                  {result.costAnalysis.rentInsight}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Distribuição percentual */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#5A6270]">Distribuição dos Custos</h4>
-            {result.costAnalysis.distribution.map((item: any) => (
-              <div key={item.name} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-[#1A1A1A]">{item.name}</span>
-                  <span className="font-bold text-[#6B0F1A]">{item.percent}%</span>
-                </div>
-                <div className="w-full bg-[#E8E2D8] h-2 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#6B0F1A] rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, item.percent)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
           <div className="text-right">
             <span className="text-xs text-[#5A6270] block font-medium">Faturamento Atual Informado</span>
             <span className="text-xl font-mono font-bold text-[#6B0F1A]">{formatCurrency(breakEven.monthlyRevenue)}</span>
           </div>
         </div>
 
+        {/* Análise de Custos */}
+        {result.costAnalysis && result.costAnalysis.distribution && result.costAnalysis.distribution.length > 0 && (
+          <div className="bg-[#F9F7F3] rounded-xl p-4 border border-[#D8D3CB] space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#1A1A1A]">📊 Análise de Custos</h3>
+              <span className="text-xs text-[#5A6270]">Total: {formatCurrency(breakEven.fixedCostsTotal)}</span>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
+                <span className="text-[10px] text-[#5A6270] block">Itens</span>
+                <span className="text-sm font-bold text-[#6B0F1A]">{result.costAnalysis.totalItems}</span>
+              </div>
+              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
+                <span className="text-[10px] text-[#5A6270] block">Maior Custo</span>
+                <span className="text-xs font-bold text-[#1A1A1A] truncate block">{result.costAnalysis.topCost?.name || '-'}</span>
+              </div>
+              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
+                <span className="text-[10px] text-[#5A6270] block">Custo/Func.</span>
+                <span className="text-sm font-bold text-[#6B0F1A]">{formatCurrency(result.costAnalysis.costPerEmployee)}</span>
+              </div>
+              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-center">
+                <span className="text-[10px] text-[#5A6270] block">% Fat.</span>
+                <span className="text-sm font-bold text-[#6B0F1A]">{Math.round((breakEven.fixedCostsTotal / breakEven.monthlyRevenue) * 100)}%</span>
+              </div>
+            </div>
+
+            {/* Mensagens de insight */}
+            {result.costAnalysis.topCost && (
+              <div className="p-2 bg-white rounded-lg border border-[#D8D3CB] text-xs">
+                <span className="font-bold text-[#1A1A1A]">🔴 Maior custo:</span>
+                <span className="text-[#5A6270]"> {result.costAnalysis.topCost.name} ({formatCurrency(result.costAnalysis.topCost.value)})</span>
+                {result.costAnalysis.concentrationMessage && (
+                  <p className="text-amber-700 mt-1">{result.costAnalysis.concentrationMessage}</p>
+                )}
+                {result.costAnalysis.rentInsight && (
+                  <p className="text-blue-700 mt-1">{result.costAnalysis.rentInsight}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Ponto de Equilíbrio (Break-Even)</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Ponto de Equilíbrio</span>
             <span className="text-xl font-mono font-extrabold text-[#6B0F1A]">{formatCurrency(breakEven.breakEvenRevenue)}</span>
-            <p className="text-[11px] text-[#5A6270]">Mínimo necessário p/ zerar custos</p>
+            <p className="text-[11px] text-[#5A6270]">Mínimo p/ zerar custos</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Ocupação do Faturamento</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Ocupação</span>
             <span className={`text-xl font-mono font-extrabold ${breakEven.breakEvenPercentage > 85 ? 'text-rose-700' : 'text-emerald-700'}`}>
               {breakEven.breakEvenPercentage}%
             </span>
-            <p className="text-[11px] text-[#5A6270]">% da receita gasta em custos</p>
+            <p className="text-[11px] text-[#5A6270]">% da receita em custos</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Margem de Contribuição %</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Margem de Contribuição</span>
             <span className="text-xl font-mono font-extrabold text-[#6B0F1A]">{breakEven.contributionMarginPercent}%</span>
-            <p className="text-[11px] text-[#5A6270]">Margem que sobra pós variáveis</p>
+            <p className="text-[11px] text-[#5A6270]">Margem pós variáveis</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
-            <span className="text-xs text-[#5A6270] block font-medium">Lucro Líquido Estimado</span>
+            <span className="text-xs text-[#5A6270] block font-medium">Lucro Líquido</span>
             <span className={`text-xl font-mono font-extrabold ${breakEven.estimatedNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
               {formatCurrency(breakEven.estimatedNetProfit)}
             </span>
-            <p className="text-[11px] text-[#5A6270]">Margem líquida: {breakEven.estimatedNetMarginPercent}%</p>
+            <p className="text-[11px] text-[#5A6270]">Margem: {breakEven.estimatedNetMarginPercent}%</p>
           </div>
 
         </div>
@@ -688,8 +657,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
             <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Execução Tática</span>
-            <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Plano de Ação de 90 Dias (3 Fases)</h2>
-            <p className="text-[#5A6270] text-xs">Focado em eliminar o gargalo de {primaryBottleneck.name}</p>
+            <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Plano de Ação de 90 Dias</h2>
+            <p className="text-[#5A6270] text-xs">(3 Fases) • Focado em eliminar o gargalo de {primaryBottleneck.name}</p>
           </div>
 
           {/* Phase Tabs */}
@@ -704,7 +673,10 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                     : 'text-[#5A6270] hover:text-[#1A1A1A]'
                 }`}
               >
-                Fase {ph} ({ph === 1 ? '1-30d' : ph === 2 ? '31-60d' : '61-90d'})
+                Fase {ph}
+                <span className="block text-[9px] font-normal opacity-75">
+                  {ph === 1 ? '1-30d' : ph === 2 ? '31-60d' : '61-90d'}
+                </span>
               </button>
             ))}
           </div>
@@ -788,7 +760,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         <div className="space-y-3">
           <h4 className="font-bold text-[#1A1A1A] text-sm uppercase tracking-wider">Recomendações Estratégicas Prioritárias:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {result.strategicRecommendations.map((rec, idx) => (
+            {result.strategicRecommendations.slice(0, 4).map((rec, idx) => (
               <div key={idx} className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] flex items-start gap-3">
                 <div className="w-6 h-6 rounded-lg bg-[#6B0F1A] text-white font-bold text-xs flex items-center justify-center shrink-0 border border-[#500B13]">
                   {idx + 1}
@@ -809,7 +781,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               </span>
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-              {result.recomendacoesPersonalizadas.map((rec: string, index: number) => (
+              {result.recomendacoesPersonalizadas.slice(0, 4).map((rec: string, index: number) => (
                 <div key={index} className="p-3 rounded-xl bg-[#F4E8C1] border border-[#D4AF37]/40 flex items-start gap-2">
                   <span className="text-[#6B0F1A] font-bold text-sm">•</span>
                   <p className="text-xs text-[#1A1A1A] font-medium leading-relaxed">{rec}</p>

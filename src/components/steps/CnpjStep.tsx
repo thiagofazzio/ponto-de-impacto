@@ -35,7 +35,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // Função para verificar divergência do modelo de receita
+  // 🔥 Função para verificar divergência do modelo de receita (REATIVADA)
   const verificarDivergenciaModelo = () => {
     if (!cnpjData || !formData.revenueModel) return null;
     
@@ -242,7 +242,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* Insight de divergência do modelo de receita */}
+          {/* 🔥 INSIGHT REATIVADO */}
           {divergencia && (
             <div className="p-4 bg-[#F4E8C1] border border-[#D4AF37] rounded-xl">
               <div className="flex items-start gap-3">
@@ -261,8 +261,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           )}
 
-          {/* 🔥 CAMPOS REMOVIDOS - Funcionários e Faturamento agora estão na etapa 5 (FinancialDataStep) */}
-          {/* Apenas o botão de confirmar permanece */}
+          {/* Botão de confirmar */}
           <button
             onClick={handleConfirm}
             className="w-full px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors flex items-center justify-center gap-2"

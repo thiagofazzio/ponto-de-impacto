@@ -55,12 +55,14 @@ export function analyzeFixedCosts(costItems: Array<{ name: string; value: number
 
   const sorted = [...costItems].sort((a, b) => b.value - a.value);
   const topCost = sorted[0];
+  
   const distribution = sorted.map(item => ({
     ...item,
     percent: totalFixedCosts > 0 ? Math.round((item.value / totalFixedCosts) * 100) : 0
   }));
 
-  const hasConcentration = topCost && (topCost.value / totalFixedCosts) > 0.4;
+  // 🔥 CORREÇÃO: O alerta só aparece se houver mais de 1 item e um deles for > 40%
+  const hasConcentration = sorted.length > 1 && topCost && (topCost.value / totalFixedCosts) > 0.4;
 
   let employees = 6;
   if (employeesCount === '1_5') employees = 3;
@@ -81,9 +83,12 @@ export function analyzeFixedCosts(costItems: Array<{ name: string; value: number
     costPerEmployee,
     rentPercentOfRevenue,
     totalItems: costItems.length,
+    // 🔥 CORREÇÃO: Mensagens mais inteligentes
     concentrationMessage: hasConcentration 
       ? `⚠️ Atenção: ${topCost.name} representa ${Math.round((topCost.value / totalFixedCosts) * 100)}% dos seus custos fixos. Considere revisar essa despesa.` 
-      : null,
+      : costItems.length === 1 
+        ? '💡 Dica: Detalhe seus custos fixos para uma análise mais precisa.' 
+        : null,
     rentInsight: rentItem && rentPercentOfRevenue > 20 
       ? `🏢 Seu aluguel representa ${rentPercentOfRevenue}% do faturamento. O ideal é que esse valor fique abaixo de 20%. Considere renegociar ou buscar uma opção mais adequada.`
       : rentItem ? `✅ Seu aluguel representa ${rentPercentOfRevenue}% do faturamento, dentro do recomendado.` 
@@ -209,7 +214,7 @@ function aplicarResponsaveis(resultado: any, data: DiagnosticFormData): any {
     );
   }
 
-  // === GERENTE DE VENDAS (NOVO) ===
+  // === GERENTE DE VENDAS ===
   if (data.hasSalesManager === false) {
     recomendacoesExtras.push(
       '👔 A equipe comercial não possui um gestor dedicado. Recomendamos a contratação ou capacitação de um líder comercial para estruturar o funil, treinar a equipe e aumentar a previsibilidade de vendas.'

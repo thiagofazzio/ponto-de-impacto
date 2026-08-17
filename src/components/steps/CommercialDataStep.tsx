@@ -78,35 +78,8 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
           </div>
         </div>
 
-        {/* Sales team size */}
-        <div className="space-y-2 border-t border-[#D8D3CB] pt-5">
-          <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-            3. Tamanho da Equipe Comercial (Vendedores / SDRs / Closers)
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { val: 0, label: 'Apenas os sócios vendem' },
-              { val: 1, label: '1 Vendedor dedicado' },
-              { val: 3, label: '2 a 4 Vendedores' },
-              { val: 5, label: '5 ou mais Vendedores' },
-            ].map((item) => (
-              <button
-                key={item.val}
-                type="button"
-                onClick={() => onUpdate({ salesTeamSize: item.val })}
-                className={`p-3 rounded-xl border text-xs font-semibold transition text-center cursor-pointer ${
-                  formData.salesTeamSize === item.val
-                    ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A] font-bold'
-                    : 'bg-[#F9F7F3] border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 🔥 NOVO: Gerente de Vendas */}
+        {/* 🔥 ORDEM INVERTIDA: Gestor primeiro, depois tamanho da equipe */}
+        {/* Gestor de Vendas */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
             👔 A equipe comercial possui um gestor/coordenador dedicado?
@@ -136,6 +109,34 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
               <span>❌</span>
               <span>Não, as vendas são gerenciadas pelos sócios</span>
             </button>
+          </div>
+        </div>
+
+        {/* Tamanho da Equipe Comercial */}
+        <div className="space-y-2 border-t border-[#D8D3CB] pt-5">
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+            3. Tamanho da Equipe Comercial (Vendedores / SDRs / Closers)
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { val: 0, label: 'Apenas os sócios vendem' },
+              { val: 1, label: '1 Vendedor dedicado' },
+              { val: 3, label: '2 a 4 Vendedores' },
+              { val: 5, label: '5 ou mais Vendedores' },
+            ].map((item) => (
+              <button
+                key={item.val}
+                type="button"
+                onClick={() => onUpdate({ salesTeamSize: item.val })}
+                className={`p-3 rounded-xl border text-xs font-semibold transition text-center cursor-pointer ${
+                  formData.salesTeamSize === item.val
+                    ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A] font-bold'
+                    : 'bg-[#F9F7F3] border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
 
