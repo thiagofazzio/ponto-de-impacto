@@ -49,26 +49,19 @@ export const AREA_DESCRIPTIONS: Record<string, { description: string; impact: st
   },
 };
 
-// 🔥 NOVA FUNÇÃO: Analisa os custos fixos detalhados
+// 🔥 FUNÇÃO: Analisa os custos fixos detalhados
 export function analyzeFixedCosts(costItems: Array<{ name: string; value: number }>, totalFixedCosts: number, monthlyRevenue: number, employeesCount: string) {
   if (!costItems || costItems.length === 0 || totalFixedCosts === 0) return null;
 
-  // Ordena do maior para o menor
   const sorted = [...costItems].sort((a, b) => b.value - a.value);
-  
-  // Maior custo
   const topCost = sorted[0];
-  
-  // Distribuição percentual
   const distribution = sorted.map(item => ({
     ...item,
     percent: totalFixedCosts > 0 ? Math.round((item.value / totalFixedCosts) * 100) : 0
   }));
 
-  // Alerta de concentração (se um item > 40% do total)
   const hasConcentration = topCost && (topCost.value / totalFixedCosts) > 0.4;
 
-  // Custo fixo por funcionário (aproximado)
   let employees = 6;
   if (employeesCount === '1_5') employees = 3;
   else if (employeesCount === '6_15') employees = 10;
@@ -78,7 +71,6 @@ export function analyzeFixedCosts(costItems: Array<{ name: string; value: number
   
   const costPerEmployee = employees > 0 ? Math.round(totalFixedCosts / employees) : 0;
 
-  // Análise de aluguel (se existir)
   const rentItem = costItems.find(item => item.name === 'Aluguel');
   const rentPercentOfRevenue = monthlyRevenue > 0 && rentItem ? Math.round((rentItem.value / monthlyRevenue) * 100) : 0;
 
@@ -99,7 +91,7 @@ export function analyzeFixedCosts(costItems: Array<{ name: string; value: number
   };
 }
 
-// 🔥 Função para aplicar ajustes baseados no modelo de receita
+// 🔥 FUNÇÃO: Aplica ajustes baseados no modelo de receita
 function aplicarModeloReceita(resultado: any, modeloReceita: string): any {
   const ajustes: Record<string, any> = {
     venda_produtos: {
@@ -165,6 +157,69 @@ function aplicarModeloReceita(resultado: any, modeloReceita: string): any {
     recomendacoesPersonalizadas: ajuste.recomendacoes,
     prioridadeModelo: ajuste.prioridade,
     modeloReceitaAplicado: modeloReceita,
+  };
+}
+
+// 🔥 FUNÇÃO: Ajusta recomendações com base nos responsáveis por área
+function aplicarResponsaveis(resultado: any, data: DiagnosticFormData): any {
+  const recomendacoesExtras: string[] = [];
+  
+  // === FINANCEIRO ===
+  if (data.responsavelFinanceiro === 'socio') {
+    recomendacoesExtras.push(
+      '🧑‍💼 O sócio é o responsável direto pela gestão financeira. Recomendamos a contratação ou capacitação de um profissional dedicado para descentralizar essa função e permitir que o sócio foque na estratégia.'
+    );
+  } else if (data.responsavelFinanceiro === 'head') {
+    recomendacoesExtras.push(
+      '📊 A área financeira já possui um gestor dedicado. Foque em capacitar esse profissional com ferramentas de análise e planejamento financeiro.'
+    );
+  } else if (data.responsavelFinanceiro === 'analista') {
+    recomendacoesExtras.push(
+      '📋 A área financeira é conduzida por um analista/assistente. Considere a contratação de um head para estruturar a área e dar suporte à tomada de decisão.'
+    );
+  }
+
+  // === COMERCIAL ===
+  if (data.responsavelComercial === 'socio') {
+    recomendacoesExtras.push(
+      '🧑‍💼 As vendas dependem diretamente do sócio. O principal gargalo comercial está na centralização. Contrate um líder comercial para estruturar o funil e treinar a equipe.'
+    );
+  } else if (data.responsavelComercial === 'head') {
+    recomendacoesExtras.push(
+      '📊 A área comercial possui um líder dedicado. O foco deve ser em fornecer ferramentas de gestão (CRM, metas) e autonomia para ele executar o plano de vendas.'
+    );
+  } else if (data.responsavelComercial === 'vendedor') {
+    recomendacoesExtras.push(
+      '📋 A área comercial é composta por executores de vendas. Considere a contratação de um head comercial para dar direção estratégica e aumentar a previsibilidade.'
+    );
+  }
+
+  // === OPERAÇÕES ===
+  if (data.responsavelOperacoes === 'socio') {
+    recomendacoesExtras.push(
+      '🧑‍💼 As operações são gerenciadas pelo sócio. Isso limita a escalabilidade. Recomendamos estruturar processos (POPs) e contratar um gestor operacional para descentralizar.'
+    );
+  } else if (data.responsavelOperacoes === 'head') {
+    recomendacoesExtras.push(
+      '📊 A operação já possui um gestor dedicado. Foque em capacitar esse profissional com ferramentas de gestão e indicadores de desempenho operacional.'
+    );
+  } else if (data.responsavelOperacoes === 'analista') {
+    recomendacoesExtras.push(
+      '📋 A operação é conduzida por um analista/assistente. Considere a contratação de um COO ou Head de Operações para estruturar a área e permitir escalabilidade.'
+    );
+  }
+
+  const recomendacoesAtuais = resultado.recomendacoesPersonalizadas || resultado.strategicRecommendations || [];
+  const recomendacoesCombinadas = [...recomendacoesAtuais, ...recomendacoesExtras];
+
+  return {
+    ...resultado,
+    recomendacoesPersonalizadas: recomendacoesCombinadas,
+    responsaveis: {
+      financeiro: data.responsavelFinanceiro,
+      comercial: data.responsavelComercial,
+      operacoes: data.responsavelOperacoes,
+    },
   };
 }
 
@@ -541,7 +596,6 @@ export function generateActionPlan90Days(
     },
   };
 
-  // 🔥 FALLBACK: Se não encontrar o plano, retorna um genérico
   const plano = defaultPlans[primaryKey];
   if (!plano) {
     console.warn(`Plano não encontrado para a área: ${primaryKey}, usando fallback`);
@@ -638,16 +692,9 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     breakEven
   );
 
-  // 🔥 APLICA O MODELO DE RECEITA
   const modeloReceita = data.revenueModel || 'outros';
   
-  // 🔥 ANALISA OS CUSTOS FIXOS (se houver itens detalhados)
-  // Nota: Os itens de custo não estão no DiagnosticFormData atualmente,
-  // então vamos criar um placeholder. Em uma implementação futura, você pode
-  // adicionar um campo `costItems` no formData.
   const costItems: Array<{ name: string; value: number }> = [];
-  // Se você quiser simular itens para teste, pode descomentar a linha abaixo:
-  // costItems.push({ name: 'Aluguel', value: 12000 }, { name: 'Salários', value: 18000 });
   
   const costAnalysis = data.fixedCosts && data.fixedCosts > 0 
     ? analyzeFixedCosts(
@@ -683,10 +730,10 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
   };
 
   const resultadoComModelo = aplicarModeloReceita(resultadoBase, modeloReceita);
+  const resultadoComResponsaveis = aplicarResponsaveis(resultadoComModelo, data);
 
   return {
-    ...resultadoComModelo,
-    // Mantém os campos originais que não devem ser sobrescritos
+    ...resultadoComResponsaveis,
     formSummary: resultadoBase.formSummary,
     clarityIndex: resultadoBase.clarityIndex,
     clarityStatus: resultadoBase.clarityStatus,
@@ -702,10 +749,10 @@ export function generateFullDiagnostic(data: DiagnosticFormData): DiagnosticResu
     aiGenerated: resultadoBase.aiGenerated,
     generatedAt: resultadoBase.generatedAt,
     costAnalysis: resultadoBase.costAnalysis,
-    // Campos adicionados pelo modelo de receita
     revenueModel: modeloReceita,
-    recomendacoesPersonalizadas: resultadoComModelo.recomendacoesPersonalizadas,
-    prioridadeModelo: resultadoComModelo.prioridadeModelo,
-    modeloReceitaAplicado: resultadoComModelo.modeloReceitaAplicado,
+    recomendacoesPersonalizadas: resultadoComResponsaveis.recomendacoesPersonalizadas,
+    prioridadeModelo: resultadoComResponsaveis.prioridadeModelo,
+    modeloReceitaAplicado: resultadoComResponsaveis.modeloReceitaAplicado,
+    responsaveis: resultadoComResponsaveis.responsaveis,
   };
 }
