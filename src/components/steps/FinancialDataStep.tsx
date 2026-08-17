@@ -24,7 +24,7 @@ const CATEGORIAS_CUSTO = [
   'Outros'
 ];
 
-// 🔥 Categorias de custos variáveis (SEM Impostos)
+// Categorias de custos variáveis
 const CATEGORIAS_VARIAVEIS = [
   'Insumos / Matéria-prima',
   'Comissões de vendas',
@@ -45,7 +45,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
   const [newCategory, setNewCategory] = useState('');
   const [newValue, setNewValue] = useState('');
 
-  // 🔥 Estado para detalhamento de custos variáveis
   const [showVariableDetails, setShowVariableDetails] = useState(false);
   const [variableItems, setVariableItems] = useState<Array<{ id: string; name: string; percent: number }>>([]);
   const [newVariableCategory, setNewVariableCategory] = useState('');
@@ -83,7 +82,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     onUpdate({ fixedCosts: total });
   }, [costItems]);
 
-  // 🔥 Atualiza o total de custos variáveis
+  // Atualiza o total de custos variáveis
   useEffect(() => {
     const total = variableItems.reduce((sum, item) => sum + (item.percent || 0), 0);
     onUpdate({ variableCostsPercent: Math.min(95, Math.round(total)) });
@@ -113,7 +112,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     ));
   };
 
-  // 🔥 Funções para custos variáveis
+  // Funções para custos variáveis
   const addVariableItem = () => {
     if (!newVariableCategory) return;
     const percent = parseFloat(newVariablePercent) || 0;
@@ -244,7 +243,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         </div>
 
-        {/* 🔥 Estímulo para detalhar custos fixos */}
+        {/* Estímulo para detalhar custos fixos */}
         {!showCostDetails && costItems.length === 1 && (
           <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
             <Info className="w-4 h-4 shrink-0" />
@@ -328,7 +327,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         )}
 
-        {/* 🔥 Custos Variáveis - SEM BARRINHA (apenas input numérico) */}
+        {/* Custos Variáveis - SEM BARRINHA */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-2">
           <div className="flex justify-between items-center">
             <div className="flex-1">
@@ -369,7 +368,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             </button>
           </div>
 
-          {/* 🔥 Estímulo para detalhar custos variáveis */}
+          {/* Estímulo para detalhar custos variáveis */}
           {!showVariableDetails && variableItems.length === 1 && (
             <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
               <Info className="w-4 h-4 shrink-0" />
@@ -456,26 +455,47 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           )}
         </div>
 
-        {/* Impostos sobre Venda */}
+        {/* Regime Tributário e Impostos sobre Venda - CORRIGIDO */}
         <div className="border-t border-[#D8D3CB] pt-5">
-          <div className="flex justify-between items-center">
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-              4. Impostos sobre Venda (%)
-            </label>
-            <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formData.taxesPercent}%</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={40}
-            step={0.5}
-            value={formData.taxesPercent}
-            onChange={(e) => onUpdate({ taxesPercent: Number(e.target.value) })}
-            className="w-full accent-[#6B0F1A] cursor-pointer mt-2"
-          />
-          <div className="flex justify-between text-[11px] text-[#5A6270]">
-            <span>Alíquota efetiva de imposto na Nota Fiscal</span>
-            <span>Atualmente: {formData.taxesPercent}%</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                Regime Tributário
+              </label>
+              <select
+                value={formData.taxRegime || 'Simples Nacional'}
+                onChange={(e) => onUpdate({ taxRegime: e.target.value })}
+                className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
+              >
+                <option value="Simples Nacional">Simples Nacional</option>
+                <option value="Lucro Presumido">Lucro Presumido</option>
+                <option value="Lucro Real">Lucro Real</option>
+                <option value="MEI">MEI</option>
+              </select>
+              <p className="text-[11px] text-[#5A6270] mt-1">Selecione o regime tributário da sua empresa.</p>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                  Impostos sobre Venda (%)
+                </label>
+                <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formData.taxesPercent}%</span>
+              </div>
+              <input
+                type="number"
+                min={0}
+                max={40}
+                step={0.5}
+                value={formData.taxesPercent}
+                onChange={(e) => onUpdate({ taxesPercent: Number(e.target.value) })}
+                className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
+              />
+              <div className="flex justify-between text-[11px] text-[#5A6270] mt-1">
+                <span>Alíquota efetiva de imposto na Nota Fiscal</span>
+                <span>Atualmente: {formData.taxesPercent}%</span>
+              </div>
+            </div>
           </div>
         </div>
 

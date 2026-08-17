@@ -226,7 +226,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 result.clarityStatus === 'Excelente'
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                   : result.clarityStatus === 'Saudável'
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'  // 🔥 CORRIGIDO: VERDE
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                   : result.clarityStatus === 'Atenção'
                   ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
                   : 'bg-rose-50 border-rose-300 text-rose-800'
@@ -313,7 +313,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* 🔥 Evidências Coletadas - CARDS CORRIGIDOS (GRID RESPONSIVO) */}
+      {/* Evidências Coletadas - CARDS CORRIGIDOS */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -331,11 +331,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           )}
         </div>
 
-        {/* 🔥 GRID RESPONSIVO: 1 coluna no mobile, 2 no tablet, 3 no desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          
+        <div className="grid grid-cols-1 gap-6">
           {/* Card 1: BrasilAPI / CNPJ */}
-          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
+          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Building2 className="w-4 h-4" /> Dados Públicos (CNPJ)
@@ -348,11 +346,11 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <div className="space-y-2 text-xs text-[#1A1A1A]">
               <div>
                 <span className="text-[#5A6270] block font-medium">Razão Social:</span>
-                <span className="font-bold text-sm text-[#1A1A1A]">{form.cnpjData?.razaoSocial || form.companyName}</span>
+                <span className="font-bold text-sm text-[#1A1A1A] break-words">{form.cnpjData?.razaoSocial || form.companyName}</span>
               </div>
               <div>
                 <span className="text-[#5A6270] block font-medium">Nome Fantasia:</span>
-                <span className="font-semibold">{form.cnpjData?.nomeFantasia || 'Não informado'}</span>
+                <span className="font-semibold break-words">{form.cnpjData?.nomeFantasia || 'Não informado'}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <div>
@@ -366,19 +364,19 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               </div>
               <div className="pt-1">
                 <span className="text-[#5A6270] block font-medium">Atividade Principal (CNAE):</span>
-                <span className="text-[11px] font-medium text-[#1A1A1A]">{form.cnpjData?.cnaeCodigo} - {form.cnpjData?.cnaeDescricao || form.segment}</span>
+                <span className="text-[11px] font-medium text-[#1A1A1A] break-words">{form.cnpjData?.cnaeCodigo} - {form.cnpjData?.cnaeDescricao || form.segment}</span>
               </div>
               {form.cnpjData?.logradouro && (
                 <div className="pt-1">
                   <span className="text-[#5A6270] block font-medium">Endereço Registrado:</span>
-                  <span className="text-[11px] text-[#5A6270]">{form.cnpjData.logradouro}, {form.cnpjData.municipio} - {form.cnpjData.uf}</span>
+                  <span className="text-[11px] text-[#5A6270] break-words">{form.cnpjData.logradouro}, {form.cnpjData.municipio} - {form.cnpjData.uf}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Card 2: Google Places Evidence */}
-          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
+          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" /> Reputação (Google Places)
@@ -400,14 +398,14 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                     <span className="text-[10px] block text-[#5A6270] font-bold">★ de 5.0</span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-[#1A1A1A]">{evidence.googlePlaces.name}</h4>
+                    <h4 className="font-bold text-sm text-[#1A1A1A] break-words">{evidence.googlePlaces.name}</h4>
                     <p className="text-xs font-semibold text-emerald-800 mt-0.5">
                       {evidence.googlePlaces.userRatingsTotal} avaliações reais de clientes
                     </p>
                     {evidence.googlePlaces.address && (
                       <p className="text-[11px] text-[#5A6270] mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-[#6B0F1A]" />
-                        <span className="truncate max-w-[180px]">{evidence.googlePlaces.address}</span>
+                        <span className="break-words">{evidence.googlePlaces.address}</span>
                       </p>
                     )}
                   </div>
@@ -431,7 +429,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           </div>
 
           {/* Card 3: News / Imprensa */}
-          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
+          <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Newspaper className="w-4 h-4" /> Imprensa & Menções
@@ -451,7 +449,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                       rel="noreferrer"
                       className="font-bold text-xs text-[#1A1A1A] hover:text-[#6B0F1A] flex items-center justify-between gap-1 group"
                     >
-                      <span className="line-clamp-2">{item.title}</span>
+                      <span className="line-clamp-2 break-words">{item.title}</span>
                       <ExternalLink className="w-3 h-3 text-[#5A6270] group-hover:text-[#6B0F1A] shrink-0" />
                     </a>
                     <div className="flex items-center justify-between text-[10px] text-[#5A6270]">

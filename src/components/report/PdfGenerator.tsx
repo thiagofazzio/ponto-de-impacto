@@ -17,7 +17,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 max-w-4xl mx-auto" style={{ overflow: 'auto', maxHeight: '90vh' }}>
+    <>
       <style>{`
         @media print {
           body * {
@@ -27,9 +27,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             visibility: visible !important;
           }
           #pdf-content {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
             padding: 15px !important;
@@ -38,6 +35,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
             font-size: 10px !important;
             line-height: 1.4 !important;
+            page-break-after: avoid !important;
           }
           #pdf-content .card {
             background: #F9F7F3 !important;
@@ -98,27 +96,27 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
       <div id="pdf-content" className="max-w-4xl mx-auto" style={{ padding: '15px' }}>
         
         {/* Cabeçalho */}
-        <div className="flex-between mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div className="flex-between mb-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
           <div>
-            <div className="badge" style={{ display: 'inline-block', background: '#F4E8C1', color: '#6B0F1A', fontSize: '9px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px', border: '1px solid #D4AF37' }}>
+            <div className="badge" style={{ display: 'inline-block', background: '#F4E8C1', color: '#6B0F1A', fontSize: '8px', fontWeight: '700', padding: '1px 6px', borderRadius: '10px', border: '1px solid #D4AF37' }}>
               Relatório Executivo TFAZZIO
             </div>
-            <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#1A1A1A', marginTop: '2px' }}>
+            <h1 style={{ fontSize: '16px', fontWeight: '900', color: '#1A1A1A', marginTop: '2px' }}>
               Diagnóstico Ponto de Impacto
             </h1>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '10px', color: '#5A6270' }}>Gerado em: {result.generatedAt}</p>
+            <p style={{ fontSize: '8px', color: '#5A6270' }}>Gerado em: {result.generatedAt}</p>
           </div>
         </div>
 
         {/* Empresa */}
-        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
-          <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Building2 size={16} color="#6B0F1A" />
-            <strong style={{ fontSize: '14px', color: '#6B0F1A' }}>{result.formSummary.companyName || 'Empresa PME'}</strong>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '8px', marginBottom: '6px', pageBreakInside: 'avoid' }}>
+          <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Building2 size={12} color="#6B0F1A" />
+            <strong style={{ fontSize: '12px', color: '#6B0F1A' }}>{result.formSummary.companyName || 'Empresa PME'}</strong>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '10px', marginTop: '4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '8px', marginTop: '2px' }}>
             <span><strong>CNPJ:</strong> {result.formSummary.cnpj || 'Não informado'}</span>
             <span><strong>Segmento:</strong> {result.formSummary.segment}</span>
             <span><strong>Porte:</strong> {result.formSummary.cnpjData?.porte || 'PME'}</span>
@@ -126,84 +124,84 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </div>
 
         {/* Objetivo e Dor */}
-        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-          <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '10px', pageBreakInside: 'avoid' }}>
-            <p style={{ fontSize: '9px', fontWeight: '700', color: '#5A6270', marginBottom: '2px' }}>🎯 Objetivo Reportado</p>
-            <p style={{ fontSize: '13px', fontWeight: '600', color: '#1A1A1A' }}>{result.formSummary.mainGoal || 'Não informado'}</p>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
+          <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '6px', pageBreakInside: 'avoid' }}>
+            <p style={{ fontSize: '8px', fontWeight: '700', color: '#5A6270', marginBottom: '1px' }}>🎯 Objetivo Reportado</p>
+            <p style={{ fontSize: '10px', fontWeight: '600', color: '#1A1A1A' }}>{result.formSummary.mainGoal || 'Não informado'}</p>
           </div>
-          <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '10px', pageBreakInside: 'avoid' }}>
-            <p style={{ fontSize: '9px', fontWeight: '700', color: '#5A6270', marginBottom: '2px' }}>🚧 Principal Dor</p>
-            <p style={{ fontSize: '13px', fontWeight: '600', color: '#1A1A1A' }}>{result.formSummary.biggestDifficulty || 'Não informado'}</p>
+          <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '6px', pageBreakInside: 'avoid' }}>
+            <p style={{ fontSize: '8px', fontWeight: '700', color: '#5A6270', marginBottom: '1px' }}>🚧 Principal Dor</p>
+            <p style={{ fontSize: '10px', fontWeight: '600', color: '#1A1A1A' }}>{result.formSummary.biggestDifficulty || 'Não informado'}</p>
           </div>
         </div>
 
         {/* Índice de Clareza */}
-        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '8px', marginBottom: '6px', pageBreakInside: 'avoid' }}>
           <div className="flex-between" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#5A6270' }}>Índice de Clareza</span>
-            <span style={{ fontSize: '28px', fontWeight: '900', color: '#6B0F1A' }}>{result.clarityIndex}</span>
+            <span style={{ fontSize: '9px', fontWeight: '700', color: '#5A6270' }}>Índice de Clareza</span>
+            <span style={{ fontSize: '20px', fontWeight: '900', color: '#6B0F1A' }}>{result.clarityIndex}</span>
           </div>
-          <p style={{ fontSize: '11px', color: '#5A6270', marginTop: '2px' }}>{result.clarityDescription}</p>
+          <p style={{ fontSize: '9px', color: '#5A6270', marginTop: '1px' }}>{result.clarityDescription}</p>
         </div>
 
         {/* Gargalos */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
           {/* Gargalo Principal */}
-          <div className="card-rose" style={{ border: '2px solid #fca5a5', background: '#fef2f2', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
-            <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <AlertTriangle size={14} color="#dc2626" />
-              <span style={{ fontSize: '10px', fontWeight: '700', color: '#dc2626' }}>Gargalo Principal</span>
+          <div className="card-rose" style={{ border: '2px solid #fca5a5', background: '#fef2f2', borderRadius: '6px', padding: '8px', pageBreakInside: 'avoid' }}>
+            <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <AlertTriangle size={12} color="#dc2626" />
+              <span style={{ fontSize: '8px', fontWeight: '700', color: '#dc2626' }}>Gargalo Principal</span>
             </div>
-            <p style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A', margin: '2px 0' }}>{result.primaryBottleneck.name}</p>
-            <p style={{ fontSize: '11px', color: '#1A1A1A' }}>Nota: {result.primaryBottleneck.score}/10</p>
-            <p style={{ fontSize: '10px', color: '#5A6270' }}>{result.primaryBottleneck.description}</p>
-            <p style={{ fontSize: '10px', fontWeight: '700', color: '#6B0F1A', marginTop: '2px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
+            <p style={{ fontSize: '10px', fontWeight: '700', color: '#1A1A1A', margin: '1px 0' }}>{result.primaryBottleneck.name}</p>
+            <p style={{ fontSize: '9px', color: '#1A1A1A' }}>Nota: {result.primaryBottleneck.score}/10</p>
+            <p style={{ fontSize: '8px', color: '#5A6270' }}>{result.primaryBottleneck.description}</p>
+            <p style={{ fontSize: '8px', fontWeight: '700', color: '#6B0F1A', marginTop: '1px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
           </div>
 
           {/* Gargalo Secundário */}
-          <div className="card-gold" style={{ border: '2px solid #D4AF37', background: '#F4E8C1', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
-            <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Zap size={14} color="#6B0F1A" />
-              <span style={{ fontSize: '10px', fontWeight: '700', color: '#6B0F1A' }}>Gargalo Secundário</span>
+          <div className="card-gold" style={{ border: '2px solid #D4AF37', background: '#F4E8C1', borderRadius: '6px', padding: '8px', pageBreakInside: 'avoid' }}>
+            <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Zap size={12} color="#6B0F1A" />
+              <span style={{ fontSize: '8px', fontWeight: '700', color: '#6B0F1A' }}>Gargalo Secundário</span>
             </div>
-            <p style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A', margin: '2px 0' }}>{result.secondaryBottleneck.name}</p>
-            <p style={{ fontSize: '11px', color: '#1A1A1A' }}>Nota: {result.secondaryBottleneck.score}/10</p>
-            <p style={{ fontSize: '10px', color: '#5A6270' }}>{result.secondaryBottleneck.description}</p>
+            <p style={{ fontSize: '10px', fontWeight: '700', color: '#1A1A1A', margin: '1px 0' }}>{result.secondaryBottleneck.name}</p>
+            <p style={{ fontSize: '9px', color: '#1A1A1A' }}>Nota: {result.secondaryBottleneck.score}/10</p>
+            <p style={{ fontSize: '8px', color: '#5A6270' }}>{result.secondaryBottleneck.description}</p>
           </div>
         </div>
 
         {/* Engenharia Financeira */}
-        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
-          <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <TrendingUp size={16} color="#6B0F1A" />
-            <span style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A' }}>Engenharia Financeira</span>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '8px', marginBottom: '6px', pageBreakInside: 'avoid' }}>
+          <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <TrendingUp size={12} color="#6B0F1A" />
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#1A1A1A' }}>Engenharia Financeira</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '4px' }}>
-            <div><strong>Faturamento:</strong> {formatCurrency(result.breakEven.monthlyRevenue)}</div>
-            <div><strong>Break-Even:</strong> {formatCurrency(result.breakEven.breakEvenRevenue)}</div>
-            <div><strong>Margem de Contribuição:</strong> {result.breakEven.contributionMarginPercent}%</div>
-            <div><strong>Lucro Líquido:</strong> {formatCurrency(result.breakEven.estimatedNetProfit)}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', marginTop: '2px' }}>
+            <div style={{ fontSize: '9px' }}><strong>Faturamento:</strong> {formatCurrency(result.breakEven.monthlyRevenue)}</div>
+            <div style={{ fontSize: '9px' }}><strong>Break-Even:</strong> {formatCurrency(result.breakEven.breakEvenRevenue)}</div>
+            <div style={{ fontSize: '9px' }}><strong>Margem de Contribuição:</strong> {result.breakEven.contributionMarginPercent}%</div>
+            <div style={{ fontSize: '9px' }}><strong>Lucro Líquido:</strong> {formatCurrency(result.breakEven.estimatedNetProfit)}</div>
           </div>
         </div>
 
         {/* Síntese do Consultor */}
-        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', marginBottom: '10px', pageBreakInside: 'avoid' }}>
-          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A' }}>🧠 Síntese do Consultor</h3>
-          <p style={{ fontSize: '11px', color: '#5A6270', marginTop: '2px' }}>{result.executiveSummary}</p>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '8px', marginBottom: '6px', pageBreakInside: 'avoid' }}>
+          <h3 style={{ fontSize: '10px', fontWeight: '700', color: '#1A1A1A' }}>🧠 Síntese do Consultor</h3>
+          <p style={{ fontSize: '9px', color: '#5A6270', marginTop: '1px' }}>{result.executiveSummary}</p>
         </div>
 
         {/* Recomendações */}
-        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
-          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#1A1A1A' }}>🎯 Recomendações Estratégicas</h3>
-          <ul style={{ paddingLeft: '16px', margin: '4px 0', fontSize: '11px' }}>
+        <div className="card" style={{ background: '#F9F7F3', border: '1px solid #D8D3CB', borderRadius: '6px', padding: '8px', pageBreakInside: 'avoid' }}>
+          <h3 style={{ fontSize: '10px', fontWeight: '700', color: '#1A1A1A' }}>🎯 Recomendações Estratégicas</h3>
+          <ul style={{ paddingLeft: '12px', margin: '2px 0', fontSize: '8px' }}>
             {result.strategicRecommendations.slice(0, 4).map((rec, idx) => (
-              <li key={idx} style={{ marginBottom: '2px' }}>{rec}</li>
+              <li key={idx} style={{ marginBottom: '1px', fontSize: '9px' }}>{rec}</li>
             ))}
           </ul>
         </div>
       </div>
 
-      {/* 🔥 BOTÕES - NÃO APARECEM NA IMPRESSÃO */}
+      {/* Botões */}
       <div className="mt-4 flex justify-end gap-3 no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
         <button
           onClick={onClose}
@@ -218,7 +216,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
           Baixar PDF (Imprimir)
         </button>
       </div>
-    </div>
+    </>
   );
 };
 
