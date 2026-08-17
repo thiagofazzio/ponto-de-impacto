@@ -226,7 +226,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 result.clarityStatus === 'Excelente'
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                   : result.clarityStatus === 'Saudável'
-                  ? 'bg-blue-50 border-blue-300 text-blue-800'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'  // 🔥 CORRIGIDO: VERDE
                   : result.clarityStatus === 'Atenção'
                   ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
                   : 'bg-rose-50 border-rose-300 text-rose-800'
@@ -313,7 +313,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* Evidências Coletadas - HORIZONTAL */}
+      {/* 🔥 Evidências Coletadas - HORIZONTAL */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -578,7 +578,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               </div>
             </div>
 
-            {/* 🔥 NOVO: Mensagem de estímulo se os custos NÃO foram detalhados */}
+            {/* Mensagem de estímulo se os custos NÃO foram detalhados */}
             {result.costAnalysis && !result.costAnalysis.isDetailed && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
                 <Info className="w-4 h-4 shrink-0" />

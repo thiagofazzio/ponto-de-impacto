@@ -39,7 +39,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
             font-size: 11px !important;
             line-height: 1.5 !important;
-            transform: scale(0.75) !important;
+            transform: scale(0.7) !important;
             transform-origin: top left !important;
           }
           #pdf-content .card {

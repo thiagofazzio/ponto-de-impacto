@@ -24,12 +24,11 @@ const CATEGORIAS_CUSTO = [
   'Outros'
 ];
 
-// 🔥 Categorias de custos variáveis
+// 🔥 Categorias de custos variáveis (SEM Impostos)
 const CATEGORIAS_VARIAVEIS = [
   'Insumos / Matéria-prima',
   'Comissões de vendas',
   'Taxas de cartão de crédito',
-  'Impostos sobre vendas',
   'Frete e entregas',
   'Embalagens',
   'Royalties',
@@ -329,7 +328,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         )}
 
-        {/* 🔥 Custos Variáveis - COM DETALHAMENTO */}
+        {/* 🔥 Custos Variáveis - SEM BARRINHA (apenas input numérico) */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-2">
           <div className="flex justify-between items-center">
             <div className="flex-1">
@@ -340,11 +339,11 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
                 <span className="text-xs font-mono font-bold text-[#6B0F1A]">{Math.round(totalVariablePercent)}%</span>
               </div>
               <input
-                type="range"
+                type="number"
                 min={0}
-                max={80}
-                step={1}
-                value={Math.min(80, Math.round(totalVariablePercent))}
+                max={95}
+                step={0.5}
+                value={Math.round(totalVariablePercent)}
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   if (variableItems.length > 1) {
@@ -353,9 +352,9 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
                     onUpdate({ variableCostsPercent: val });
                   }
                 }}
-                className="w-full accent-[#6B0F1A] cursor-pointer"
+                className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
               />
-              <div className="flex justify-between text-[11px] text-[#5A6270]">
+              <div className="flex justify-between text-[11px] text-[#5A6270] mt-1">
                 <span>Insumos / Comissões / Taxas de cartão</span>
                 <span>Atualmente: {Math.round(totalVariablePercent)}%</span>
               </div>
