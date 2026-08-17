@@ -20,7 +20,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
     <div className="bg-white rounded-xl p-4 max-w-4xl mx-auto" style={{ overflow: 'auto', maxHeight: '90vh' }}>
       <style>{`
         @media print {
-          /* 🔥 RESETA TUDO - SÓ O PDF APARECE */
           body * {
             visibility: hidden !important;
           }
@@ -95,16 +94,11 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
       `}</style>
 
       <div id="pdf-content" className="max-w-4xl mx-auto" style={{ padding: '15px' }}>
-        
         {/* Cabeçalho */}
         <div className="flex-between mb-4">
           <div>
-            <div className="badge">
-              Relatório Executivo TFAZZIO
-            </div>
-            <h1>
-              Diagnóstico Ponto de Impacto
-            </h1>
+            <div className="badge">Relatório Executivo TFAZZIO</div>
+            <h1>Diagnóstico Ponto de Impacto</h1>
           </div>
           <div className="text-right">
             <p className="text-muted">Gerado em: {result.generatedAt}</p>
@@ -147,7 +141,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
         {/* Gargalos */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-          {/* Gargalo Principal */}
           <div className="card card-rose">
             <div className="flex">
               <AlertTriangle size={16} color="#dc2626" />
@@ -158,8 +151,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             <p style={{ fontSize: '11px', color: '#5A6270' }}>{result.primaryBottleneck.description}</p>
             <p style={{ fontSize: '11px', fontWeight: '700', color: '#6B0F1A', marginTop: '2px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
           </div>
-
-          {/* Gargalo Secundário */}
           <div className="card card-gold">
             <div className="flex">
               <Zap size={16} color="#6B0F1A" />
@@ -202,7 +193,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </div>
       </div>
 
-      {/* 🔥 BOTÕES - NÃO APARECEM NA IMPRESSÃO */}
+      {/* Botões */}
       <div className="mt-4 flex justify-end gap-3 no-print">
         <button
           onClick={onClose}

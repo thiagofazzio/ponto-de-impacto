@@ -313,7 +313,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* Evidências Coletadas - CARDS CORRIGIDOS */}
+      {/* Evidências Coletadas - CARDS ORGANIZADOS */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -331,7 +331,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
+        {/* GRID RESPONSIVO: 1 coluna no mobile, 2 no tablet, 3 no desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          
           {/* Card 1: BrasilAPI / CNPJ */}
           <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4 overflow-hidden">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
@@ -381,11 +383,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
                 <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" /> Reputação (Google Places)
               </span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                evidence?.googlePlaces?.status === 'success'
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                  : 'bg-amber-50 text-amber-800 border-amber-200'
-              }`}>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${evidence?.googlePlaces?.status === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
                 {evidence?.googlePlaces?.status === 'success' ? 'Verificado' : 'Não Vinculado'}
               </span>
             </div>
@@ -399,9 +397,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-[#1A1A1A] break-words">{evidence.googlePlaces.name}</h4>
-                    <p className="text-xs font-semibold text-emerald-800 mt-0.5">
-                      {evidence.googlePlaces.userRatingsTotal} avaliações reais de clientes
-                    </p>
+                    <p className="text-xs font-semibold text-emerald-800 mt-0.5">{evidence.googlePlaces.userRatingsTotal} avaliações reais de clientes</p>
                     {evidence.googlePlaces.address && (
                       <p className="text-[11px] text-[#5A6270] mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-[#6B0F1A]" />
@@ -418,12 +414,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ) : (
               <div className="p-4 bg-white rounded-xl border border-[#D8D3CB] text-center space-y-2">
                 <Globe className="w-8 h-8 text-[#5A6270] mx-auto opacity-50" />
-                <p className="text-xs text-[#5A6270]">
-                  Não foi localizado perfil verificado de avaliações públicas para este nome no Google Places ou a chave de API não foi configurada.
-                </p>
-                <p className="text-[11px] text-[#6B0F1A] font-semibold">
-                  Recomendação: Criar e otimizar o perfil no Google Meu Negócio.
-                </p>
+                <p className="text-xs text-[#5A6270]">Não foi localizado perfil verificado de avaliações públicas para este nome no Google Places.</p>
+                <p className="text-[11px] text-[#6B0F1A] font-semibold">Recomendação: Criar e otimizar o perfil no Google Meu Negócio.</p>
               </div>
             )}
           </div>
@@ -462,12 +454,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ) : (
               <div className="p-4 bg-white rounded-xl border border-[#D8D3CB] text-center space-y-2">
                 <Newspaper className="w-8 h-8 text-[#5A6270] mx-auto opacity-50" />
-                <p className="text-xs text-[#5A6270]">
-                  Nenhuma menção ou notícia pública recente foi encontrada nos portais monitorados para a marca.
-                </p>
-                <p className="text-[11px] text-[#6B0F1A] font-semibold">
-                  Oportunidade: Desenvolver ações de assessoria de imprensa e PR.
-                </p>
+                <p className="text-xs text-[#5A6270]">Nenhuma menção ou notícia pública recente foi encontrada.</p>
+                <p className="text-[11px] text-[#6B0F1A] font-semibold">Oportunidade: Desenvolver ações de assessoria de imprensa e PR.</p>
               </div>
             )}
           </div>

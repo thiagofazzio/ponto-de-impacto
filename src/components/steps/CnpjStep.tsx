@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, CheckCircle, AlertTriangle, Building2, Users, DollarSign, Lightbulb } from 'lucide-react';
+import { Search, CheckCircle, AlertTriangle, Building2, Lightbulb } from 'lucide-react';
 
 interface CnpjStepProps {
   cnpj: string;
@@ -35,30 +35,29 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // Função para verificar divergência do modelo de receita
-  const verificarDivergenciaModelo = () => {
-    if (!cnpjData || !formData.revenueModel) return null;
+  // 🔥 Função para gerar o insight
+  const verificarInsightModelo = () => {
+    if (!cnpjData) return null;
     
     const cnae = cnpjData.cnaeDescricao || '';
-    const modelo = formData.revenueModel;
     
     const palavrasChave: Record<string, string> = {
-      'comercio': 'venda_produtos',
-      'varejista': 'venda_produtos',
-      'supermercados': 'venda_produtos',
-      'consultoria': 'prestacao_servicos',
-      'servicos': 'prestacao_servicos',
-      'assinatura': 'assinatura',
-      'plataforma': 'marketplace',
-      'distribuição': 'venda_produtos',
-      'indústria': 'venda_produtos',
-      'ensino': 'prestacao_servicos',
-      'saúde': 'prestacao_servicos',
-      'alimentício': 'venda_produtos',
-      'varejo': 'venda_produtos',
+      'comercio': 'Venda de Produtos',
+      'varejista': 'Venda de Produtos',
+      'supermercados': 'Venda de Produtos',
+      'consultoria': 'Prestação de Serviços',
+      'servicos': 'Prestação de Serviços',
+      'assinatura': 'Assinatura / Recorrência',
+      'plataforma': 'Marketplace / Plataforma',
+      'distribuição': 'Venda de Produtos',
+      'indústria': 'Venda de Produtos',
+      'ensino': 'Prestação de Serviços',
+      'saúde': 'Prestação de Serviços',
+      'alimentício': 'Venda de Produtos',
+      'varejo': 'Venda de Produtos',
     };
     
-    let modeloSugerido = 'outros';
+    let modeloSugerido = 'Modelo híbrido ou personalizado';
     for (const [key, value] of Object.entries(palavrasChave)) {
       if (cnae.toLowerCase().includes(key)) {
         modeloSugerido = value;
@@ -66,24 +65,43 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
       }
     }
     
-    if (modelo !== modeloSugerido && modeloSugerido !== 'outros' && modelo !== 'outros') {
-      const labels: Record<string, string> = {
-        venda_produtos: 'Venda de Produtos',
-        prestacao_servicos: 'Prestação de Serviços',
-        assinatura: 'Assinatura / Recorrência',
-        marketplace: 'Marketplace / Plataforma',
-        hibrido: 'Híbrido',
-        outros: 'Outro modelo',
-      };
-      
+    const modeloSelecionado = formData.revenueModel;
+    const labels: Record<string, string> = {
+      venda_produtos: 'Venda de Produtos',
+      prestacao_servicos: 'Prestação de Serviços',
+      assinatura: 'Assinatura / Recorrência',
+      marketplace: 'Marketplace / Plataforma',
+      hibrido: 'Híbrido',
+      outros: 'Outro modelo',
+    };
+    const modeloLabel = modeloSelecionado ? labels[modeloSelecionado] : null;
+
+    // 🔥 Sempre mostra o insight, adaptando a mensagem
+    if (modeloSelecionado && modeloLabel && modeloLabel !== modeloSugerido && modeloSelecionado !== 'outros') {
       return {
-        modeloAtual: labels[modelo] || modelo,
-        modeloSugerido: labels[modeloSugerido] || modeloSugerido,
-        mensagem: `Seu modelo de receita (${labels[modelo] || modelo}) é diferente do usual para empresas do seu segmento (${labels[modeloSugerido] || modeloSugerido}). Isso pode indicar uma oportunidade de posicionamento!`,
+        icone: '🚀',
+        cor: 'bg-amber-50 border-amber-200',
+        titulo: 'Estratégia diferenciada!',
+        mensagem: `Seu CNAE sugere ${modeloSugerido}, mas você escolheu ${modeloLabel}.`,
+        detalhe: 'Isso pode ser uma evolução do negócio, uma estratégia fiscal ou um posicionamento único. Vamos basear nossa análise no modelo que você selecionou.'
+      };
+    } else if (modeloSelecionado && modeloLabel && modeloLabel === modeloSugerido) {
+      return {
+        icone: '🎯',
+        cor: 'bg-emerald-50 border-emerald-200',
+        titulo: 'Alinhamento perfeito!',
+        mensagem: `Seu modelo de receita (${modeloLabel}) está alinhado com seu segmento de mercado.`,
+        detalhe: 'Isso indica que você está no caminho certo para o seu tipo de negócio.'
+      };
+    } else {
+      return {
+        icone: '💡',
+        cor: 'bg-blue-50 border-blue-200',
+        titulo: 'Insight TFAZZIO',
+        mensagem: `Para o segmento da sua empresa, o modelo de receita mais comum é ${modeloSugerido}.`,
+        detalhe: 'Na etapa anterior você pode confirmar qual modelo faz mais sentido para sua realidade.'
       };
     }
-    
-    return null;
   };
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,17 +160,13 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     onNext();
   };
 
-  const divergencia = verificarDivergenciaModelo();
+  const insight = verificarInsightModelo();
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Dados da Empresa
-        </h2>
-        <p className="text-gray-600 mt-2">
-          Informe o CNPJ para buscar os dados automaticamente e confirme as informações.
-        </p>
+        <h2 className="text-2xl font-bold text-gray-800">Dados da Empresa</h2>
+        <p className="text-gray-600 mt-2">Informe o CNPJ para buscar os dados automaticamente e confirme as informações.</p>
       </div>
 
       {/* Busca CNPJ */}
@@ -171,103 +185,75 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             disabled={loading || localCnpj.replace(/\D/g, '').length !== 14}
             className="px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {loading ? (
-              <span className="inline-block animate-spin">⟳</span>
-            ) : (
-              <Search size={20} />
-            )}
+            {loading ? ( <span className="inline-block animate-spin">⟳</span> ) : ( <Search size={20} /> )}
             Buscar
           </button>
         </div>
 
         {error && (
           <div className="mt-3 p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center gap-2">
-            <AlertTriangle size={16} />
-            {error}
+            <AlertTriangle size={16} /> {error}
           </div>
         )}
 
         {loading && (
           <div className="mt-3 p-3 bg-[#F4E8C1] text-[#6B0F1A] rounded-lg text-sm flex items-center gap-2">
-            <span className="inline-block animate-spin">⟳</span>
-            Buscando dados do CNPJ...
+            <span className="inline-block animate-spin">⟳</span> Buscando dados do CNPJ...
           </div>
         )}
       </div>
 
-      {/* Dados do CNPJ (quando carregados) */}
+      {/* Dados do CNPJ */}
       {cnpjData && !loading && (
         <div className="mt-6 space-y-4">
           <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 shadow-sm">
             <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-              <Building2 size={18} className="text-[#6B0F1A]" />
-              Dados da Empresa
+              <Building2 size={18} className="text-[#6B0F1A]" /> Dados da Empresa
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600">Razão Social</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">
-                  {cnpjData.razaoSocial || 'Não informado'}
-                </div>
+                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.razaoSocial || 'Não informado'}</div>
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-600">Nome Fantasia</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">
-                  {cnpjData.nomeFantasia || cnpjData.razaoSocial || 'Não informado'}
-                </div>
+                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.nomeFantasia || cnpjData.razaoSocial || 'Não informado'}</div>
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-600">Porte</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">
-                  {cnpjData.porte || 'Não informado'}
-                </div>
+                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.porte || 'Não informado'}</div>
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-600">Cidade / UF</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">
-                  {cnpjData.municipio ? `${cnpjData.municipio} / ${cnpjData.uf}` : 'Não informado'}
-                </div>
+                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800">{cnpjData.municipio ? `${cnpjData.municipio} / ${cnpjData.uf}` : 'Não informado'}</div>
               </div>
-              
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600">Atividade Principal (CNAE)</label>
-                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800 text-sm">
-                  {cnpjData.cnaeDescricao || 'Não informado'}
-                </div>
+                <div className="mt-1 p-2 bg-gray-50 rounded-lg text-gray-800 text-sm">{cnpjData.cnaeDescricao || 'Não informado'}</div>
               </div>
             </div>
           </div>
 
-          {/* Insight de divergência do modelo de receita */}
-          {divergencia && (
-            <div className="p-4 bg-[#F4E8C1] border border-[#D4AF37] rounded-xl">
+          {/* 🔥 INSIGHT REATIVADO E MELHORADO */}
+          {insight && (
+            <div className={`p-4 rounded-xl border ${insight.cor}`}>
               <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-[#6B0F1A] shrink-0 mt-0.5" />
+                <span className="text-2xl">{insight.icone}</span>
                 <div>
-                  <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">💡 Insight TFAZZIO</span>
-                  <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">
-                    {divergencia.mensagem}
-                  </p>
-                  <p className="text-xs text-[#5A6270] mt-1">
-                    Seu modelo atual: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloAtual}</span> • 
-                    Sugestão para o segmento: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloSugerido}</span>
-                  </p>
+                  <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">{insight.titulo}</span>
+                  <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">{insight.mensagem}</p>
+                  <p className="text-xs text-[#5A6270] mt-1">{insight.detalhe}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Botão de confirmar */}
           <button
             onClick={handleConfirm}
             className="w-full px-6 py-3 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] transition-colors flex items-center justify-center gap-2"
           >
-            <CheckCircle size={20} />
-            Confirmar e Continuar
+            <CheckCircle size={20} /> Confirmar e Continuar
           </button>
         </div>
       )}
