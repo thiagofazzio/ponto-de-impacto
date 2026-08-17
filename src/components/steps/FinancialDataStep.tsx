@@ -245,6 +245,14 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         </div>
 
+        {/* 🔥 Estímulo para detalhar custos fixos */}
+        {!showCostDetails && costItems.length === 1 && (
+          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>💡 Clique em "Detalhar custos" para uma análise mais precisa do seu break-even.</span>
+          </div>
+        )}
+
         {/* Detalhamento de Custos Fixos */}
         {showCostDetails && (
           <div className="border-t border-[#D8D3CB] pt-5 mt-2">
@@ -361,6 +369,14 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
               {showVariableDetails ? 'Ocultar' : 'Detalhar'} variáveis
             </button>
           </div>
+
+          {/* 🔥 Estímulo para detalhar custos variáveis */}
+          {!showVariableDetails && variableItems.length === 1 && (
+            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+              <Info className="w-4 h-4 shrink-0" />
+              <span>💡 Clique em "Detalhar variáveis" para entender o impacto de cada custo na sua margem.</span>
+            </div>
+          )}
 
           {/* Detalhamento de Custos Variáveis */}
           {showVariableDetails && (

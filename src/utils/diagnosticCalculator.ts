@@ -61,7 +61,9 @@ export function analyzeFixedCosts(costItems: Array<{ name: string; value: number
     percent: totalFixedCosts > 0 ? Math.round((item.value / totalFixedCosts) * 100) : 0
   }));
 
-  // 🔥 CORREÇÃO: O alerta só aparece se houver mais de 1 item e um deles for > 40%
+  // 🔥 Flag para saber se os custos foram detalhados
+  const isDetailed = costItems.length > 1;
+
   const hasConcentration = sorted.length > 1 && topCost && (topCost.value / totalFixedCosts) > 0.4;
 
   let employees = 6;
@@ -83,7 +85,7 @@ export function analyzeFixedCosts(costItems: Array<{ name: string; value: number
     costPerEmployee,
     rentPercentOfRevenue,
     totalItems: costItems.length,
-    // 🔥 CORREÇÃO: Mensagens mais inteligentes
+    isDetailed, // 🔥 NOVO: flag para saber se detalhou
     concentrationMessage: hasConcentration 
       ? `⚠️ Atenção: ${topCost.name} representa ${Math.round((topCost.value / totalFixedCosts) * 100)}% dos seus custos fixos. Considere revisar essa despesa.` 
       : costItems.length === 1 

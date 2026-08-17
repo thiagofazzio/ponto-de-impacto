@@ -25,6 +25,7 @@ import {
   Newspaper,
   MapPin,
   ExternalLink,
+  Info,
 } from 'lucide-react';
 import {
   Radar,
@@ -427,7 +428,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             )}
           </div>
 
-          {/* Card 3: News / Imprensa - HORIZONTAL */}
+          {/* Card 3: News / Imprensa */}
           <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
               <span className="text-xs font-extrabold uppercase text-[#6B0F1A] flex items-center gap-1.5">
@@ -576,6 +577,14 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 <span className="text-sm font-bold text-[#6B0F1A]">{Math.round((breakEven.fixedCostsTotal / breakEven.monthlyRevenue) * 100)}%</span>
               </div>
             </div>
+
+            {/* 🔥 NOVO: Mensagem de estímulo se os custos NÃO foram detalhados */}
+            {result.costAnalysis && !result.costAnalysis.isDetailed && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+                <Info className="w-4 h-4 shrink-0" />
+                <span>💡 Para uma análise mais precisa, detalhe seus custos fixos e variáveis na etapa financeira.</span>
+              </div>
+            )}
 
             {/* Mensagens de insight */}
             {result.costAnalysis.topCost && (
