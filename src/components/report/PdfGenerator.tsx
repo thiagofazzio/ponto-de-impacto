@@ -18,7 +18,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <>
-      {/* 🔥 ESTILOS DE IMPRESSÃO - AJUSTADOS */}
+      {/* 🔥 ESTILOS DE IMPRESSÃO - COM ZOOM AJUSTADO (90%) */}
       <style>{`
         @media print {
           body * {
@@ -39,6 +39,8 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
             font-size: 11px !important;
             line-height: 1.5 !important;
+            transform: scale(0.95) !important;
+            transform-origin: top left !important;
           }
           #pdf-content .card {
             background: #F9F7F3 !important;
@@ -93,11 +95,9 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         @page {
           margin: 1.2cm;
           size: A4;
-          zoom: 90%;
         }
       `}</style>
 
-      {/* 🔥 CONTEÚDO DO PDF - VISUAL BONITO E AJUSTADO */}
       <div id="pdf-content" className="max-w-4xl mx-auto" style={{ padding: '15px' }}>
         
         {/* Cabeçalho */}
@@ -151,7 +151,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
         {/* Gargalos */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-          {/* Gargalo Principal */}
           <div className="card-rose" style={{ border: '2px solid #fca5a5', background: '#fef2f2', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
             <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <AlertTriangle size={14} color="#dc2626" />
@@ -163,7 +162,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             <p style={{ fontSize: '10px', fontWeight: '700', color: '#6B0F1A', marginTop: '2px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
           </div>
 
-          {/* Gargalo Secundário */}
           <div className="card-gold" style={{ border: '2px solid #D4AF37', background: '#F4E8C1', borderRadius: '8px', padding: '12px', pageBreakInside: 'avoid' }}>
             <div className="flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Zap size={14} color="#6B0F1A" />

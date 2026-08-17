@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DiagnosticFormData } from '../../types';
-import { DollarSign, PieChart, Info, Landmark, Users, User, Briefcase, Clipboard, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { DollarSign, PieChart, Info, Landmark, Users, User, Briefcase, Clipboard, Plus, Trash2, ChevronDown, ChevronRight, Percent } from 'lucide-react';
 
 interface FinancialDataStepProps {
   formData: DiagnosticFormData;
@@ -24,6 +24,18 @@ const CATEGORIAS_CUSTO = [
   'Outros'
 ];
 
+// 🔥 Categorias de custos variáveis
+const CATEGORIAS_VARIAVEIS = [
+  'Insumos / Matéria-prima',
+  'Comissões de vendas',
+  'Taxas de cartão de crédito',
+  'Impostos sobre vendas',
+  'Frete e entregas',
+  'Embalagens',
+  'Royalties',
+  'Outros'
+];
+
 export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, onUpdate }) => {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
@@ -34,10 +46,17 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
   const [newCategory, setNewCategory] = useState('');
   const [newValue, setNewValue] = useState('');
 
+  // 🔥 Estado para detalhamento de custos variáveis
+  const [showVariableDetails, setShowVariableDetails] = useState(false);
+  const [variableItems, setVariableItems] = useState<Array<{ id: string; name: string; percent: number }>>([]);
+  const [newVariableCategory, setNewVariableCategory] = useState('');
+  const [newVariablePercent, setNewVariablePercent] = useState('');
+
   const monthlyRevenue = formData.monthlyRevenue || 150000;
   const monthlyClients = formData.monthlyClients || 60;
   const suggestedTicket = monthlyClients > 0 ? Math.round(monthlyRevenue / monthlyClients) : 0;
 
+  // Inicializa itens de custo fixo
   useEffect(() => {
     if (formData.fixedCosts && formData.fixedCosts > 0 && costItems.length === 0) {
       setCostItems([{
@@ -48,10 +67,28 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     }
   }, []);
 
+  // Inicializa itens de custo variável a partir do percentual total
+  useEffect(() => {
+    if (formData.variableCostsPercent && formData.variableCostsPercent > 0 && variableItems.length === 0) {
+      setVariableItems([{
+        id: Date.now().toString(),
+        name: 'Outros variáveis',
+        percent: formData.variableCostsPercent
+      }]);
+    }
+  }, []);
+
+  // Atualiza o total de custos fixos
   useEffect(() => {
     const total = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
     onUpdate({ fixedCosts: total });
   }, [costItems]);
+
+  // 🔥 Atualiza o total de custos variáveis
+  useEffect(() => {
+    const total = variableItems.reduce((sum, item) => sum + (item.percent || 0), 0);
+    onUpdate({ variableCostsPercent: Math.min(95, Math.round(total)) });
+  }, [variableItems]);
 
   const addCostItem = () => {
     if (!newCategory) return;
@@ -77,7 +114,33 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     ));
   };
 
+  // 🔥 Funções para custos variáveis
+  const addVariableItem = () => {
+    if (!newVariableCategory) return;
+    const percent = parseFloat(newVariablePercent) || 0;
+    if (percent <= 0) return;
+    
+    setVariableItems([...variableItems, {
+      id: Date.now().toString(),
+      name: newVariableCategory,
+      percent: percent
+    }]);
+    setNewVariableCategory('');
+    setNewVariablePercent('');
+  };
+
+  const removeVariableItem = (id: string) => {
+    setVariableItems(variableItems.filter(item => item.id !== id));
+  };
+
+  const updateVariableItem = (id: string, percent: number) => {
+    setVariableItems(variableItems.map(item => 
+      item.id === id ? { ...item, percent: percent } : item
+    ));
+  };
+
   const totalFixedCosts = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
+  const totalVariablePercent = variableItems.reduce((sum, item) => sum + (item.percent || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -93,7 +156,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
         
-        {/* 🔥 NÚMERO DE FUNCIONÁRIOS */}
+        {/* Número de Funcionários e Faturamento */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
@@ -182,7 +245,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         </div>
 
-        {/* Detalhamento de Custos */}
+        {/* Detalhamento de Custos Fixos */}
         {showCostDetails && (
           <div className="border-t border-[#D8D3CB] pt-5 mt-2">
             <div className="flex items-center justify-between mb-3">
@@ -258,53 +321,147 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         )}
 
-        {/* Variable Costs & Taxes Percentages */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-[#D8D3CB] pt-5">
-          
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                3. Custos Variáveis (%)
-              </label>
-              <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formData.variableCostsPercent}%</span>
+        {/* 🔥 Custos Variáveis - COM DETALHAMENTO */}
+        <div className="border-t border-[#D8D3CB] pt-5 mt-2">
+          <div className="flex justify-between items-center">
+            <div className="flex-1">
+              <div className="flex justify-between items-center">
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                  3. Custos Variáveis (%)
+                </label>
+                <span className="text-xs font-mono font-bold text-[#6B0F1A]">{Math.round(totalVariablePercent)}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={80}
+                step={1}
+                value={Math.min(80, Math.round(totalVariablePercent))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (variableItems.length > 1) {
+                    setVariableItems([{ id: Date.now().toString(), name: 'Outros variáveis', percent: val }]);
+                  } else {
+                    onUpdate({ variableCostsPercent: val });
+                  }
+                }}
+                className="w-full accent-[#6B0F1A] cursor-pointer"
+              />
+              <div className="flex justify-between text-[11px] text-[#5A6270]">
+                <span>Insumos / Comissões / Taxas de cartão</span>
+                <span>Atualmente: {Math.round(totalVariablePercent)}%</span>
+              </div>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={80}
-              step={1}
-              value={formData.variableCostsPercent}
-              onChange={(e) => onUpdate({ variableCostsPercent: Number(e.target.value) })}
-              className="w-full accent-[#6B0F1A] cursor-pointer"
-            />
-            <div className="flex justify-between text-[11px] text-[#5A6270]">
-              <span>Insumos / Comissões / Taxas de cartão</span>
-              <span>Atualmente: {formData.variableCostsPercent}%</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowVariableDetails(!showVariableDetails)}
+              className="text-xs text-[#6B0F1A] font-semibold flex items-center gap-1 hover:underline ml-4 shrink-0"
+            >
+              {showVariableDetails ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              {showVariableDetails ? 'Ocultar' : 'Detalhar'} variáveis
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                4. Impostos sobre Venda (%)
-              </label>
-              <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formData.taxesPercent}%</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={40}
-              step={0.5}
-              value={formData.taxesPercent}
-              onChange={(e) => onUpdate({ taxesPercent: Number(e.target.value) })}
-              className="w-full accent-[#6B0F1A] cursor-pointer"
-            />
-            <div className="flex justify-between text-[11px] text-[#5A6270]">
-              <span>Alíquota efetiva de imposto na Nota Fiscal</span>
-              <span>Atualmente: {formData.taxesPercent}%</span>
-            </div>
-          </div>
+          {/* Detalhamento de Custos Variáveis */}
+          {showVariableDetails && (
+            <div className="mt-3 pt-3 border-t border-[#D8D3CB]">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                  📊 Detalhamento dos Custos Variáveis
+                </h4>
+                <span className="text-xs font-bold text-[#6B0F1A]">
+                  Total: {Math.round(totalVariablePercent)}%
+                </span>
+              </div>
 
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {variableItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 bg-[#F9F7F3] p-2 rounded-lg border border-[#D8D3CB]">
+                    <span className="text-xs font-medium text-[#1A1A1A] flex-1 truncate">
+                      {item.name}
+                    </span>
+                    <div className="relative w-24">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        value={item.percent || ''}
+                        onChange={(e) => updateVariableItem(item.id, Number(e.target.value))}
+                        className="w-full bg-white border border-[#D8D3CB] rounded-lg px-2 py-1 text-xs font-mono focus:border-[#6B0F1A] focus:outline-none text-right"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">%</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeVariableItem(item.id)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                      disabled={variableItems.length === 1}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 mt-3">
+                <select
+                  value={newVariableCategory}
+                  onChange={(e) => setNewVariableCategory(e.target.value)}
+                  className="flex-1 bg-white border border-[#D8D3CB] rounded-lg px-3 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none"
+                >
+                  <option value="">Selecione uma categoria...</option>
+                  {CATEGORIAS_VARIAVEIS.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <div className="relative w-20">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={newVariablePercent}
+                    onChange={(e) => setNewVariablePercent(e.target.value)}
+                    placeholder="%"
+                    className="w-full bg-white border border-[#D8D3CB] rounded-lg px-2 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none text-right pr-6"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">%</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={addVariableItem}
+                  disabled={!newVariableCategory || !newVariablePercent}
+                  className="px-3 py-1.5 bg-[#6B0F1A] text-white rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#500B13] transition flex items-center gap-1"
+                >
+                  <Plus size={14} /> Adicionar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Impostos sobre Venda */}
+        <div className="border-t border-[#D8D3CB] pt-5">
+          <div className="flex justify-between items-center">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+              4. Impostos sobre Venda (%)
+            </label>
+            <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formData.taxesPercent}%</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={40}
+            step={0.5}
+            value={formData.taxesPercent}
+            onChange={(e) => onUpdate({ taxesPercent: Number(e.target.value) })}
+            className="w-full accent-[#6B0F1A] cursor-pointer mt-2"
+          />
+          <div className="flex justify-between text-[11px] text-[#5A6270]">
+            <span>Alíquota efetiva de imposto na Nota Fiscal</span>
+            <span>Atualmente: {formData.taxesPercent}%</span>
+          </div>
         </div>
 
         {/* Owner Salary, Ticket & Clients */}
