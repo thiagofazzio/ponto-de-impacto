@@ -313,7 +313,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* 🔥 Evidências Coletadas - HORIZONTAL */}
+      {/* 🔥 Evidências Coletadas - CARDS CORRIGIDOS (GRID RESPONSIVO) */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -331,7 +331,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 🔥 GRID RESPONSIVO: 1 coluna no mobile, 2 no tablet, 3 no desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          
           {/* Card 1: BrasilAPI / CNPJ */}
           <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
@@ -405,7 +407,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                     {evidence.googlePlaces.address && (
                       <p className="text-[11px] text-[#5A6270] mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-[#6B0F1A]" />
-                        <span className="truncate max-w-[200px]">{evidence.googlePlaces.address}</span>
+                        <span className="truncate max-w-[180px]">{evidence.googlePlaces.address}</span>
                       </p>
                     )}
                   </div>
