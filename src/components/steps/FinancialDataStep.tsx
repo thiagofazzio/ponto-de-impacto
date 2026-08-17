@@ -1,20 +1,96 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DiagnosticFormData } from '../../types';
-import { DollarSign, PieChart, Info, Landmark, Users, User, Briefcase, Clipboard } from 'lucide-react';
+import { DollarSign, PieChart, Info, Landmark, Users, User, Briefcase, Clipboard, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface FinancialDataStepProps {
   formData: DiagnosticFormData;
   onUpdate: (fields: Partial<DiagnosticFormData>) => void;
 }
 
+// Categorias de custo predefinidas
+const CATEGORIAS_CUSTO = [
+  'Aluguel',
+  'Salários operacionais',
+  'Pró-labore',
+  'Softwares e assinaturas',
+  'Contabilidade',
+  'Marketing e publicidade',
+  'Energia e utilidades',
+  'Manutenção',
+  'Seguros',
+  'Transporte e frete',
+  'Material de escritório',
+  'Consultorias',
+  'Outros'
+];
+
 export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, onUpdate }) => {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
   };
 
+  // 🔥 Estado para controlar se o detalhamento está aberto
+  const [showCostDetails, setShowCostDetails] = useState(false);
+  
+  // 🔥 Estado para os itens de custo
+  const [costItems, setCostItems] = useState<Array<{ id: string; name: string; value: number }>>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [newValue, setNewValue] = useState('');
+
+  // Usa o faturamento da etapa anterior (CNPJ)
   const monthlyRevenue = formData.monthlyRevenue || 150000;
+  
+  // Calcula o ticket médio sugerido
   const monthlyClients = formData.monthlyClients || 60;
   const suggestedTicket = monthlyClients > 0 ? Math.round(monthlyRevenue / monthlyClients) : 0;
+
+  // 🔥 Inicializa os itens de custo a partir do valor total (se houver)
+  useEffect(() => {
+    if (formData.fixedCosts && formData.fixedCosts > 0 && costItems.length === 0) {
+      // Se já tem um valor total, cria um item "Outros" com esse valor
+      setCostItems([{
+        id: Date.now().toString(),
+        name: 'Outros custos',
+        value: formData.fixedCosts
+      }]);
+    }
+  }, []);
+
+  // 🔥 Atualiza o total de custos fixos sempre que os itens mudam
+  useEffect(() => {
+    const total = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
+    onUpdate({ fixedCosts: total });
+  }, [costItems]);
+
+  // 🔥 Adicionar novo item de custo
+  const addCostItem = () => {
+    if (!newCategory) return;
+    const value = parseFloat(newValue) || 0;
+    if (value <= 0) return;
+    
+    setCostItems([...costItems, {
+      id: Date.now().toString(),
+      name: newCategory,
+      value: value
+    }]);
+    setNewCategory('');
+    setNewValue('');
+  };
+
+  // 🔥 Remover item de custo
+  const removeCostItem = (id: string) => {
+    setCostItems(costItems.filter(item => item.id !== id));
+  };
+
+  // 🔥 Atualizar valor de um item
+  const updateCostItem = (id: string, value: number) => {
+    setCostItems(costItems.map(item => 
+      item.id === id ? { ...item, value: value } : item
+    ));
+  };
+
+  // 🔥 Total calculado
+  const totalFixedCosts = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -30,9 +106,8 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
         
-        {/* Monthly Revenue & Fixed Costs */}
+        {/* Monthly Revenue */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
@@ -56,12 +131,13 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             <p className="text-[11px] text-[#5A6270]">Média bruta dos últimos 3 a 6 meses.</p>
           </div>
 
+          {/* 🔥 CUSTOS FIXOS - COM BOTÃO DE DETALHAMENTO */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
                 2. Custos Fixos Mensais (R$) *
               </label>
-              <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formatCurrency(formData.fixedCosts || 0)}</span>
+              <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formatCurrency(totalFixedCosts)}</span>
             </div>
             <div className="relative">
               <span className="absolute left-3.5 top-2.5 text-[#5A6270] font-semibold text-sm">R$</span>
@@ -70,16 +146,113 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
                 type="number"
                 min={0}
                 step={500}
-                value={formData.fixedCosts || ''}
-                onChange={(e) => onUpdate({ fixedCosts: Number(e.target.value) })}
+                value={totalFixedCosts}
+                onChange={(e) => {
+                  // Se o usuário digitar manualmente, reseta os itens detalhados
+                  const val = Number(e.target.value);
+                  if (costItems.length > 1) {
+                    setCostItems([{ id: Date.now().toString(), name: 'Outros custos', value: val }]);
+                  } else {
+                    onUpdate({ fixedCosts: val });
+                  }
+                }}
                 placeholder="Ex: 45000"
                 className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
               />
             </div>
-            <p className="text-[11px] text-[#5A6270]">Aluguel, salários operacionais, softwares, contabilidade.</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCostDetails(!showCostDetails)}
+                className="text-xs text-[#6B0F1A] font-semibold flex items-center gap-1 hover:underline"
+              >
+                {showCostDetails ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                {showCostDetails ? 'Ocultar' : 'Detalhar'} custos
+              </button>
+              <span className="text-[11px] text-[#5A6270]">
+                {costItems.length > 1 ? `${costItems.length} itens detalhados` : 'Insira os valores detalhadamente'}
+              </span>
+            </div>
           </div>
-
         </div>
+
+        {/* 🔥 DETALHAMENTO DE CUSTOS (EXPANSÍVEL) */}
+        {showCostDetails && (
+          <div className="border-t border-[#D8D3CB] pt-5 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                📋 Detalhamento dos Custos Fixos
+              </h4>
+              <span className="text-xs font-bold text-[#6B0F1A]">
+                Total: {formatCurrency(totalFixedCosts)}
+              </span>
+            </div>
+
+            {/* Lista de itens */}
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {costItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 bg-[#F9F7F3] p-2 rounded-lg border border-[#D8D3CB]">
+                  <span className="text-xs font-medium text-[#1A1A1A] flex-1 truncate">
+                    {item.name}
+                  </span>
+                  <div className="relative w-32">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">R$</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={100}
+                      value={item.value || ''}
+                      onChange={(e) => updateCostItem(item.id, Number(e.target.value))}
+                      className="w-full bg-white border border-[#D8D3CB] rounded-lg pl-7 pr-2 py-1 text-xs font-mono focus:border-[#6B0F1A] focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeCostItem(item.id)}
+                    className="text-red-500 hover:text-red-700 p-1"
+                    disabled={costItems.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Adicionar novo item */}
+            <div className="flex items-center gap-2 mt-3">
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="flex-1 bg-white border border-[#D8D3CB] rounded-lg px-3 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none"
+              >
+                <option value="">Selecione uma categoria...</option>
+                {CATEGORIAS_CUSTO.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <div className="relative w-28">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">R$</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  placeholder="Valor"
+                  className="w-full bg-white border border-[#D8D3CB] rounded-lg pl-7 pr-2 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={addCostItem}
+                disabled={!newCategory || !newValue}
+                className="px-3 py-1.5 bg-[#6B0F1A] text-white rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#500B13] transition flex items-center gap-1"
+              >
+                <Plus size={14} /> Adicionar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Variable Costs & Taxes Percentages */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-[#D8D3CB] pt-5">
