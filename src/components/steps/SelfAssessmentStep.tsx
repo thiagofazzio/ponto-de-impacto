@@ -1,51 +1,13 @@
 import React from 'react';
-import { AlertCircle, CheckCircle2, TrendingUp, AlertTriangle, HelpCircle } from 'lucide-react';
+import { Star, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface SelfAssessmentStepProps {
   areaKey: string;
   areaTitle: string;
-  stepNumber: number;
-  currentValue: number;
+  stepNumber: number; // 6 to 11
+  currentValue: number; // 1 to 5
   onSelect: (val: number) => void;
 }
-
-const LEVEL_CONFIG: Record<number, { color: string; bg: string; border: string; icon: React.ReactNode; label: string }> = {
-  1: {
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    icon: <AlertCircle className="w-5 h-5 text-red-600" />,
-    label: 'Crítico',
-  },
-  2: {
-    color: 'text-orange-700',
-    bg: 'bg-orange-50',
-    border: 'border-orange-200',
-    icon: <AlertTriangle className="w-5 h-5 text-orange-600" />,
-    label: 'Atenção',
-  },
-  3: {
-    color: 'text-yellow-700',
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
-    icon: <HelpCircle className="w-5 h-5 text-yellow-600" />,
-    label: 'Regular',
-  },
-  4: {
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    icon: <TrendingUp className="w-5 h-5 text-blue-600" />,
-    label: 'Bom',
-  },
-  5: {
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-    icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />,
-    label: 'Excelente',
-  },
-};
 
 const AREA_GUIDES: Record<string, { subtitle: string; levels: Record<number, { title: string; desc: string }> }> = {
   Financeiro: {
@@ -122,10 +84,8 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Autoavaliação</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
-          Como você avalia a área de <span className="text-[#6B0F1A]">{areaTitle}</span>?
-        </h2>
+        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa {stepNumber} de 16 • Autoavaliação Direcionada</span>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Como você avalia a área de {areaTitle}?</h2>
         <p className="text-[#5A6270] text-sm mt-1">{guide.subtitle}</p>
       </div>
 
@@ -134,49 +94,44 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
           Selecione a nota de 1 a 5 que melhor reflete a realidade atual da sua empresa:
         </label>
 
+        {/* Rating cards 1 to 5 */}
         <div className="grid grid-cols-1 gap-3">
           {[1, 2, 3, 4, 5].map((star) => {
             const isSelected = currentValue === star;
             const level = guide.levels[star];
-            const config = LEVEL_CONFIG[star];
 
             return (
               <button
                 key={star}
                 type="button"
                 onClick={() => onSelect(star)}
-                className={`p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-start gap-4 cursor-pointer ${
+                className={`p-4 rounded-xl border text-left transition duration-150 flex items-start gap-4 cursor-pointer ${
                   isSelected
-                    ? `${config.bg} ${config.border} shadow-md`
-                    : 'bg-white border-[#D8D3CB] hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
+                    ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#1A1A1A] shadow-md'
+                    : 'bg-[#F9F7F3] border-[#D8D3CB] text-[#1A1A1A] hover:border-[#6B0F1A]/50'
                 }`}
               >
-                <div className="flex flex-col items-center gap-1 shrink-0">
-                  <div className={`text-2xl ${isSelected ? config.color : 'text-[#5A6270]'}`}>
-                    {config.icon}
-                  </div>
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm border ${
-                      isSelected
-                        ? `${config.bg} ${config.border} ${config.color}`
-                        : 'bg-[#F9F7F3] text-[#5A6270] border-[#D8D3CB]'
-                    }`}
-                  >
-                    {star}
-                  </div>
+                {/* Score badge */}
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-sm border ${
+                    isSelected
+                      ? 'bg-[#6B0F1A] text-white border-[#500B13] shadow'
+                      : 'bg-white text-[#5A6270] border-[#D8D3CB]'
+                  }`}
+                >
+                  {star}★
                 </div>
 
+                {/* Level details */}
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className={`font-bold text-sm ${isSelected ? config.color : 'text-[#1A1A1A]'}`}>
+                    <span className={`font-bold text-sm ${isSelected ? 'text-[#6B0F1A]' : 'text-[#1A1A1A]'}`}>
                       Nota {star}: {level.title}
                     </span>
-                    {isSelected ? (
+                    {isSelected && (
                       <span className="text-xs font-bold text-[#6B0F1A] flex items-center gap-1">
                         <CheckCircle2 className="w-4 h-4" /> Selecionado
                       </span>
-                    ) : (
-                      <span className="text-xs font-medium text-[#5A6270]">{config.label}</span>
                     )}
                   </div>
                   <p className="text-xs text-[#5A6270] mt-0.5 leading-relaxed">{level.desc}</p>
