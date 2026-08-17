@@ -114,10 +114,14 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
 
-    // Etapa 5: Financeiro + Responsável Financeiro
+    // Etapa 5: Financeiro + Funcionários + Responsável Financeiro
     if (currentStep === 5) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
+        return false;
+      }
+      if (!formData.employeesCount) {
+        setValidationError('Por favor, informe o número de funcionários.');
         return false;
       }
       if (!formData.responsavelFinanceiro) {

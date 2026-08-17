@@ -35,30 +35,30 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     return value;
   };
 
-  // 🔥 Função para verificar divergência do modelo de receita (REATIVADA)
-  const verificarDivergenciaModelo = () => {
-    if (!cnpjData || !formData.revenueModel) return null;
+  // 🔥 FUNÇÃO REATIVADA: Insight do modelo de receita
+  const verificarInsightModelo = () => {
+    if (!cnpjData) return null;
     
     const cnae = cnpjData.cnaeDescricao || '';
-    const modelo = formData.revenueModel;
     
+    // Mapeamento de palavras-chave para modelos sugeridos
     const palavrasChave: Record<string, string> = {
-      'comercio': 'venda_produtos',
-      'varejista': 'venda_produtos',
-      'supermercados': 'venda_produtos',
-      'consultoria': 'prestacao_servicos',
-      'servicos': 'prestacao_servicos',
-      'assinatura': 'assinatura',
-      'plataforma': 'marketplace',
-      'distribuição': 'venda_produtos',
-      'indústria': 'venda_produtos',
-      'ensino': 'prestacao_servicos',
-      'saúde': 'prestacao_servicos',
-      'alimentício': 'venda_produtos',
-      'varejo': 'venda_produtos',
+      'comercio': 'Venda de Produtos',
+      'varejista': 'Venda de Produtos',
+      'supermercados': 'Venda de Produtos',
+      'consultoria': 'Prestação de Serviços',
+      'servicos': 'Prestação de Serviços',
+      'assinatura': 'Assinatura / Recorrência',
+      'plataforma': 'Marketplace / Plataforma',
+      'distribuição': 'Venda de Produtos',
+      'indústria': 'Venda de Produtos',
+      'ensino': 'Prestação de Serviços',
+      'saúde': 'Prestação de Serviços',
+      'alimentício': 'Venda de Produtos',
+      'varejo': 'Venda de Produtos',
     };
     
-    let modeloSugerido = 'outros';
+    let modeloSugerido = 'Modelo híbrido ou personalizado';
     for (const [key, value] of Object.entries(palavrasChave)) {
       if (cnae.toLowerCase().includes(key)) {
         modeloSugerido = value;
@@ -66,24 +66,43 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
       }
     }
     
-    if (modelo !== modeloSugerido && modeloSugerido !== 'outros' && modelo !== 'outros') {
-      const labels: Record<string, string> = {
-        venda_produtos: 'Venda de Produtos',
-        prestacao_servicos: 'Prestação de Serviços',
-        assinatura: 'Assinatura / Recorrência',
-        marketplace: 'Marketplace / Plataforma',
-        hibrido: 'Híbrido',
-        outros: 'Outro modelo',
-      };
-      
+    const modeloSelecionado = formData.revenueModel;
+    const labels: Record<string, string> = {
+      venda_produtos: 'Venda de Produtos',
+      prestacao_servicos: 'Prestação de Serviços',
+      assinatura: 'Assinatura / Recorrência',
+      marketplace: 'Marketplace / Plataforma',
+      hibrido: 'Híbrido',
+      outros: 'Outro modelo',
+    };
+    const modeloLabel = modeloSelecionado ? labels[modeloSelecionado] : null;
+
+    // 🔥 Sempre mostra o insight, adaptando a mensagem
+    if (modeloSelecionado && modeloLabel && modeloLabel !== modeloSugerido && modeloSelecionado !== 'outros') {
       return {
-        modeloAtual: labels[modelo] || modelo,
-        modeloSugerido: labels[modeloSugerido] || modeloSugerido,
-        mensagem: `Seu modelo de receita (${labels[modelo] || modelo}) é diferente do usual para empresas do seu segmento (${labels[modeloSugerido] || modeloSugerido}). Isso pode indicar uma oportunidade de posicionamento!`,
+        icone: '🚀',
+        cor: 'bg-amber-50 border-amber-200',
+        titulo: 'Estratégia diferenciada detectada!',
+        mensagem: `Seu CNAE sugere ${modeloSugerido}, mas você escolheu ${modeloLabel}.`,
+        detalhe: 'Isso pode ser uma evolução do negócio, uma estratégia fiscal ou um posicionamento único.'
+      };
+    } else if (modeloSelecionado && modeloLabel && modeloLabel === modeloSugerido) {
+      return {
+        icone: '🎯',
+        cor: 'bg-emerald-50 border-emerald-200',
+        titulo: 'Alinhamento perfeito!',
+        mensagem: `Seu modelo de receita (${modeloLabel}) está alinhado com seu segmento de mercado.`,
+        detalhe: 'Isso indica que você está no caminho certo para o seu tipo de negócio.'
+      };
+    } else {
+      return {
+        icone: '💡',
+        cor: 'bg-blue-50 border-blue-200',
+        titulo: 'Insight TFAZZIO',
+        mensagem: `Para o segmento da sua empresa, o modelo de receita mais comum é ${modeloSugerido}.`,
+        detalhe: 'Na etapa anterior você pode confirmar qual modelo faz mais sentido para sua realidade.'
       };
     }
-    
-    return null;
   };
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +161,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     onNext();
   };
 
-  const divergencia = verificarDivergenciaModelo();
+  const insight = verificarInsightModelo();
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -242,20 +261,15 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
             </div>
           </div>
 
-          {/* 🔥 INSIGHT REATIVADO */}
-          {divergencia && (
-            <div className="p-4 bg-[#F4E8C1] border border-[#D4AF37] rounded-xl">
+          {/* 🔥 INSIGHT SEMPRE VISÍVEL */}
+          {insight && (
+            <div className={`p-4 rounded-xl border ${insight.cor}`}>
               <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-[#6B0F1A] shrink-0 mt-0.5" />
+                <span className="text-2xl">{insight.icone}</span>
                 <div>
-                  <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">💡 Insight TFAZZIO</span>
-                  <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">
-                    {divergencia.mensagem}
-                  </p>
-                  <p className="text-xs text-[#5A6270] mt-1">
-                    Seu modelo atual: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloAtual}</span> • 
-                    Sugestão para o segmento: <span className="font-bold text-[#6B0F1A]">{divergencia.modeloSugerido}</span>
-                  </p>
+                  <span className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">{insight.titulo}</span>
+                  <p className="text-sm text-[#1A1A1A] mt-0.5 font-medium">{insight.mensagem}</p>
+                  <p className="text-xs text-[#5A6270] mt-1">{insight.detalhe}</p>
                 </div>
               </div>
             </div>

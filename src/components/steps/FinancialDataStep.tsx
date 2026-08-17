@@ -29,25 +29,17 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
   };
 
-  // 🔥 Estado para controlar se o detalhamento está aberto
   const [showCostDetails, setShowCostDetails] = useState(false);
-  
-  // 🔥 Estado para os itens de custo
   const [costItems, setCostItems] = useState<Array<{ id: string; name: string; value: number }>>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newValue, setNewValue] = useState('');
 
-  // Usa o faturamento da etapa anterior (CNPJ)
   const monthlyRevenue = formData.monthlyRevenue || 150000;
-  
-  // Calcula o ticket médio sugerido
   const monthlyClients = formData.monthlyClients || 60;
   const suggestedTicket = monthlyClients > 0 ? Math.round(monthlyRevenue / monthlyClients) : 0;
 
-  // 🔥 Inicializa os itens de custo a partir do valor total (se houver)
   useEffect(() => {
     if (formData.fixedCosts && formData.fixedCosts > 0 && costItems.length === 0) {
-      // Se já tem um valor total, cria um item "Outros" com esse valor
       setCostItems([{
         id: Date.now().toString(),
         name: 'Outros custos',
@@ -56,13 +48,11 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     }
   }, []);
 
-  // 🔥 Atualiza o total de custos fixos sempre que os itens mudam
   useEffect(() => {
     const total = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
     onUpdate({ fixedCosts: total });
   }, [costItems]);
 
-  // 🔥 Adicionar novo item de custo
   const addCostItem = () => {
     if (!newCategory) return;
     const value = parseFloat(newValue) || 0;
@@ -77,19 +67,16 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
     setNewValue('');
   };
 
-  // 🔥 Remover item de custo
   const removeCostItem = (id: string) => {
     setCostItems(costItems.filter(item => item.id !== id));
   };
 
-  // 🔥 Atualizar valor de um item
   const updateCostItem = (id: string, value: number) => {
     setCostItems(costItems.map(item => 
       item.id === id ? { ...item, value: value } : item
     ));
   };
 
-  // 🔥 Total calculado
   const totalFixedCosts = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
 
   return (
@@ -106,12 +93,30 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
         
-        {/* Monthly Revenue */}
+        {/* 🔥 NÚMERO DE FUNCIONÁRIOS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+              Número de Funcionários *
+            </label>
+            <select
+              value={formData.employeesCount || '6_15'}
+              onChange={(e) => onUpdate({ employeesCount: e.target.value })}
+              className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
+            >
+              <option value="1_5">1 a 5</option>
+              <option value="6_15">6 a 15</option>
+              <option value="16_50">16 a 50</option>
+              <option value="51_100">51 a 100</option>
+              <option value="100+">Mais de 100</option>
+            </select>
+            <p className="text-[11px] text-[#5A6270]">Total de colaboradores na empresa.</p>
+          </div>
+
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                1. Faturamento Mensal Médio (R$) *
+                Faturamento Mensal Médio (R$) *
               </label>
               <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formatCurrency(monthlyRevenue)}</span>
             </div>
@@ -130,8 +135,10 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             </div>
             <p className="text-[11px] text-[#5A6270]">Média bruta dos últimos 3 a 6 meses.</p>
           </div>
+        </div>
 
-          {/* 🔥 CUSTOS FIXOS - COM BOTÃO DE DETALHAMENTO */}
+        {/* Custos Fixos */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-[#D8D3CB] pt-5">
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
@@ -148,7 +155,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
                 step={500}
                 value={totalFixedCosts}
                 onChange={(e) => {
-                  // Se o usuário digitar manualmente, reseta os itens detalhados
                   const val = Number(e.target.value);
                   if (costItems.length > 1) {
                     setCostItems([{ id: Date.now().toString(), name: 'Outros custos', value: val }]);
@@ -176,7 +182,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         </div>
 
-        {/* 🔥 DETALHAMENTO DE CUSTOS (EXPANSÍVEL) */}
+        {/* Detalhamento de Custos */}
         {showCostDetails && (
           <div className="border-t border-[#D8D3CB] pt-5 mt-2">
             <div className="flex items-center justify-between mb-3">
@@ -188,7 +194,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
               </span>
             </div>
 
-            {/* Lista de itens */}
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
               {costItems.map((item) => (
                 <div key={item.id} className="flex items-center gap-2 bg-[#F9F7F3] p-2 rounded-lg border border-[#D8D3CB]">
@@ -218,7 +223,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
               ))}
             </div>
 
-            {/* Adicionar novo item */}
             <div className="flex items-center gap-2 mt-3">
               <select
                 value={newCategory}
