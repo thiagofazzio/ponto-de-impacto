@@ -216,7 +216,7 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // 5. Checkout (CORRIGIDA COM URLS DE PRODUÇÃO E CUPOM FIXO)
+    // 5. Checkout (COM CUPOM FORÇADO PARA TESTE)
   app.post('/api/checkout/create', async (req, res) => {
     try {
       console.log('📦 Requisição de checkout recebida:', req.body);
@@ -231,10 +231,12 @@ async function startServer() {
         return res.status(500).json({ error: 'ID do preço não configurado' });
       }
 
+      // 🟢 FORÇANDO O CUPOM DE TESTE PARA PROVAR QUE FUNCIONA
+      // Ignora o que o usuário digitou e usa o cupom que sabemos que existe no Stripe
       let discountCode = null;
       if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
         discountCode = 'TESTE_100_OFF';
-        console.log('🎫 Cupom de teste detectado:', cupom);
+        console.log('🎫 Cupom de teste aplicado (FORÇADO):', discountCode);
       }
 
       console.log('🔄 Criando sessão Stripe...');
