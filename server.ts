@@ -216,7 +216,7 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // 5. Checkout (CORRIGIDA COM LOGS)
+  // 5. Checkout (CORRIGIDA COM URLS DE PRODUÇÃO E CUPOM FIXO)
   app.post('/api/checkout/create', async (req, res) => {
     try {
       console.log('📦 Requisição de checkout recebida:', req.body);
@@ -291,7 +291,19 @@ async function startServer() {
     res.json({ received: true });
   });
 
-  // 7. Diagnóstico (protegido por pagamento)
+  // 7. Rota de cancelamento (nova)
+  app.get('/checkout/cancel', (req, res) => {
+    res.redirect('https://ponto.tfazzio.com.br/?canceled=true');
+  });
+
+  // 8. Rota de sucesso (nova)
+  app.get('/checkout/success', (req, res) => {
+    const sessionId = req.query.session_id;
+    console.log('✅ Checkout success para session_id:', sessionId);
+    res.redirect(`https://ponto.tfazzio.com.br/?success=true&session_id=${sessionId}`);
+  });
+
+  // 9. Diagnóstico (protegido por pagamento)
   app.post('/api/diagnostico/calcular', async (req, res) => {
     try {
       const formData: DiagnosticFormData = req.body;
@@ -307,7 +319,7 @@ async function startServer() {
     }
   });
 
-  // 8. Diagnóstico com IA
+  // 10. Diagnóstico com IA
   app.post('/api/diagnostico/ia-gerar', async (req, res) => {
     const formData: DiagnosticFormData = req.body;
     const baseResult = generateFullDiagnostic(formData);
@@ -363,7 +375,7 @@ TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSu
     }
   });
 
-  // 9. Admin Leads
+  // 11. Admin Leads
   app.get('/api/admin/leads', (req, res) => {
     const token = String(req.query.token || '');
     if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
@@ -378,16 +390,6 @@ TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSu
   });
 
   // ===== SERVER ESTÁTICO =====
-
-  // Rota de sucesso (checkout)
-  app.get('/checkout/success', (req, res) => {
-    const indexPath = path.join(process.cwd(), 'dist', 'index.html');
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.send('<h1>Pagamento confirmado!</h1><p>Você pode fechar esta janela e voltar ao diagnóstico.</p>');
-    }
-  });
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
