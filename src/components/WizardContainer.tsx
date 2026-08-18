@@ -11,7 +11,7 @@ import { ReviewStep } from './steps/ReviewStep';
 import { ProcessingStep } from './steps/ProcessingStep';
 import { ReportDashboard } from './report/ReportDashboard';
 import { PdfGenerator } from './report/PdfGenerator';
-import { ArrowLeft, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import RevenueModelStep from './RevenueModelStep';
