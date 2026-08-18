@@ -11,7 +11,7 @@ import { ReviewStep } from './steps/ReviewStep';
 import { ProcessingStep } from './steps/ProcessingStep';
 import { ReportDashboard } from './report/ReportDashboard';
 import { PdfGenerator } from './report/PdfGenerator';
-import { ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import RevenueModelStep from './RevenueModelStep';
@@ -81,7 +81,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🔥 Efeito para carregar dados do localStorage (caso o usuário recarregue a página)
+  // 🔥 Carrega dados do localStorage
   useEffect(() => {
     const savedData = localStorage.getItem('tfazzio_diagnostic_data');
     if (savedData) {
@@ -203,9 +203,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // 🔥 Função para limpar dados e recomeçar
   const resetAll = () => {
-    setFormData(INITIAL_FORM_DATA);
     localStorage.removeItem('tfazzio_diagnostic_data');
+    setFormData(INITIAL_FORM_DATA);
     setDiagnosticResult(null);
     setCurrentStep(1);
     setShowPdfModal(false);
