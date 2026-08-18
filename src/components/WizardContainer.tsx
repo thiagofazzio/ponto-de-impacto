@@ -63,6 +63,7 @@ const INITIAL_FORM_DATA: DiagnosticFormData = {
   responsavelFinanceiro: '',
   responsavelComercial: '',
   responsavelOperacoes: '',
+  paymentConfirmed: false,
 };
 
 interface WizardContainerProps {
@@ -88,7 +89,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     if (success === 'true' && sessionId) {
       setShowSuccess(true);
-      // Limpa a URL para não ficar suja
+      setFormData(prev => ({ ...prev, paymentConfirmed: true }));
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -167,8 +168,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const nextStep = () => {
     if (!validateStep()) return;
     
-    // 🔥 Se estiver na etapa 14 (Revisão), mostra o checkout
-    if (currentStep === 14) {
+    // 🔥 Se estiver na etapa 4 (CNPJ) e NÃO tiver pago, mostra o checkout
+    if (currentStep === 4 && !formData.paymentConfirmed) {
       setShowCheckout(true);
       return;
     }
@@ -210,7 +211,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const fetchResult = (async (): Promise<DiagnosticResult> => {
       try {
-        const response = await fetch('/api/diagnostico/ia-gerar', {
+        const response = await fetch('/api/diagnostico/gerar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -366,6 +367,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           onClose={() => setShowCheckout(false)}
           onSuccess={() => {
             setShowCheckout(false);
+            setFormData(prev => ({ ...prev, paymentConfirmed: true }));
             setShowSuccess(true);
           }}
         />

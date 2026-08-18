@@ -38,7 +38,7 @@ export interface DiagnosticFormData {
   conversionRate: number;
   hasCRM: boolean;
   salesTeamSize: number;
-  hasSalesManager?: boolean; // 🔥 NOVO
+  hasSalesManager?: boolean;
 
   // Autoavaliação (1 a 5)
   scoreFinanceiro: number;
@@ -74,6 +74,9 @@ export interface DiagnosticFormData {
   responsavelFinanceiro: string;
   responsavelComercial: string;
   responsavelOperacoes: string;
+
+  // Pagamento (NOVO)
+  paymentConfirmed?: boolean;
 }
 
 export interface BreakEvenAnalysis {
@@ -106,6 +109,8 @@ export interface BottleneckInfo {
   description: string;
   impact: string;
   immediateAction: string;
+  impactoSimplificado?: string;
+  acaoUrgente?: string;
 }
 
 export interface ActionPlanTask {
@@ -167,18 +172,15 @@ export interface DiagnosticResult {
   evidenceData?: EvidenceData;
   aiGenerated: boolean;
   generatedAt: string;
-  // Campos adicionados pelo modelo de receita
   revenueModel?: string;
   recomendacoesPersonalizadas?: string[];
   prioridadeModelo?: string;
   modeloReceitaAplicado?: string;
-  // Campos adicionados pelos responsáveis
   responsaveis?: {
     financeiro: string;
     comercial: string;
     operacoes: string;
   };
-  // Análise de custos
   costAnalysis?: {
     topCost: { name: string; value: number };
     distribution: Array<{ name: string; value: number; percent: number }>;

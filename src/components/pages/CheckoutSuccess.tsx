@@ -7,7 +7,6 @@ interface CheckoutSuccessProps {
 
 const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ onContinue }) => {
   useEffect(() => {
-    // Dispara a geração do diagnóstico automaticamente após o pagamento
     const timer = setTimeout(() => {
       if (onContinue) onContinue();
     }, 2000);
