@@ -368,7 +368,11 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           onSuccess={() => {
             setShowCheckout(false);
             setFormData(prev => ({ ...prev, paymentConfirmed: true }));
-            setShowSuccess(true);
+            
+            // 🔥 CORREÇÃO DO PULO: Agora volta para as perguntas
+            setCurrentStep(5);
+            if (onStepChange) onStepChange(5);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         />
       )}
