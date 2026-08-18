@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { DiagnosticResult } from '../../types';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { Download, Loader2 } from 'lucide-react';
 
 interface PdfGeneratorProps {
