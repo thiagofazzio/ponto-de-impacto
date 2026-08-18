@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { DiagnosticResult } from '../../types';
 import { Building2, Target, TrendingUp, Zap, AlertTriangle } from 'lucide-react';
 
@@ -8,8 +8,20 @@ interface PdfGeneratorProps {
 }
 
 export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) => {
+  const printCounter = useRef(0);
+
   const handlePrint = () => {
-    window.print();
+    // Evita múltiplas impressões
+    if (printCounter.current > 0) return;
+    printCounter.current += 1;
+    
+    setTimeout(() => {
+      window.print();
+      // Reseta o contador após a impressão
+      setTimeout(() => {
+        printCounter.current = 0;
+      }, 2000);
+    }, 300);
   };
 
   const formatCurrency = (val: number) => {
