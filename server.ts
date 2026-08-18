@@ -210,7 +210,7 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // ===== CHECKOUT CORRIGIDO COM O ID PROMO_... REAL =====
+  // ===== CHECKOUT COM BYPASS DE TESTE =====
   app.post('/api/checkout/create', async (req, res) => {
     try {
       console.log('📦 Requisição de checkout recebida:', req.body);
@@ -218,19 +218,20 @@ async function startServer() {
       const { email, cupom } = req.body;
       const priceId = process.env.STRIPE_PRICE_ID;
 
+      // 🟢 BYPASS: Se o cupom começar com TESTE_TFAZZIO_, libera sem ir para o Stripe
+      if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
+        console.log('🎫 Cupom de teste detectado! BYPASS ATIVADO.');
+        return res.json({ 
+          url: `https://ponto.tfazzio.com.br/checkout/success?session_id=teste_${Date.now()}`
+        });
+      }
+
       if (!priceId) {
         console.error('❌ STRIPE_PRICE_ID não está configurada');
         return res.status(500).json({ error: 'ID do preço não configurado' });
       }
 
-      let promotionCode = null;
-      if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
-        // 🔥 ID DO CÓDIGO PROMOCIONAL QUE APARECEU NO SEU PRINT
-        promotionCode = 'promo_1USqhsEzPbBd9isYIZqDYOJo';
-        console.log('🎫 ID do promotion_code aplicado:', promotionCode);
-      }
-
-      console.log('🔄 Criando sessão Stripe...');
+      console.log('🔄 Criando sessão Stripe para pagamento real...');
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -242,7 +243,6 @@ async function startServer() {
             quantity: 1,
           },
         ],
-        discounts: promotionCode ? [{ promotion_code: promotionCode }] : [],
         success_url: `https://ponto.tfazzio.com.br/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://ponto.tfazzio.com.br/checkout/cancel`,
         metadata: {
@@ -251,7 +251,7 @@ async function startServer() {
         },
       });
 
-      console.log('✅ Sessão criada com sucesso:', session.id);
+      console.log('✅ Sessão Stripe criada com sucesso:', session.id);
       return res.json({ url: session.url });
     } catch (err: any) {
       console.error('❌ ERRO DETALHADO DO STRIPE:', err);
