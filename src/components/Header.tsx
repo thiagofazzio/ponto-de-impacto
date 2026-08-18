@@ -11,12 +11,18 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset, companyName }) => {
   const isReport = currentStep === 16;
 
+  // 🔥 Função que limpa o localStorage e recarrega a página
+  const handleReset = () => {
+    localStorage.removeItem('tfazzio_diagnostic_data');
+    window.location.reload();
+  };
+
   return (
     <header id="header-main" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#D8D3CB] text-[#1A1A1A] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={onReset}>
+        <div className="flex items-center gap-3 cursor-pointer" onClick={handleReset}>
           <div className="w-8.5 h-8.5 rounded-lg bg-[#6B0F1A] flex items-center justify-center text-[#D4AF37] font-bold shadow-sm border border-[#500B13]">
             <Target className="w-5 h-5 stroke-[2.5]" />
           </div>
@@ -67,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
           {currentStep > 1 && (
             <button
               id="btn-restart-diagnostic"
-              onClick={onReset}
+              onClick={handleReset}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5A6270] hover:text-[#1A1A1A] bg-[#F9F7F3] hover:bg-[#E8E2D8] border border-[#D8D3CB] rounded-lg transition"
               title="Reiniciar diagnóstico"
             >

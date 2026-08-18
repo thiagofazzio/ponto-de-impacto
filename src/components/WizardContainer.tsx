@@ -203,25 +203,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🔥 Função para limpar dados e recomeçar COM RECARREGAMENTO DA PÁGINA
-  const resetAll = () => {
-    localStorage.removeItem('tfazzio_diagnostic_data');
-    setFormData(INITIAL_FORM_DATA);
-    setDiagnosticResult(null);
-    setCurrentStep(1);
-    setShowPdfModal(false);
-    setValidationError(null);
-    setShowCheckout(false);
-    setShowSuccess(false);
-    setIsProcessing(false);
-    if (onStepChange) onStepChange(1);
-    if (onCompanyChange) onCompanyChange('');
-    
-    // 🔥 Força o recarregamento da página para garantir que todos os dados sejam limpos
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-  };
+  // 🔥 Reset removido daqui porque agora é feito pelo Header
 
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
@@ -350,7 +332,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             )}
             {currentStep === 15 && <ProcessingStep />}
             {currentStep === 16 && diagnosticResult && (
-              <ReportDashboard result={diagnosticResult} onDownloadPdf={() => setShowPdfModal(true)} onRestart={resetAll} />
+              <ReportDashboard result={diagnosticResult} onDownloadPdf={() => setShowPdfModal(true)} onRestart={() => window.location.reload()} />
             )}
           </motion.div>
         </AnimatePresence>
