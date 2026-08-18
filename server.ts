@@ -11,6 +11,7 @@ import Stripe from 'stripe';
 console.log('🔑 GOOGLE_PLACES_API_KEY:', process.env.GOOGLE_PLACES_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? '✅ Configurada' : '❌ Não configurada');
+console.log('🔑 STRIPE_PRICE_ID:', process.env.STRIPE_PRICE_ID ? '✅ Configurada' : '❌ Não configurada');
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
@@ -215,16 +216,28 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // 5. Checkout (nova rota) - CORRIGIDA dentro da função startServer()
+  // 5. Checkout (CORRIGIDA COM LOGS)
   app.post('/api/checkout/create', async (req, res) => {
     try {
+      console.log('📦 Requisição de checkout recebida:', req.body);
+
       const { email, cupom } = req.body;
-      const priceId = process.env.STRIPE_PRICE_ID || 'price_1R2A123456'; // Substitua pelo seu ID real
+      const priceId = process.env.STRIPE_PRICE_ID;
+
+      console.log('🔍 Price ID usado:', priceId);
+
+      if (!priceId) {
+        console.error('❌ STRIPE_PRICE_ID não está configurada');
+        return res.status(500).json({ error: 'ID do preço não configurado' });
+      }
 
       let discountCode = null;
       if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
         discountCode = 'TESTE_100_OFF';
+        console.log('🎫 Cupom de teste detectado:', cupom);
       }
+
+      console.log('🔄 Criando sessão Stripe...');
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -237,18 +250,19 @@ async function startServer() {
           },
         ],
         discounts: discountCode ? [{ coupon: discountCode }] : [],
-        success_url: `http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `http://localhost:3000/checkout/cancel`,
+        success_url: `https://ponto.tfazzio.com.br/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `https://ponto.tfazzio.com.br/checkout/cancel`,
         metadata: {
           email: email || '',
           cupom: cupom || '',
         },
       });
 
+      console.log('✅ Sessão criada com sucesso:', session.id);
       return res.json({ url: session.url });
     } catch (err: any) {
-      console.error('Erro ao criar checkout:', err);
-      return res.status(500).json({ error: 'Erro ao criar sessão de pagamento' });
+      console.error('❌ ERRO DETALHADO DO STRIPE:', err);
+      return res.status(500).json({ error: err.message || 'Erro ao criar sessão de pagamento' });
     }
   });
 
