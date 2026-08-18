@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { DiagnosticResult } from '../../types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas-pro';
@@ -11,6 +11,7 @@ interface PdfGeneratorProps {
 
 export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) => {
   const [generating, setGenerating] = useState(false);
+  const [contentReady, setContentReady] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const form = result.formSummary;
@@ -22,21 +23,40 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
   };
 
+  // 🔥 Força o navegador a calcular o layout antes de capturar
+  useEffect(() => {
+    if (contentRef.current) {
+      // Força reflow
+      contentRef.current.getBoundingClientRect();
+      setContentReady(true);
+    }
+  }, []);
+
   const handleDownloadPdf = async () => {
-    if (!contentRef.current) return;
+    if (!contentRef.current || !contentReady) return;
     setGenerating(true);
 
     try {
-      // 🔥 Dá um tempo para o CSS ser renderizado antes de capturar
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // 🔥 Espera as fontes carregarem
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
 
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2.5,
+      // 🔥 Força 3 quadros de animação para garantir que o layout esteja pintado
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+      // 🔥 Pega o elemento com todas as dimensões corretas
+      const node = contentRef.current;
+
+      const canvas = await html2canvas(node, {
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        width: contentRef.current.scrollWidth,
-        height: contentRef.current.scrollHeight,
+        width: node.scrollWidth,
+        height: node.scrollHeight,
+        windowWidth: node.scrollWidth,
+        windowHeight: node.scrollHeight,
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -70,13 +90,14 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <div className="space-y-4">
+      {/* Botões */}
       <div className="flex justify-end gap-3 no-print">
         {onClose && (
           <button onClick={onClose} className="px-4 py-2 border border-[#D8D3CB] rounded-lg hover:bg-[#F9F7F3] text-sm">Fechar</button>
         )}
         <button
           onClick={handleDownloadPdf}
-          disabled={generating}
+          disabled={generating || !contentReady}
           className="px-6 py-3 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-extrabold text-sm rounded-xl shadow-lg flex items-center gap-2 transition cursor-pointer no-print"
         >
           {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-[#D4AF37]" />}
@@ -84,6 +105,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </button>
       </div>
 
+      {/* Conteúdo do PDF */}
       <div className="overflow-auto max-h-[75vh] bg-[#EDEAE3] rounded-xl border border-[#D8D3CB] p-4 no-print">
         <div
           ref={contentRef}
