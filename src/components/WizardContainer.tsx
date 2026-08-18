@@ -360,7 +360,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
-      {/* Checkout Modal */}
+            {/* Checkout Modal */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}
@@ -369,7 +369,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             setShowCheckout(false);
             setFormData(prev => ({ ...prev, paymentConfirmed: true }));
             
-            // 🔥 CORREÇÃO DO PULO: Agora volta para as perguntas
+            // 🔥 CORREÇÃO DEFINITIVA: Agora vai para a etapa 5
             setCurrentStep(5);
             if (onStepChange) onStepChange(5);
             window.scrollTo({ top: 0, behavior: 'smooth' });
