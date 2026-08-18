@@ -19,56 +19,75 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
   };
 
-  // 🔥 O botão agora só dispara o Ctrl+P nativo do navegador
   const handlePrint = () => {
     window.print();
   };
 
   return (
     <div className="space-y-4">
-      {/* 🔥 CSS DE IMPRESSÃO PERFEITO */}
+      {/* 🔥 CSS DE IMPRESSÃO COM A LINHA MÁGICA QUE RESOLVE TUDO */}
       <style>{`
         @media print {
-          @page {
-            size: A4 portrait;
-            margin: 1.5cm;
-          }
+          /* Esconde tudo que não for o PDF */
           body * {
             visibility: hidden !important;
+            display: none !important;
           }
+
+          /* Força o conteúdo do PDF a aparecer */
           #pdf-content, #pdf-content * {
             visibility: visible !important;
+            display: block !important;
           }
+
+          /* Ajusta o PDF para ocupar a página inteira */
           #pdf-content {
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
             width: 100% !important;
+            height: 100% !important;
             background: white !important;
             color: #1A1A1A !important;
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
             font-size: 11px !important;
             line-height: 1.5 !important;
+            padding: 20px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
           }
-          #pdf-content .card { background: #F9F7F3 !important; border: 1px solid #D8D3CB !important; border-radius: 6px !important; padding: 10px !important; margin-bottom: 8px !important; page-break-inside: avoid !important; }
-          .no-print { display: none !important; }
+
+          /* Estilos dos cartões */
+          #pdf-content .card {
+            background: #F9F7F3 !important;
+            border: 1px solid #D8D3CB !important;
+            border-radius: 6px !important;
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+            page-break-inside: avoid !important;
+          }
+
+          /* Títulos */
           #pdf-content h1 { font-size: 22px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 4px !important; }
           #pdf-content h2 { font-size: 16px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 10px !important; margin-bottom: 4px !important; }
           #pdf-content h3 { font-size: 14px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 8px !important; margin-bottom: 2px !important; }
+
+          /* Texto */
           #pdf-content p { font-size: 11px !important; line-height: 1.5 !important; color: #1A1A1A !important; margin: 2px 0 !important; }
           #pdf-content .text-muted { color: #5A6270 !important; font-size: 10px !important; }
-          #pdf-content .text-red { color: #6B0F1A !important; }
-          #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-          #pdf-content .grid-3 { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
-          #pdf-content .flex-between { display: flex !important; justify-content: space-between !important; align-items: center !important; }
-          #pdf-content .text-right { text-align: right !important; }
           #pdf-content .font-bold { font-weight: 700 !important; }
-          #pdf-content .badge { display: inline-block !important; background: #F4E8C1 !important; color: #6B0F1A !important; font-size: 10px !important; font-weight: 700 !important; padding: 2px 8px !important; border-radius: 12px !important; border: 1px solid #D4AF37 !important; }
-          #pdf-content ul { padding-left: 16px !important; margin: 4px 0 !important; }
-          #pdf-content li { font-size: 11px !important; margin-bottom: 2px !important; }
+
+          /* Tabela */
           #pdf-content table { width: 100% !important; border-collapse: collapse !important; font-size: 11px !important; }
           #pdf-content th, #pdf-content td { padding: 6px !important; border: 1px solid #D8D3CB !important; }
           #pdf-content th { background: #F9F7F3 !important; font-weight: 700 !important; }
+
+          /* Listas */
+          #pdf-content ul { padding-left: 16px !important; margin: 4px 0 !important; }
+          #pdf-content li { font-size: 11px !important; margin-bottom: 2px !important; }
+
+          /* Esconde botões e elementos de tela */
+          .no-print { display: none !important; }
         }
       `}</style>
 
@@ -86,7 +105,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </button>
       </div>
 
-      {/* 🔥 O CONTEÚDO EXATO QUE SERÁ IMPRESSO (igual ao relatório) */}
+      {/* PRÉ-VISUALIZAÇÃO */}
       <div className="overflow-auto max-h-[75vh] bg-[#EDEAE3] rounded-xl border border-[#D8D3CB] p-4 no-print">
         <div
           ref={contentRef}
