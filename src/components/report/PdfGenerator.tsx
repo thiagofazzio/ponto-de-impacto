@@ -27,12 +27,16 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
     setGenerating(true);
 
     try {
-      // Captura o conteúdo do PDF
+      // 🔥 Dá um tempo para o CSS ser renderizado antes de capturar
+      await new Promise(resolve => setTimeout(resolve, 150));
+
       const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        width: contentRef.current.scrollWidth,
+        height: contentRef.current.scrollHeight,
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -66,7 +70,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <div className="space-y-4">
-      {/* Botões */}
       <div className="flex justify-end gap-3 no-print">
         {onClose && (
           <button onClick={onClose} className="px-4 py-2 border border-[#D8D3CB] rounded-lg hover:bg-[#F9F7F3] text-sm">Fechar</button>
@@ -81,7 +84,6 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         </button>
       </div>
 
-      {/* Conteúdo do PDF */}
       <div className="overflow-auto max-h-[75vh] bg-[#EDEAE3] rounded-xl border border-[#D8D3CB] p-4 no-print">
         <div
           ref={contentRef}
