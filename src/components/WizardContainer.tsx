@@ -81,7 +81,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🔥 Verifica se o usuário voltou do Stripe com sucesso (caso real)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -168,7 +167,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const nextStep = () => {
     if (!validateStep()) return;
     
-    // 🔥 Se estiver na etapa 4 (CNPJ) e NÃO tiver pago, mostra o checkout
     if (currentStep === 4 && !formData.paymentConfirmed) {
       setShowCheckout(true);
       return;
@@ -234,7 +232,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (onStepChange) onStepChange(16);
   };
 
-  // ===== RENDER =====
   if (showSuccess) {
     return (
       <CheckoutSuccess 
@@ -325,7 +322,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             )}
             {currentStep === 13 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
             {currentStep === 14 && (
-              <ReviewStep formData={formData} onUpdate={updateFormData} onRunDiagnostic={() => {}} />
+              <ReviewStep formData={formData} onUpdate={updateFormData} onRunDiagnostic={runDiagnosticCalculation} />
             )}
             {currentStep === 15 && <ProcessingStep />}
             {currentStep === 16 && diagnosticResult && (
