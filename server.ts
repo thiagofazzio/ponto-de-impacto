@@ -16,7 +16,6 @@ console.log('🔑 STRIPE_PRICE_ID:', process.env.STRIPE_PRICE_ID ? '✅ Configur
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
 
-// 🔥 Lead simplificado (só salva depois do pagamento)
 function registrarLeadPago(formData: DiagnosticFormData, result: any) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -53,8 +52,7 @@ function registrarLeadPago(formData: DiagnosticFormData, result: any) {
   }
 }
 
-// ===== FUNÇÕES AUXILIARES (Google Places e News) =====
-async function fetchGooglePlacesEvidence(query: string): Promise<any> {
+async function fetchGooglePlacesEvidence(query: string): Promise<GooglePlacesEvidence> {
   if (!query) return { rating: null, userRatingsTotal: null, status: 'not_found' };
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) return { rating: null, userRatingsTotal: null, status: 'no_api_key' };
@@ -86,7 +84,7 @@ async function fetchGooglePlacesEvidence(query: string): Promise<any> {
   }
 }
 
-async function fetchNewsEvidence(query: string): Promise<any[]> {
+async function fetchNewsEvidence(query: string): Promise<NewsItemEvidence[]> {
   if (!query) return [];
   const serpApiKey = process.env.SERP_API_KEY;
   if (serpApiKey) {
@@ -129,14 +127,13 @@ async function fetchNewsEvidence(query: string): Promise<any[]> {
   return [];
 }
 
-async function getEvidenceData(companyName: string, cityState: string): Promise<any> {
+async function getEvidenceData(companyName: string, cityState: string): Promise<EvidenceData> {
   const queryPlaces = `${companyName} ${cityState}`.trim();
   const queryNews = companyName.trim();
   const [googlePlaces, news] = await Promise.all([fetchGooglePlacesEvidence(queryPlaces), fetchNewsEvidence(queryNews)]);
   return { googlePlaces, news, fetchedAt: new Date().toLocaleDateString('pt-BR') };
 }
 
-// ===== SERVIDOR =====
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
@@ -146,14 +143,17 @@ async function startServer() {
     apiVersion: '2025-02-24.acacia',
   });
 
-  // ===== ROTAS PÚBLICAS (CNPJ, GOOGLE, NEWS) =====
-  app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+  // ===== ROTAS PÚBLICAS =====
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', service: 'Ponto de Impacto Diagnostic API (TFAZZIO)', timestamp: new Date().toISOString() });
+  });
 
   app.get('/api/cnpj/:cnpj', async (req, res) => {
     try {
       const cleanCnpj = req.params.cnpj.replace(/\D/g, '');
       if (cleanCnpj.length !== 14) return res.status(400).json({ error: 'CNPJ inválido. Deve conter 14 dígitos.' });
       let data: any = null;
+      let source = 'brasilapi';
       try {
         const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
         if (response.ok) data = await response.json();
@@ -163,6 +163,7 @@ async function startServer() {
           const fallbackRes = await fetch(`https://publica.cnpj.ws/cnpj/${cleanCnpj}`);
           if (fallbackRes.ok) {
             const raw = await fallbackRes.json();
+            source = 'cnpj.ws';
             data = {
               cnpj: cleanCnpj, razao_social: raw.razao_social,
               nome_fantasia: raw.estabelecimento?.nome_fantasia || raw.razao_social,
@@ -178,15 +179,16 @@ async function startServer() {
         } catch (e) { console.warn('Fallback CNPJ fetch failed too'); }
       }
       if (!data) return res.status(444).json({ error: 'Não foi possível obter dados automáticos do CNPJ nas bases públicas. Você pode preencher os dados manualmente.' });
-      return res.json({
+      const formattedCompany = {
         cnpj: cleanCnpj, razaoSocial: data.razao_social || data.nome || 'Razão Social não informada',
         nomeFantasia: data.nome_fantasia || data.fantasia || data.razao_social || 'Nome Fantasia não informado',
         porte: data.porte || 'PME', cnaeCodigo: String(data.cnae_fiscal || data.cnae_fiscal_principal || ''),
         cnaeDescricao: data.cnae_fiscal_descricao || data.cnae_fiscal_principal_descricao || 'Atividade principal',
         logradouro: data.logradouro || '', municipio: data.municipio || data.cidade || '', uf: data.uf || data.estado || '',
         situacaoCadastral: data.descricao_situacao_cadastral || 'Ativa', capitalSocial: Number(data.capital_social || 0),
-        dataAbertura: data.data_inicio_atividade || data.data_abertura || '', source: 'brasilapi',
-      });
+        dataAbertura: data.data_inicio_atividade || data.data_abertura || '', source,
+      };
+      return res.json(formattedCompany);
     } catch (error: any) {
       console.error('Error fetching CNPJ:', error);
       return res.status(500).json({ error: 'Erro ao consultar CNPJ', details: error.message });
@@ -208,7 +210,7 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // ===== ROTA DE CHECKOUT (CORRIGIDA COM CUPOM) =====
+  // ===== CHECKOUT CORRIGIDO (PROMOTION_CODE) =====
   app.post('/api/checkout/create', async (req, res) => {
     try {
       console.log('📦 Requisição de checkout recebida:', req.body);
@@ -221,10 +223,10 @@ async function startServer() {
         return res.status(500).json({ error: 'ID do preço não configurado' });
       }
 
-      let discountCode = null;
+      let promotionCode = null;
       if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
-        discountCode = 'TESTE_100_OFF'; // Nome do código promocional
-        console.log('🎫 Cupom de teste detectado:', cupom);
+        promotionCode = 'TESTE_100_OFF';
+        console.log('🎫 Código promocional aplicado:', promotionCode);
       }
 
       console.log('🔄 Criando sessão Stripe...');
@@ -239,7 +241,7 @@ async function startServer() {
             quantity: 1,
           },
         ],
-        discounts: discountCode ? [{ coupon: discountCode }] : [],
+        discounts: promotionCode ? [{ promotion_code: promotionCode }] : [],
         success_url: `https://ponto.tfazzio.com.br/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `https://ponto.tfazzio.com.br/checkout/cancel`,
         metadata: {
@@ -256,7 +258,7 @@ async function startServer() {
     }
   });
 
-  // ===== ROTAS DE RETORNO (SUCESSO E CANCELAMENTO) =====
+  // ===== ROTAS DE RETORNO =====
   app.get('/checkout/success', (req, res) => {
     const sessionId = req.query.session_id;
     console.log('✅ Checkout success para session_id:', sessionId);
@@ -267,7 +269,7 @@ async function startServer() {
     res.redirect('https://ponto.tfazzio.com.br/?canceled=true');
   });
 
-  // ===== DIAGNÓSTICO COMPLETO (PROTEGIDO) =====
+  // ===== DIAGNÓSTICO =====
   app.post('/api/diagnostico/gerar', async (req, res) => {
     try {
       const formData: DiagnosticFormData = req.body;
@@ -283,7 +285,7 @@ async function startServer() {
     }
   });
 
-  // ===== ADMIN LEADS =====
+  // ===== ADMIN =====
   app.get('/api/admin/leads', (req, res) => {
     const token = String(req.query.token || '');
     if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
