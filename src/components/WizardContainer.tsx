@@ -81,7 +81,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🔥 Verifica se o usuário voltou do Stripe com sucesso
+  // 🔥 Verifica se o usuário voltou do Stripe com sucesso (caso real)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -236,7 +236,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   // ===== RENDER =====
   if (showSuccess) {
-    return <CheckoutSuccess onContinue={runDiagnosticCalculation} />;
+    return (
+      <CheckoutSuccess 
+        onContinue={() => {
+          setShowSuccess(false);
+          setCurrentStep(5);
+          if (onStepChange) onStepChange(5);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }} 
+      />
+    );
   }
 
   return (
@@ -360,7 +369,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
-            {/* Checkout Modal */}
+      {/* Checkout Modal */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}
@@ -368,11 +377,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           onSuccess={() => {
             setShowCheckout(false);
             setFormData(prev => ({ ...prev, paymentConfirmed: true }));
-            
-            // 🔥 CORREÇÃO DEFINITIVA: Agora vai para a etapa 5
-            setCurrentStep(5);
-            if (onStepChange) onStepChange(5);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setShowSuccess(true);
           }}
         />
       )}
