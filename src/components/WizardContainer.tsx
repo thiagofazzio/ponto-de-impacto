@@ -81,6 +81,23 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // 🔥 Efeito para carregar dados do localStorage (caso o usuário recarregue a página)
+  useEffect(() => {
+    const savedData = localStorage.getItem('tfazzio_diagnostic_data');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) { /* ignora */ }
+    }
+  }, []);
+
+  // 🔥 Salva dados no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('tfazzio_diagnostic_data', JSON.stringify(formData));
+  }, [formData]);
+
+  // 🔥 Verifica se o usuário voltou do Stripe com sucesso
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -188,6 +205,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const resetAll = () => {
     setFormData(INITIAL_FORM_DATA);
+    localStorage.removeItem('tfazzio_diagnostic_data');
     setDiagnosticResult(null);
     setCurrentStep(1);
     setShowPdfModal(false);
