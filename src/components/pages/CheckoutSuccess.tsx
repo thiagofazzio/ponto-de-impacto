@@ -7,10 +7,9 @@ interface CheckoutSuccessProps {
 
 const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ onContinue }) => {
   useEffect(() => {
-    // 🔥 Timer de 2 segundos e DEPOIS redireciona
     const timer = setTimeout(() => {
       if (onContinue) {
-        onContinue(); // Chama a função que foi passada (vai para etapa 5)
+        onContinue(); // Isso vai chamar a função de ir para a Etapa 5
       }
     }, 2000);
     return () => clearTimeout(timer);
