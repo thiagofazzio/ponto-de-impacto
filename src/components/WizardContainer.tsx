@@ -15,6 +15,7 @@ import { ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import RevenueModelStep from './RevenueModelStep';
+import CheckoutModal from './checkout/CheckoutModal';
 
 const MIN_PROCESSING_MS = 3600;
 
@@ -74,6 +75,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   const totalWizardSteps = 16;
 
@@ -105,16 +107,12 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const validateStep = (): boolean => {
     setValidationError(null);
-
-    // Etapa 3: Objetivo
     if (currentStep === 3) {
       if (!formData.mainGoal || !formData.biggestDifficulty) {
         setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
         return false;
       }
     }
-
-    // Etapa 5: Financeiro + Funcionários + Responsável Financeiro
     if (currentStep === 5) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
@@ -129,8 +127,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         return false;
       }
     }
-
-    // Etapa 6: Comercial + Responsáveis + Equipe + Gerente de Vendas
     if (currentStep === 6) {
       if (!formData.responsavelComercial) {
         setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
@@ -149,12 +145,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         return false;
       }
     }
-
     return true;
   };
 
   const nextStep = () => {
     if (!validateStep()) return;
+    
+    // 🔥 Se estiver na etapa 14 (Revisão), mostra o checkout
+    if (currentStep === 14) {
+      setShowCheckout(true);
+      return;
+    }
+
     const next = currentStep + 1;
     setCurrentStep(next);
     if (onStepChange) onStepChange(next);
@@ -175,6 +177,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setCurrentStep(1);
     setShowPdfModal(false);
     setValidationError(null);
+    setShowCheckout(false);
     if (onStepChange) onStepChange(1);
     if (onCompanyChange) onCompanyChange('');
   };
@@ -219,10 +222,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {/* Etapa 1: Boas-vindas */}
             {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
-
-            {/* Etapa 2: Modelo de Receita + Área */}
             {currentStep === 2 && (
               <RevenueModelStep
                 onNext={(data) => {
@@ -237,8 +237,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 initialData={formData}
               />
             )}
-
-            {/* Etapa 3: Objetivo */}
             {currentStep === 3 && (
               <ObjectiveStep
                 mainGoal={formData.mainGoal}
@@ -246,8 +244,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 onUpdate={(data) => updateFormData(data)}
               />
             )}
-
-            {/* Etapa 4: CNPJ + Dados da Empresa */}
             {currentStep === 4 && (
               <CnpjStep 
                 cnpj={formData.cnpj} 
@@ -258,14 +254,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 updateFormData={updateFormData}
               />
             )}
-
-            {/* Etapa 5: Dados Financeiros */}
             {currentStep === 5 && <FinancialDataStep formData={formData} onUpdate={updateFormData} />}
-            
-            {/* Etapa 6: Dados Comerciais */}
             {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
-
-            {/* Etapas 7-12: Autoavaliação (6 áreas) */}
             {currentStep === 7 && (
               <SelfAssessmentStep areaKey="Financeiro" areaTitle="Financeiro & Caixa" stepNumber={7}
                 currentValue={formData.scoreFinanceiro}
@@ -296,19 +286,11 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 currentValue={formData.scoreEstrategia}
                 onSelect={(val) => { updateFormData({ scoreEstrategia: val }); nextStep(); }} />
             )}
-
-            {/* Etapa 13: Perguntas Estratégicas */}
             {currentStep === 13 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
-
-            {/* Etapa 14: Revisão */}
             {currentStep === 14 && (
-              <ReviewStep formData={formData} onUpdate={updateFormData} onRunDiagnostic={runDiagnosticCalculation} />
+              <ReviewStep formData={formData} onUpdate={updateFormData} onRunDiagnostic={() => {}} />
             )}
-
-            {/* Etapa 15: Processando */}
             {currentStep === 15 && <ProcessingStep />}
-
-            {/* Etapa 16: Relatório */}
             {currentStep === 16 && diagnosticResult && (
               <ReportDashboard result={diagnosticResult} onDownloadPdf={() => setShowPdfModal(true)} onRestart={resetAll} />
             )}
@@ -330,12 +312,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             className="px-5 py-2.5 bg-white hover:bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-pointer shadow-sm">
             <ArrowLeft className="w-4 h-4" /><span>Voltar</span>
           </button>
-          {currentStep !== 14 && (
-            <button type="button" onClick={nextStep}
-              className="px-6 py-2.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
-              <span>Avançar</span><ArrowRight className="w-4 h-4 stroke-[2.5]" />
-            </button>
-          )}
+          <button type="button" onClick={nextStep}
+            className="px-6 py-2.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
+            <span>Avançar</span><ArrowRight className="w-4 h-4 stroke-[2.5]" />
+          </button>
         </div>
       )}
 
@@ -350,6 +330,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             <PdfGenerator result={diagnosticResult} onClose={() => setShowPdfModal(false)} />
           </div>
         </div>
+      )}
+
+      {/* 🔥 Checkout Modal */}
+      {showCheckout && (
+        <CheckoutModal
+          email={formData.contactEmail}
+          onClose={() => setShowCheckout(false)}
+          onSuccess={() => {
+            setShowCheckout(false);
+            runDiagnosticCalculation();
+          }}
+        />
       )}
     </div>
   );

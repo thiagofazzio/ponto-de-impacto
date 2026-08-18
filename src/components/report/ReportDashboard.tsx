@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { DiagnosticResult, ActionPlanPhase, AreaScoreInfo } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { DiagnosticResult, ActionPlanPhase, AreaScoreInfo } from '../../utils/diagnosticCalculator';
 import {
   Download,
   AlertTriangle,
@@ -25,6 +25,8 @@ import {
   Newspaper,
   MapPin,
   ExternalLink,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import {
   Radar,
@@ -52,6 +54,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
   const [activePhaseTab, setActivePhaseTab] = useState<1 | 2 | 3>(1);
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
   const [showModalCTA, setShowModalCTA] = useState(false);
+  const [modo, setModo] = useState<'simplificado' | 'completo'>('completo');
 
   const form = result.formSummary;
   const breakEven = result.breakEven;
@@ -59,7 +62,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
   const secondaryBottleneck = result.secondaryBottleneck;
   const evidence = result.evidenceData;
 
-  React.useEffect(() => {
+  useEffect(() => {
     confetti({
       particleCount: 80,
       spread: 70,
@@ -104,9 +107,156 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
       ? result.actionPlan90Days.phase2
       : result.actionPlan90Days.phase3;
 
+  // ===== MODO SIMPLIFICADO =====
+  if (modo === 'simplificado') {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Botão para voltar ao modo completo */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setModo('completo')}
+            className="flex items-center gap-2 text-sm bg-white border px-4 py-2 rounded-lg shadow-sm hover:bg-[#F9F7F3] transition"
+          >
+            <ToggleRight className="w-5 h-5 text-[#6B0F1A]" />
+            Ver Detalhado
+          </button>
+        </div>
+
+        {/* 1. A Nota (Lázaro) */}
+        <div className="bg-white border border-[#D8D3CB] p-6 rounded-2xl shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#5A6270]">Sua Nota</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase border ${
+              result.clarityStatus === 'Excelente'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : result.clarityStatus === 'Saudável'
+                ? 'bg-blue-50 border-blue-300 text-blue-800'
+                : result.clarityStatus === 'Atenção'
+                ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
+                : 'bg-rose-50 border-rose-300 text-rose-800'
+            }`}>
+              {result.clarityStatus}
+            </span>
+          </div>
+          <h2 className="text-5xl font-black text-[#6B0F1A]">{result.clarityIndex}</h2>
+          <p className="text-lg text-[#5A6270] mt-2">{result.clarityDescription}</p>
+        </div>
+
+        {/* 2. O Problema (Alfredo) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm">
+            <div className="flex items-center gap-2 text-rose-800 font-bold text-sm uppercase">
+              <AlertTriangle className="w-4 h-4" /> Gargalo Principal
+            </div>
+            <span className="text-xl font-bold block mt-1">{primaryBottleneck.name}</span>
+            <p className="text-sm text-rose-700 mt-2">{primaryBottleneck.immediateAction}</p>
+            <p className="text-xs text-rose-600 mt-1 italic">"{primaryBottleneck.impactoSimplificado || 'Este é o seu maior limitador.'}"</p>
+          </div>
+          <div className="bg-[#F4E8C1] p-4 rounded-xl border border-[#D4AF37]/50 shadow-sm">
+            <div className="flex items-center gap-2 text-[#6B0F1A] font-bold text-sm uppercase">
+              <ShieldAlert className="w-4 h-4" /> Gargalo Secundário
+            </div>
+            <span className="text-xl font-bold block mt-1">{secondaryBottleneck.name}</span>
+            <p className="text-sm text-[#6B0F1A] mt-2">{secondaryBottleneck.immediateAction}</p>
+            <p className="text-xs text-[#5A6270] mt-1 italic">"{secondaryBottleneck.impactoSimplificado || 'Fique de olho nisso também.'}"</p>
+          </div>
+        </div>
+
+        {/* 3. O Plano de Ação (As Missões) */}
+        <div className="bg-[#F9F7F3] p-6 rounded-2xl border border-[#D8D3CB] shadow-md space-y-4">
+          <h3 className="font-bold text-lg text-[#1A1A1A]">📋 Seu Plano de 90 Dias</h3>
+          <div className="space-y-4">
+            <div className="bg-white p-4 rounded-xl border border-[#D8D3CB]">
+              <div className="flex items-center gap-2 text-[#6B0F1A] font-bold text-sm">
+                <Calendar className="w-4 h-4" /> Missão 1 (Dias 1-30): Organizar a Casa
+              </div>
+              <ul className="list-none space-y-2 mt-2">
+                {result.actionPlan90Days.phase1.tasks.map(t => (
+                  <li key={t.id} className="flex items-start gap-2 text-sm">
+                    <span className="text-emerald-600">✅</span> {t.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-[#D8D3CB]">
+              <div className="flex items-center gap-2 text-[#6B0F1A] font-bold text-sm">
+                <Target className="w-4 h-4" /> Missão 2 (Dias 31-60): Arrumar a Cozinha
+              </div>
+              <ul className="list-none space-y-2 mt-2">
+                {result.actionPlan90Days.phase2.tasks.map(t => (
+                  <li key={t.id} className="flex items-start gap-2 text-sm">
+                    <span className="text-emerald-600">✅</span> {t.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-[#D8D3CB]">
+              <div className="flex items-center gap-2 text-[#6B0F1A] font-bold text-sm">
+                <Zap className="w-4 h-4" /> Missão 3 (Dias 61-90): Convidar os Clientes
+              </div>
+              <ul className="list-none space-y-2 mt-2">
+                {result.actionPlan90Days.phase3.tasks.map(t => (
+                  <li key={t.id} className="flex items-start gap-2 text-sm">
+                    <span className="text-emerald-600">✅</span> {t.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Resumo Financeiro (simplificado) */}
+        <div className="bg-white p-6 rounded-2xl border border-[#D8D3CB] shadow-md grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-[#5A6270] uppercase font-bold">Faturamento</p>
+            <p className="text-xl font-bold text-[#1A1A1A]">{formatCurrency(breakEven.monthlyRevenue)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#5A6270] uppercase font-bold">Break-Even</p>
+            <p className="text-xl font-bold text-[#6B0F1A]">{formatCurrency(breakEven.breakEvenRevenue)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#5A6270] uppercase font-bold">Margem de Contribuição</p>
+            <p className="text-xl font-bold text-[#1A1A1A]">{breakEven.contributionMarginPercent}%</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#5A6270] uppercase font-bold">Lucro Líquido</p>
+            <p className={`text-xl font-bold ${breakEven.estimatedNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+              {formatCurrency(breakEven.estimatedNetProfit)}
+            </p>
+          </div>
+        </div>
+
+        {/* CTA Final */}
+        <div className="bg-[#6B0F1A] rounded-2xl p-6 text-white shadow-xl text-center">
+          <h3 className="text-xl font-bold">Quer ajuda para executar este plano?</h3>
+          <p className="text-sm text-[#E8E2D8] mt-2">Agende uma sessão estratégica com a TFAZZIO.</p>
+          <button
+            onClick={() => setShowModalCTA(true)}
+            className="mt-4 px-6 py-3 bg-[#D4AF37] hover:bg-[#AA8B22] text-[#1A1A1A] font-bold rounded-xl shadow-lg transition"
+          >
+            Agendar Sessão
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ===== MODO COMPLETO (seu relatório atual) =====
   return (
     <div id="report-visual-container" className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-8 text-[#1A1A1A]">
       
+      {/* Botão para alternar para simplificado */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => setModo('simplificado')}
+          className="flex items-center gap-2 text-sm bg-white border px-4 py-2 rounded-lg shadow-sm hover:bg-[#F9F7F3] transition"
+        >
+          <ToggleLeft className="w-5 h-5 text-[#6B0F1A]" />
+          Ver Simplificado
+        </button>
+      </div>
+
       {/* HEADER BANNER */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-3xl">
@@ -114,11 +264,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <Zap className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>Relatório Executivo TFAZZIO • Gerado em {result.generatedAt}</span>
           </div>
-
           <h1 className="text-2xl sm:text-4xl font-black text-[#1A1A1A] tracking-tight">
             Diagnóstico Ponto de Impacto: <span className="text-[#6B0F1A]">{form.companyName || form.cnpjData?.razaoSocial || 'Sua Empresa'}</span>
           </h1>
-
           <p className="text-[#5A6270] text-xs sm:text-sm flex flex-wrap items-center gap-3">
             <span>CNPJ: <strong className="text-[#1A1A1A]">{form.cnpj || 'Não informado'}</strong></span>
             <span>•</span>
@@ -127,7 +275,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <span>Porte: <strong className="text-[#1A1A1A]">{form.cnpjData?.porte || 'PME'}</strong></span>
           </p>
         </div>
-
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           <button
             id="btn-download-pdf-top"
@@ -700,7 +847,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
             <div className="space-y-3">
               <a
-                href={`https://wa.me/5511999999999?text=Ol%C3%A1%20Thiago!%20Acabei%20de%20fazer%20o%20diagn%C3%B3stico%20Ponto%20de%20Impacto%20para%20a%20empresa%20${encodeURIComponent(
+                href={`https://wa.me/5516992752758?text=Ol%C3%A1%20Thiago!%20Acabei%20de%20fazer%20o%20diagn%C3%B3stico%20Ponto%20de%20Impacto%20para%20a%20empresa%20${encodeURIComponent(
                   form.companyName || 'minha empresa'
                 )}%20e%20gostaria%20de%20agendar%20minha%20sess%C3%A3o%20estrat%C3%A9gica.`}
                 target="_blank"

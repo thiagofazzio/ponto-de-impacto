@@ -5,19 +5,26 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { calculateBreakEven, generateFullDiagnostic } from './src/utils/diagnosticCalculator';
-import { DiagnosticFormData, EvidenceData, GooglePlacesEvidence, NewsItemEvidence } from './src/types';
+import { DiagnosticFormData, EvidenceData, GooglePlacesEvidence, NewsItemEvidence } from './src/utils/diagnosticCalculator';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2025-02-24.acacia',
+});
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
 
 console.log('🔑 GOOGLE_PLACES_API_KEY:', process.env.GOOGLE_PLACES_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Configurada' : '❌ Não configurada');
+console.log('🔑 STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? '✅ Configurada' : '❌ Não configurada');
 
-function registrarLead(formData: DiagnosticFormData, result: any) {
+function registrarLead(formData: DiagnosticFormData, result: any, pago: boolean = false) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     const record = {
       timestamp: new Date().toISOString(),
+      pago,
       nome: formData.contactName || '',
       email: formData.contactEmail || '',
       telefone: formData.contactPhone || '',
@@ -48,11 +55,234 @@ function registrarLead(formData: DiagnosticFormData, result: any) {
   }
 }
 
+// ===== ROTAS DA API =====
+
+// 1. Checkout (nova rota)
+app.post('/api/checkout/create', async (req, res) => {
+  try {
+    const { email, cupom } = req.body;
+    let priceId = 'price_...'; // Substitua pelo ID do seu produto no Stripe (crie no dashboard)
+    let discountCode = null;
+
+    // Cupons de teste
+    if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
+      discountCode = 'TESTE_100_OFF';
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      customer_email: email || undefined,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      discounts: discountCode ? [{ coupon: discountCode }] : [],
+      success_url: `http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `http://localhost:3000/checkout/cancel`,
+      metadata: {
+        email: email || '',
+        cupom: cupom || '',
+      },
+    });
+
+    return res.json({ url: session.url });
+  } catch (err: any) {
+    console.error('Erro ao criar checkout:', err);
+    return res.status(500).json({ error: 'Erro ao criar sessão de pagamento' });
+  }
+});
+
+// 2. Webhook do Stripe (para confirmar pagamento)
+app.post('/api/checkout/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig || '',
+      process.env.STRIPE_WEBHOOK_SECRET || ''
+    );
+  } catch (err: any) {
+    console.error('⚠️ Webhook signature verification failed.', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const email = session.customer_email || session.metadata?.email || '';
+    console.log('✅ Pagamento concluído para:', email);
+    // Aqui você pode salvar no banco que o email está pago
+  }
+
+  res.json({ received: true });
+});
+
+// 3. Health
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'Ponto de Impacto Diagnostic API (TFAZZIO)', timestamp: new Date().toISOString() });
+});
+
+// 4. CNPJ
+app.get('/api/cnpj/:cnpj', async (req, res) => {
+  try {
+    const cleanCnpj = req.params.cnpj.replace(/\D/g, '');
+    if (cleanCnpj.length !== 14) return res.status(400).json({ error: 'CNPJ inválido. Deve conter 14 dígitos.' });
+    let data: any = null;
+    let source = 'brasilapi';
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+      if (response.ok) data = await response.json();
+    } catch (e) { console.warn('BrasilAPI fetch failed, trying fallback...'); }
+    if (!data) {
+      try {
+        const fallbackRes = await fetch(`https://publica.cnpj.ws/cnpj/${cleanCnpj}`);
+        if (fallbackRes.ok) {
+          const raw = await fallbackRes.json();
+          source = 'cnpj.ws';
+          data = {
+            cnpj: cleanCnpj, razao_social: raw.razao_social,
+            nome_fantasia: raw.estabelecimento?.nome_fantasia || raw.razao_social,
+            porte: raw.porte?.descricao || 'PME',
+            cnae_fiscal: raw.estabelecimento?.atividade_principal?.id,
+            cnae_fiscal_descricao: raw.estabelecimento?.atividade_principal?.descricao,
+            logradouro: `${raw.estabelecimento?.tipo_logradouro || ''} ${raw.estabelecimento?.logradouro || ''}`.trim(),
+            municipio: raw.estabelecimento?.cidade?.nome, uf: raw.estabelecimento?.estado?.sigla,
+            descricao_situacao_cadastral: raw.estabelecimento?.situacao_cadastral,
+            capital_social: raw.capital_social, data_inicio_atividade: raw.estabelecimento?.data_inicio_atividade,
+          };
+        }
+      } catch (e) { console.warn('Fallback CNPJ fetch failed too'); }
+    }
+    if (!data) return res.status(444).json({ error: 'Não foi possível obter dados automáticos do CNPJ nas bases públicas. Você pode preencher os dados manualmente.' });
+    const formattedCompany = {
+      cnpj: cleanCnpj, razaoSocial: data.razao_social || data.nome || 'Razão Social não informada',
+      nomeFantasia: data.nome_fantasia || data.fantasia || data.razao_social || 'Nome Fantasia não informado',
+      porte: data.porte || 'PME', cnaeCodigo: String(data.cnae_fiscal || data.cnae_fiscal_principal || ''),
+      cnaeDescricao: data.cnae_fiscal_descricao || data.cnae_fiscal_principal_descricao || 'Atividade principal',
+      logradouro: data.logradouro || '', municipio: data.municipio || data.cidade || '', uf: data.uf || data.estado || '',
+      situacaoCadastral: data.descricao_situacao_cadastral || 'Ativa', capitalSocial: Number(data.capital_social || 0),
+      dataAbertura: data.data_inicio_atividade || data.data_abertura || '', source,
+    };
+    return res.json(formattedCompany);
+  } catch (error: any) {
+    console.error('Error fetching CNPJ:', error);
+    return res.status(500).json({ error: 'Erro ao consultar CNPJ', details: error.message });
+  }
+});
+
+// 5. Google Places
+app.get('/api/google-places', async (req, res) => {
+  try { return res.json(await fetchGooglePlacesEvidence(String(req.query.query || req.query.q || '').trim())); }
+  catch (err: any) { return res.json({ rating: null, userRatingsTotal: null, status: 'error' }); }
+});
+
+app.get('/api/google-places/:query', async (req, res) => {
+  try { return res.json(await fetchGooglePlacesEvidence(String(req.params.query || '').trim())); }
+  catch (err: any) { return res.json({ rating: null, userRatingsTotal: null, status: 'error' }); }
+});
+
+// 6. News
+app.get('/api/news', async (req, res) => {
+  try { return res.json({ news: await fetchNewsEvidence(String(req.query.query || req.query.q || '').trim()) }); }
+  catch (err: any) { return res.json({ news: [] }); }
+});
+
+// 7. Diagnóstico (protegido por pagamento)
+app.post('/api/diagnostico/calcular', async (req, res) => {
+  try {
+    const formData: DiagnosticFormData = req.body;
+    const baseResult = generateFullDiagnostic(formData);
+    const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
+    const evidence = await getEvidenceData(companyName, formData.cityState || '');
+    const result = { ...baseResult, evidenceData: evidence };
+    registrarLead(formData, result, true);
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error calculating diagnostic:', error);
+    return res.status(500).json({ error: 'Erro ao processar diagnóstico', details: error.message });
+  }
+});
+
+// 8. Diagnóstico com IA
+app.post('/api/diagnostico/ia-gerar', async (req, res) => {
+  const formData: DiagnosticFormData = req.body;
+  // Verifica se o usuário pagou (simplificado: aceita qualquer um por enquanto)
+  const baseResult = generateFullDiagnostic(formData);
+  const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
+  const evidencePromise = getEvidenceData(companyName, formData.cityState || '');
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    const evidence = await evidencePromise;
+    const result = { ...baseResult, evidenceData: evidence };
+    registrarLead(formData, result, true);
+    return res.json(result);
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
+    const breakEven = baseResult.breakEven;
+    const prompt = `Você é um consultor empresarial executivo sênior do grupo TFAZZIO, especialista em reestruturação e aceleração de PMEs brasileiras.
+Analise os dados reais do diagnóstico empresarial "Ponto de Impacto" para a seguinte empresa:
+DADOS DA EMPRESA:
+- Razão Social/Nome: ${formData.companyName || formData.cnpjData?.razaoSocial || 'Empresa PME'}
+- CNPJ: ${formData.cnpj || 'Não informado'}
+- Porte / CNAE: ${formData.cnpjData?.porte || 'PME'} - ${formData.cnpjData?.cnaeDescricao || formData.segment}
+- Segmento: ${formData.segment} | Tempo no Mercado: ${formData.timeInMarket} | Funcionários: ${formData.employeesCount} | Regime: ${formData.taxRegime}
+DADOS FINANCEIROS:
+- Faturamento Mensal: R$ ${formData.monthlyRevenue} | Custos Fixos Totais: R$ ${breakEven.fixedCostsTotal}
+- Break-Even: R$ ${breakEven.breakEvenRevenue} (${breakEven.breakEvenPercentage}%) | Margem de Contribuição: ${breakEven.contributionMarginPercent}%
+- Lucro Líquido Estimado: R$ ${breakEven.estimatedNetProfit} (${breakEven.estimatedNetMarginPercent}%)
+GARGALOS: Principal: ${baseResult.primaryBottleneck.name} (${baseResult.primaryBottleneck.score}) | Secundário: ${baseResult.secondaryBottleneck.name} (${baseResult.secondaryBottleneck.score})
+Objetivo: "${formData.mainGoal || 'Expandir de forma estruturada'}" | Dificuldade: "${formData.biggestDifficulty || 'Gargalo operacional'}"
+TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSummary": "...", "textualDiagnosis": "...", "strategicRecommendations": ["...","...","...","..."]}. Responda APENAS em JSON válido em português do Brasil.`;
+
+    const response = await ai.models.generateContent({ model: 'gemini-3.6-flash', contents: prompt, config: { responseMimeType: 'application/json', temperature: 0.7 } });
+    const responseText = response.text || '';
+    const evidence = await evidencePromise;
+
+    try {
+      const aiParsed = JSON.parse(responseText.trim());
+      const mergedResult = { ...baseResult, executiveSummary: aiParsed.executiveSummary || baseResult.executiveSummary, textualDiagnosis: aiParsed.textualDiagnosis || baseResult.textualDiagnosis, strategicRecommendations: aiParsed.strategicRecommendations || baseResult.strategicRecommendations, aiGenerated: true, evidenceData: evidence };
+      registrarLead(formData, mergedResult, true);
+      return res.json(mergedResult);
+    } catch (pErr) {
+      const fallbackResult = { ...baseResult, evidenceData: evidence };
+      registrarLead(formData, fallbackResult, true);
+      return res.json(fallbackResult);
+    }
+  } catch (aiErr: any) {
+    console.error('Gemini API call failed:', aiErr);
+    const evidence = await evidencePromise;
+    const fallbackResult = { ...baseResult, evidenceData: evidence };
+    registrarLead(formData, fallbackResult, true);
+    return res.json(fallbackResult);
+  }
+});
+
+// 9. Admin Leads
+app.get('/api/admin/leads', (req, res) => {
+  const token = String(req.query.token || '');
+  if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+    return res.status(401).json({ error: 'Não autorizado' });
+  }
+  try {
+    if (!fs.existsSync(LEADS_FILE)) return res.json({ count: 0, leads: [] });
+    const lines = fs.readFileSync(LEADS_FILE, 'utf-8').trim().split('\n').filter(Boolean);
+    const leads = lines.map((l) => JSON.parse(l));
+    return res.json({ count: leads.length, leads });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
+});
+
+// ===== FUNÇÕES AUXILIARES =====
+
 async function fetchGooglePlacesEvidence(query: string): Promise<GooglePlacesEvidence> {
   if (!query) return { rating: null, userRatingsTotal: null, status: 'not_found' };
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  console.log('🔍 Google Places - Query:', query);
-  console.log('🔑 API Key usada:', apiKey ? apiKey.substring(0, 10) + '...' : '❌ NENHUMA');
   if (!apiKey) return { rating: null, userRatingsTotal: null, status: 'no_api_key' };
   try {
     const findUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id,name,rating,user_ratings_total,formatted_address&key=${apiKey}`;
@@ -132,241 +362,41 @@ async function getEvidenceData(companyName: string, cityState: string): Promise<
   return { googlePlaces, news, fetchedAt: new Date().toLocaleDateString('pt-BR') };
 }
 
+// ===== SERVER ESTÁTICO =====
+
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
   app.use(express.json({ limit: '10mb' }));
 
-  // ===== ROTAS DA API =====
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'Ponto de Impacto Diagnostic API (TFAZZIO)', timestamp: new Date().toISOString() });
-  });
-
-  app.get('/api/cnpj/:cnpj', async (req, res) => {
-    try {
-      const cleanCnpj = req.params.cnpj.replace(/\D/g, '');
-      if (cleanCnpj.length !== 14) return res.status(400).json({ error: 'CNPJ inválido. Deve conter 14 dígitos.' });
-      let data: any = null;
-      let source = 'brasilapi';
-      try {
-        const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
-        if (response.ok) data = await response.json();
-      } catch (e) { console.warn('BrasilAPI fetch failed, trying fallback...'); }
-      if (!data) {
-        try {
-          const fallbackRes = await fetch(`https://publica.cnpj.ws/cnpj/${cleanCnpj}`);
-          if (fallbackRes.ok) {
-            const raw = await fallbackRes.json();
-            source = 'cnpj.ws';
-            data = {
-              cnpj: cleanCnpj, razao_social: raw.razao_social,
-              nome_fantasia: raw.estabelecimento?.nome_fantasia || raw.razao_social,
-              porte: raw.porte?.descricao || 'PME',
-              cnae_fiscal: raw.estabelecimento?.atividade_principal?.id,
-              cnae_fiscal_descricao: raw.estabelecimento?.atividade_principal?.descricao,
-              logradouro: `${raw.estabelecimento?.tipo_logradouro || ''} ${raw.estabelecimento?.logradouro || ''}`.trim(),
-              municipio: raw.estabelecimento?.cidade?.nome, uf: raw.estabelecimento?.estado?.sigla,
-              descricao_situacao_cadastral: raw.estabelecimento?.situacao_cadastral,
-              capital_social: raw.capital_social, data_inicio_atividade: raw.estabelecimento?.data_inicio_atividade,
-            };
-          }
-        } catch (e) { console.warn('Fallback CNPJ fetch failed too'); }
-      }
-      if (!data) return res.status(444).json({ error: 'Não foi possível obter dados automáticos do CNPJ nas bases públicas. Você pode preencher os dados manualmente.' });
-      const formattedCompany = {
-        cnpj: cleanCnpj, razaoSocial: data.razao_social || data.nome || 'Razão Social não informada',
-        nomeFantasia: data.nome_fantasia || data.fantasia || data.razao_social || 'Nome Fantasia não informado',
-        porte: data.porte || 'PME', cnaeCodigo: String(data.cnae_fiscal || data.cnae_fiscal_principal || ''),
-        cnaeDescricao: data.cnae_fiscal_descricao || data.cnae_fiscal_principal_descricao || 'Atividade principal',
-        logradouro: data.logradouro || '', municipio: data.municipio || data.cidade || '', uf: data.uf || data.estado || '',
-        situacaoCadastral: data.descricao_situacao_cadastral || 'Ativa', capitalSocial: Number(data.capital_social || 0),
-        dataAbertura: data.data_inicio_atividade || data.data_abertura || '', source,
-      };
-      return res.json(formattedCompany);
-    } catch (error: any) {
-      console.error('Error fetching CNPJ:', error);
-      return res.status(500).json({ error: 'Erro ao consultar CNPJ', details: error.message });
-    }
-  });
-
-  app.get('/api/google-places', async (req, res) => {
-    try { return res.json(await fetchGooglePlacesEvidence(String(req.query.query || req.query.q || '').trim())); }
-    catch (err: any) { return res.json({ rating: null, userRatingsTotal: null, status: 'error' }); }
-  });
-
-  app.get('/api/google-places/:query', async (req, res) => {
-    try { return res.json(await fetchGooglePlacesEvidence(String(req.params.query || '').trim())); }
-    catch (err: any) { return res.json({ rating: null, userRatingsTotal: null, status: 'error' }); }
-  });
-
-  app.get('/api/news', async (req, res) => {
-    try { return res.json({ news: await fetchNewsEvidence(String(req.query.query || req.query.q || '').trim()) }); }
-    catch (err: any) { return res.json({ news: [] }); }
-  });
-
-  app.post('/api/diagnostico/calcular', async (req, res) => {
-    try {
-      const formData: DiagnosticFormData = req.body;
-      const baseResult = generateFullDiagnostic(formData);
-      const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
-      const evidence = await getEvidenceData(companyName, formData.cityState || '');
-      const result = { ...baseResult, evidenceData: evidence };
-      registrarLead(formData, result);
-      return res.json(result);
-    } catch (error: any) {
-      console.error('Error calculating diagnostic:', error);
-      return res.status(500).json({ error: 'Erro ao processar diagnóstico', details: error.message });
-    }
-  });
-
-  app.post('/api/diagnostico/ia-gerar', async (req, res) => {
-    const formData: DiagnosticFormData = req.body;
-    const baseResult = generateFullDiagnostic(formData);
-    const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
-    const evidencePromise = getEvidenceData(companyName, formData.cityState || '');
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      const evidence = await evidencePromise;
-      const result = { ...baseResult, evidenceData: evidence };
-      registrarLead(formData, result);
-      return res.json(result);
-    }
-
-    try {
-      const ai = new GoogleGenAI({ apiKey, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
-      const breakEven = baseResult.breakEven;
-      const prompt = `Você é um consultor empresarial executivo sênior do grupo TFAZZIO, especialista em reestruturação e aceleração de PMEs brasileiras.
-Analise os dados reais do diagnóstico empresarial "Ponto de Impacto" para a seguinte empresa:
-DADOS DA EMPRESA:
-- Razão Social/Nome: ${formData.companyName || formData.cnpjData?.razaoSocial || 'Empresa PME'}
-- CNPJ: ${formData.cnpj || 'Não informado'}
-- Porte / CNAE: ${formData.cnpjData?.porte || 'PME'} - ${formData.cnpjData?.cnaeDescricao || formData.segment}
-- Segmento: ${formData.segment} | Tempo no Mercado: ${formData.timeInMarket} | Funcionários: ${formData.employeesCount} | Regime: ${formData.taxRegime}
-DADOS FINANCEIROS:
-- Faturamento Mensal: R$ ${formData.monthlyRevenue} | Custos Fixos Totais: R$ ${breakEven.fixedCostsTotal}
-- Break-Even: R$ ${breakEven.breakEvenRevenue} (${breakEven.breakEvenPercentage}%) | Margem de Contribuição: ${breakEven.contributionMarginPercent}%
-- Lucro Líquido Estimado: R$ ${breakEven.estimatedNetProfit} (${breakEven.estimatedNetMarginPercent}%)
-GARGALOS: Principal: ${baseResult.primaryBottleneck.name} (${baseResult.primaryBottleneck.score}) | Secundário: ${baseResult.secondaryBottleneck.name} (${baseResult.secondaryBottleneck.score})
-Objetivo: "${formData.mainGoal || 'Expandir de forma estruturada'}" | Dificuldade: "${formData.biggestDifficulty || 'Gargalo operacional'}"
-TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSummary": "...", "textualDiagnosis": "...", "strategicRecommendations": ["...","...","...","..."]}. Responda APENAS em JSON válido em português do Brasil.`;
-
-      const response = await ai.models.generateContent({ model: 'gemini-3.6-flash', contents: prompt, config: { responseMimeType: 'application/json', temperature: 0.7 } });
-      const responseText = response.text || '';
-      const evidence = await evidencePromise;
-
-      try {
-        const aiParsed = JSON.parse(responseText.trim());
-        const mergedResult = { ...baseResult, executiveSummary: aiParsed.executiveSummary || baseResult.executiveSummary, textualDiagnosis: aiParsed.textualDiagnosis || baseResult.textualDiagnosis, strategicRecommendations: aiParsed.strategicRecommendations || baseResult.strategicRecommendations, aiGenerated: true, evidenceData: evidence };
-        registrarLead(formData, mergedResult);
-        return res.json(mergedResult);
-      } catch (pErr) {
-        const fallbackResult = { ...baseResult, evidenceData: evidence };
-        registrarLead(formData, fallbackResult);
-        return res.json(fallbackResult);
-      }
-    } catch (aiErr: any) {
-      console.error('Gemini API call failed:', aiErr);
-      const evidence = await evidencePromise;
-      const fallbackResult = { ...baseResult, evidenceData: evidence };
-      registrarLead(formData, fallbackResult);
-      return res.json(fallbackResult);
-    }
-  });
-
-  app.get('/api/admin/leads', (req, res) => {
-    console.log('🔍 Token recebido:', req.query.token);
-    console.log('🔍 Token esperado (ADMIN_TOKEN):', process.env.ADMIN_TOKEN);
-    const token = String(req.query.token || '');
-    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
-      console.log('❌ Token inválido!');
-      return res.status(401).json({ error: 'Não autorizado' });
-    }
-    console.log('✅ Token válido!');
-    try {
-      if (!fs.existsSync(LEADS_FILE)) return res.json({ count: 0, leads: [] });
-      const lines = fs.readFileSync(LEADS_FILE, 'utf-8').trim().split('\n').filter(Boolean);
-      const leads = lines.map((l) => JSON.parse(l));
-      return res.json({ count: leads.length, leads });
-    } catch (err: any) { return res.status(500).json({ error: err.message }); }
-  });
-// ===== ROTA PARA O MOTOR DE DECISÃO =====
-app.post('/api/motor/diagnose', async (req, res) => {
-  try {
-    const formData = req.body;
-    const motorUrl = process.env.MOTOR_URL || 'https://motor-tfazzio.onrender.com';
-    
-    console.log('🔗 Chamando motor:', motorUrl);
-    
-    // Mapear dados do GAS para o formato do motor
-    const payload = {
-      cnpj: formData.cnpj || '',
-      faturamento: formData.monthlyRevenue || 0,
-      equipe: formData.employeesCount || 0,
-      desafio: formData.mainGoal || 'crescer_faturamento',
-      respostas: {
-        ...formData
-      }
-    };
-
-    const response = await fetch(`${motorUrl}/diagnose`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Motor error: ${response.status}`);
-    }
-
-    const motorResult = await response.json();
-    const localResult = generateFullDiagnostic(formData);
-    
-    // Combinar resultados
-    const mergedResult = {
-      ...localResult,
-      motor: motorResult,
-      motorIntegrado: true,
-      // Priorizar dados do motor quando disponíveis
-      hipoteseMotor: motorResult.hipotese_vencedora || null,
-      acoesMotor: motorResult.acoes || [],
-      // Manter os dados locais como fallback
-      primaryBottleneck: motorResult.hipotese_vencedora || localResult.primaryBottleneck,
-      strategicRecommendations: motorResult.acoes?.length > 0 ? motorResult.acoes : localResult.strategicRecommendations
-    };
-
-    registrarLead(formData, mergedResult);
-    return res.json(mergedResult);
-    
-  } catch (error) {
-    console.error('❌ Motor API error:', error);
-    // Fallback para diagnóstico local
-    const localResult = generateFullDiagnostic(req.body);
-    registrarLead(req.body, localResult);
-    return res.json({
-      ...localResult,
-      motorIntegrado: false,
-      motorErro: error.message
-    });
-  }
-});
-  // ===== SERVER ARQUIVOS ESTÁTICOS =====
-  const distPath = path.join(process.cwd(), 'dist');
-  app.use(express.static(distPath));
-  
-  app.get('*', (req, res) => {
-    const indexPath = path.join(distPath, 'index.html');
+  // Rota de sucesso (checkout)
+  app.get('/checkout/success', (req, res) => {
+    const indexPath = path.join(process.cwd(), 'dist', 'index.html');
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
-      res.status(404).send('Arquivo index.html não encontrado. Rode npm run build primeiro.');
+      res.send('<h1>Pagamento confirmado!</h1><p>Você pode fechar esta janela e voltar ao diagnóstico.</p>');
     }
   });
 
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Arquivo index.html não encontrado. Rode npm run build primeiro.');
+      }
+    });
+  }
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server "Ponto de Impacto (TFAZZIO)" running on http://0.0.0.0:${PORT}`);
-    console.log('✅ Google Places:', process.env.GOOGLE_PLACES_API_KEY ? 'Configurada' : '❌ Não configurada');
-    console.log('✅ Gemini:', process.env.GEMINI_API_KEY ? 'Configurada' : '❌ Não configurada');
   });
 }
 
