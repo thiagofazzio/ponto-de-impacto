@@ -219,8 +219,8 @@ async function startServer() {
       const priceId = process.env.STRIPE_PRICE_ID;
 
       // 🟢 BYPASS: Se o cupom começar com TESTE_TFAZZIO_, libera sem ir para o Stripe
-      if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
-        console.log('🎫 Cupom de teste detectado! BYPASS ATIVADO.');
+      if (cupom && cupom.startsWith('TTFAZZIO')) {
+        console.log('🎫 Cupom de teste TTFAZZIO detectado! BYPASS ATIVADO.');
         return res.json({ 
           url: `https://ponto.tfazzio.com.br/checkout/success?session_id=teste_${Date.now()}`
         });

@@ -7,13 +7,11 @@ interface CheckoutSuccessProps {
 
 const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ onContinue }) => {
   useEffect(() => {
-    // 🔥 NÃO CHAMAMOS MAIS O onContinue aqui!
-    // O usuário vai ser redirecionado manualmente pelo WizardContainer.
-    
-    // Apenas um timer para mostrar a tela por 2 segundos e depois sair
+    // 🔥 Timer de 2 segundos e DEPOIS redireciona
     const timer = setTimeout(() => {
-      // Se existir uma função de continuar, podemos chamar, mas NÃO chamamos mais
-      // Aqui removemos a chamada automática
+      if (onContinue) {
+        onContinue(); // Chama a função que foi passada (vai para etapa 5)
+      }
     }, 2000);
     return () => clearTimeout(timer);
   }, [onContinue]);
