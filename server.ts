@@ -210,7 +210,7 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // ===== CHECKOUT CORRIGIDO (PROMOTION_CODE) =====
+  // ===== CHECKOUT CORRIGIDO COM O ID PROMO_... REAL =====
   app.post('/api/checkout/create', async (req, res) => {
     try {
       console.log('📦 Requisição de checkout recebida:', req.body);
@@ -225,8 +225,9 @@ async function startServer() {
 
       let promotionCode = null;
       if (cupom && cupom.startsWith('TESTE_TFAZZIO_')) {
-        promotionCode = 'TESTE_100_OFF';
-        console.log('🎫 Código promocional aplicado:', promotionCode);
+        // 🔥 ID DO CÓDIGO PROMOCIONAL QUE APARECEU NO SEU PRINT
+        promotionCode = 'promo_1USqhsEzPbBd9isYIZqDYOJo';
+        console.log('🎫 ID do promotion_code aplicado:', promotionCode);
       }
 
       console.log('🔄 Criando sessão Stripe...');
