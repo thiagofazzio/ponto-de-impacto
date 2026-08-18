@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { DiagnosticResult } from '../../types';
-import { Building2, Target, TrendingUp, Zap, AlertTriangle, BarChart3, CheckCircle } from 'lucide-react';
+import { Building2, Target, TrendingUp, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 
 interface PdfGeneratorProps {
   result: DiagnosticResult;
@@ -25,14 +25,19 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <div className="bg-white rounded-xl p-4 max-w-4xl mx-auto" style={{ overflow: 'auto', maxHeight: '90vh' }}>
-      {/* CSS ESPECÍFICO PARA IMPRESSÃO (Remove duplicação) */}
+      {/* CSS de Impressão - Versão Definitiva com 'size: A4 portrait' */}
       <style>{`
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 1cm;
+          }
           html, body {
-            margin: 0 !important;
-            padding: 0 !important;
             width: 100% !important;
             height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
           }
           body * {
             visibility: hidden !important;
@@ -45,72 +50,39 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             top: 0 !important;
             left: 0 !important;
             width: 100% !important;
-            max-width: 100% !important;
-            padding: 20px !important;
+            height: 100% !important;
+            padding: 10px !important;
             background: white !important;
             color: #1A1A1A !important;
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
-            font-size: 11px !important;
-            line-height: 1.5 !important;
+            font-size: 10px !important;
+            line-height: 1.4 !important;
+            overflow: hidden !important; /* Segura o conteúdo dentro da página */
           }
-          #pdf-content .card {
-            background: #F9F7F3 !important;
-            border: 1px solid #D8D3CB !important;
-            border-radius: 8px !important;
-            padding: 12px !important;
-            margin-bottom: 10px !important;
-            page-break-inside: avoid !important;
-          }
-          #pdf-content .card-rose {
-            border: 2px solid #fca5a5 !important;
-            background: #fef2f2 !important;
-          }
-          #pdf-content .card-gold {
-            border: 2px solid #D4AF37 !important;
-            background: #F4E8C1 !important;
-          }
-          #pdf-content .badge {
-            display: inline-block !important;
-            background: #F4E8C1 !important;
-            color: #6B0F1A !important;
-            font-size: 9px !important;
-            font-weight: 700 !important;
-            padding: 2px 10px !important;
-            border-radius: 12px !important;
-            border: 1px solid #D4AF37 !important;
-          }
-          #pdf-content h1 { font-size: 20px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 4px !important; }
-          #pdf-content h2 { font-size: 15px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 10px !important; margin-bottom: 4px !important; }
-          #pdf-content h3 { font-size: 13px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 8px !important; margin-bottom: 3px !important; }
-          #pdf-content p { font-size: 11px !important; line-height: 1.5 !important; color: #1A1A1A !important; margin: 2px 0 !important; }
-          #pdf-content .text-muted { color: #5A6270 !important; font-size: 10px !important; }
-          #pdf-content .text-red { color: #6B0F1A !important; }
-          #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-          #pdf-content .border-top { border-top: 1px solid #D8D3CB !important; padding-top: 8px !important; margin-top: 8px !important; }
-          #pdf-content ul { padding-left: 16px !important; margin: 4px 0 !important; }
-          #pdf-content li { font-size: 11px !important; margin-bottom: 2px !important; }
-          #pdf-content .flex { display: flex !important; align-items: center !important; gap: 6px !important; }
+          #pdf-content .card { background: #F9F7F3 !important; border: 1px solid #D8D3CB !important; border-radius: 6px !important; padding: 10px !important; margin-bottom: 6px !important; page-break-inside: avoid !important; }
+          .no-print { display: none !important; }
+          #pdf-content .page-break { display: none !important; }
+          #pdf-content h1 { font-size: 18px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 2px !important; }
+          #pdf-content h2 { font-size: 14px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 8px !important; margin-bottom: 2px !important; }
+          #pdf-content h3 { font-size: 12px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 6px !important; margin-bottom: 2px !important; }
+          #pdf-content p { font-size: 10px !important; line-height: 1.4 !important; color: #1A1A1A !important; margin: 0 0 2px 0 !important; }
+          #pdf-content .text-muted { color: #5A6270 !important; font-size: 9px !important; }
+          #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          #pdf-content .flex { display: flex !important; align-items: center !important; gap: 4px !important; }
           #pdf-content .flex-between { display: flex !important; justify-content: space-between !important; align-items: center !important; }
-          #pdf-content .gap-2 { gap: 6px !important; }
-          #pdf-content .mb-2 { margin-bottom: 6px !important; }
-          #pdf-content .mb-4 { margin-bottom: 10px !important; }
-          #pdf-content .mt-2 { margin-top: 6px !important; }
-          #pdf-content .text-center { text-align: center !important; }
           #pdf-content .text-right { text-align: right !important; }
           #pdf-content .font-bold { font-weight: 700 !important; }
-          #pdf-content .break-inside { page-break-inside: avoid !important; }
-          #pdf-content .no-print { display: none !important; }
-          #pdf-content .page-break { display: none !important; }
-        }
-        @page {
-          margin: 1.2cm;
-          size: A4;
+          #pdf-content .card-rose { border: 2px solid #fca5a5 !important; background: #fef2f2 !important; }
+          #pdf-content .card-gold { border: 2px solid #D4AF37 !important; background: #F4E8C1 !important; }
+          #pdf-content .badge { display: inline-block !important; background: #F4E8C1 !important; color: #6B0F1A !important; font-size: 8px !important; font-weight: 700 !important; padding: 2px 8px !important; border-radius: 12px !important; border: 1px solid #D4AF37 !important; }
+          #pdf-content ul { padding-left: 12px !important; margin: 2px 0 !important; }
+          #pdf-content li { font-size: 10px !important; margin-bottom: 1px !important; }
         }
       `}</style>
 
-      <div id="pdf-content" className="max-w-4xl mx-auto" style={{ padding: '15px' }}>
+      <div id="pdf-content" className="max-w-4xl mx-auto p-4 bg-white text-[#1A1A1A]">
         {/* Cabeçalho */}
-        <div className="flex-between mb-4">
+        <div className="flex-between mb-2">
           <div>
             <div className="badge">Relatório Executivo TFAZZIO</div>
             <h1>Diagnóstico Ponto de Impacto</h1>
@@ -123,95 +95,77 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
         {/* Empresa */}
         <div className="card">
           <div className="flex">
-            <Building2 size={16} color="#6B0F1A" />
-            <strong style={{ fontSize: '14px', color: '#6B0F1A' }}>{result.formSummary.companyName || 'Empresa PME'}</strong>
+            <Building2 size={14} color="#6B0F1A" />
+            <strong style={{ fontSize: '13px', color: '#6B0F1A' }}>{result.formSummary.companyName || 'Empresa PME'}</strong>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', fontSize: '10px', marginTop: '4px' }}>
-            <span><strong>CNPJ:</strong> {result.formSummary.cnpj || 'Não informado'}</span>
-            <span><strong>Segmento:</strong> {result.formSummary.segment}</span>
-            <span><strong>Porte:</strong> {result.formSummary.cnpjData?.porte || 'PME'}</span>
+          <div className="grid grid-cols-3 gap-2 text-xs font-medium mt-1">
+            <div><span className="text-muted">CNPJ:</span> {result.formSummary.cnpj || 'Não informado'}</div>
+            <div><span className="text-muted">Segmento:</span> {result.formSummary.segment}</div>
+            <div><span className="text-muted">Porte:</span> {result.formSummary.cnpjData?.porte || 'PME'}</div>
           </div>
         </div>
 
         {/* Objetivo e Dor */}
-        <div className="grid-2" style={{ marginBottom: '10px' }}>
-          <div className="card">
-            <p className="text-muted" style={{ fontWeight: '700' }}>🎯 Objetivo Reportado</p>
-            <p style={{ fontSize: '13px', fontWeight: '600' }}>{result.formSummary.mainGoal || 'Não informado'}</p>
-          </div>
-          <div className="card">
-            <p className="text-muted" style={{ fontWeight: '700' }}>🚧 Principal Dor</p>
-            <p style={{ fontSize: '13px', fontWeight: '600' }}>{result.formSummary.biggestDifficulty || 'Não informado'}</p>
-          </div>
+        <div className="grid-2">
+          <div className="card"><p className="text-muted font-bold">🎯 Objetivo</p><p className="font-semibold">{result.formSummary.mainGoal || 'Não informado'}</p></div>
+          <div className="card"><p className="text-muted font-bold">🚧 Dor</p><p className="font-semibold">{result.formSummary.biggestDifficulty || 'Não informado'}</p></div>
         </div>
 
         {/* Índice de Clareza */}
         <div className="card">
           <div className="flex-between">
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#5A6270' }}>Índice de Clareza</span>
-            <span style={{ fontSize: '28px', fontWeight: '900', color: '#6B0F1A' }}>{result.clarityIndex}</span>
+            <span className="text-muted font-bold">Índice de Clareza</span>
+            <span className="text-2xl font-black text-[#6B0F1A]">{result.clarityIndex}</span>
           </div>
-          <p style={{ fontSize: '11px', color: '#5A6270', marginTop: '2px' }}>{result.clarityDescription}</p>
+          <p className="text-xs text-[#5A6270]">{result.clarityDescription}</p>
         </div>
 
         {/* Gargalos */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div className="grid-2">
           <div className="card card-rose">
-            <div className="flex">
-              <AlertTriangle size={16} color="#dc2626" />
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#dc2626' }}>Gargalo Principal</span>
-            </div>
-            <p style={{ fontSize: '14px', fontWeight: '700', margin: '2px 0' }}>{result.primaryBottleneck.name}</p>
-            <p style={{ fontSize: '12px' }}>Nota: {result.primaryBottleneck.score}/10</p>
-            <p style={{ fontSize: '11px', color: '#5A6270' }}>{result.primaryBottleneck.description}</p>
-            <p style={{ fontSize: '11px', fontWeight: '700', color: '#6B0F1A', marginTop: '2px' }}>Ação: {result.primaryBottleneck.immediateAction}</p>
+            <div className="flex"><AlertTriangle size={14} color="#dc2626" /><span className="font-bold text-rose-700 text-xs">Gargalo Principal</span></div>
+            <p className="font-bold text-sm">{result.primaryBottleneck.name}</p>
+            <p className="text-xs">Nota: {result.primaryBottleneck.score}/10</p>
+            <p className="text-xs">{result.primaryBottleneck.description}</p>
+            <p className="text-xs font-bold text-[#6B0F1A] mt-1">Ação: {result.primaryBottleneck.immediateAction}</p>
           </div>
           <div className="card card-gold">
-            <div className="flex">
-              <Zap size={16} color="#6B0F1A" />
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#6B0F1A' }}>Gargalo Secundário</span>
-            </div>
-            <p style={{ fontSize: '14px', fontWeight: '700', margin: '2px 0' }}>{result.secondaryBottleneck.name}</p>
-            <p style={{ fontSize: '12px' }}>Nota: {result.secondaryBottleneck.score}/10</p>
-            <p style={{ fontSize: '11px', color: '#5A6270' }}>{result.secondaryBottleneck.description}</p>
+            <div className="flex"><Zap size={14} color="#6B0F1A" /><span className="font-bold text-[#6B0F1A] text-xs">Gargalo Secundário</span></div>
+            <p className="font-bold text-sm">{result.secondaryBottleneck.name}</p>
+            <p className="text-xs">Nota: {result.secondaryBottleneck.score}/10</p>
+            <p className="text-xs">{result.secondaryBottleneck.description}</p>
           </div>
         </div>
 
-        {/* Engenharia Financeira */}
+        {/* Financeiro */}
         <div className="card">
-          <div className="flex">
-            <TrendingUp size={18} color="#6B0F1A" />
-            <span style={{ fontSize: '14px', fontWeight: '700' }}>Engenharia Financeira</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '4px' }}>
+          <div className="flex"><TrendingUp size={14} color="#6B0F1A" /><span className="font-bold text-sm">Engenharia Financeira</span></div>
+          <div className="grid grid-cols-2 gap-2 text-xs mt-1">
             <div><strong>Faturamento:</strong> {formatCurrency(result.breakEven.monthlyRevenue)}</div>
             <div><strong>Break-Even:</strong> {formatCurrency(result.breakEven.breakEvenRevenue)}</div>
-            <div><strong>Margem de Contribuição:</strong> {result.breakEven.contributionMarginPercent}%</div>
-            <div><strong>Lucro Líquido:</strong> {formatCurrency(result.breakEven.estimatedNetProfit)}</div>
+            <div><strong>Margem:</strong> {result.breakEven.contributionMarginPercent}%</div>
+            <div><strong>Lucro:</strong> {formatCurrency(result.breakEven.estimatedNetProfit)}</div>
           </div>
         </div>
 
-        {/* Síntese do Consultor */}
+        {/* Síntese */}
         <div className="card">
-          <h3 style={{ fontSize: '14px', fontWeight: '700' }}>🧠 Síntese do Consultor</h3>
-          <p style={{ fontSize: '12px', color: '#5A6270', marginTop: '2px' }}>{result.executiveSummary}</p>
+          <h3>Síntese do Consultor</h3>
+          <p className="text-xs text-[#5A6270]">{result.executiveSummary}</p>
         </div>
 
         {/* Recomendações */}
         <div className="card">
-          <h3 style={{ fontSize: '14px', fontWeight: '700' }}>🎯 Recomendações Estratégicas</h3>
-          <ul style={{ paddingLeft: '16px', margin: '4px 0' }}>
-            {result.strategicRecommendations.slice(0, 4).map((rec, idx) => (
-              <li key={idx} style={{ marginBottom: '2px' }}>{rec}</li>
-            ))}
+          <h3>Recomendações Estratégicas</h3>
+          <ul>
+            {result.strategicRecommendations.slice(0, 4).map((rec, idx) => <li key={idx}>{rec}</li>)}
           </ul>
         </div>
       </div>
 
-      {/* Botões */}
       <div className="mt-4 flex justify-end gap-3 no-print">
         <button onClick={onClose} className="px-4 py-2 border border-[#D8D3CB] rounded-lg hover:bg-[#F9F7F3] text-sm">Fechar</button>
-        <button onClick={handlePrint} className="px-4 py-2 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] text-sm">Baixar PDF (Imprimir)</button>
+        <button onClick={handlePrint} className="px-4 py-2 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] text-sm">Baixar PDF</button>
       </div>
     </div>
   );
