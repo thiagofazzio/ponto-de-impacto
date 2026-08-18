@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { DiagnosticResult } from '../../types';
-import { Building2, Target, TrendingUp, Zap, AlertTriangle } from 'lucide-react';
+import { Building2, Target, TrendingUp, Zap, AlertTriangle, BarChart3, CheckCircle } from 'lucide-react';
 
 interface PdfGeneratorProps {
   result: DiagnosticResult;
@@ -11,16 +11,11 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
   const printCounter = useRef(0);
 
   const handlePrint = () => {
-    // Evita múltiplas impressões
     if (printCounter.current > 0) return;
     printCounter.current += 1;
-    
     setTimeout(() => {
       window.print();
-      // Reseta o contador após a impressão
-      setTimeout(() => {
-        printCounter.current = 0;
-      }, 2000);
+      setTimeout(() => { printCounter.current = 0; }, 2000);
     }, 300);
   };
 
@@ -30,8 +25,15 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
   return (
     <div className="bg-white rounded-xl p-4 max-w-4xl mx-auto" style={{ overflow: 'auto', maxHeight: '90vh' }}>
+      {/* CSS ESPECÍFICO PARA IMPRESSÃO (Remove duplicação) */}
       <style>{`
         @media print {
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+          }
           body * {
             visibility: hidden !important;
           }
@@ -44,7 +46,7 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             left: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: 15px !important;
+            padding: 20px !important;
             background: white !important;
             color: #1A1A1A !important;
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
@@ -54,9 +56,9 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
           #pdf-content .card {
             background: #F9F7F3 !important;
             border: 1px solid #D8D3CB !important;
-            border-radius: 6px !important;
-            padding: 10px !important;
-            margin-bottom: 8px !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            margin-bottom: 10px !important;
             page-break-inside: avoid !important;
           }
           #pdf-content .card-rose {
@@ -73,17 +75,17 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
             color: #6B0F1A !important;
             font-size: 9px !important;
             font-weight: 700 !important;
-            padding: 2px 8px !important;
+            padding: 2px 10px !important;
             border-radius: 12px !important;
             border: 1px solid #D4AF37 !important;
           }
-          #pdf-content h1 { font-size: 18px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 4px !important; }
+          #pdf-content h1 { font-size: 20px !important; font-weight: 900 !important; color: #1A1A1A !important; margin-bottom: 4px !important; }
           #pdf-content h2 { font-size: 15px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 10px !important; margin-bottom: 4px !important; }
           #pdf-content h3 { font-size: 13px !important; font-weight: 700 !important; color: #1A1A1A !important; margin-top: 8px !important; margin-bottom: 3px !important; }
           #pdf-content p { font-size: 11px !important; line-height: 1.5 !important; color: #1A1A1A !important; margin: 2px 0 !important; }
           #pdf-content .text-muted { color: #5A6270 !important; font-size: 10px !important; }
           #pdf-content .text-red { color: #6B0F1A !important; }
-          #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          #pdf-content .grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
           #pdf-content .border-top { border-top: 1px solid #D8D3CB !important; padding-top: 8px !important; margin-top: 8px !important; }
           #pdf-content ul { padding-left: 16px !important; margin: 4px 0 !important; }
           #pdf-content li { font-size: 11px !important; margin-bottom: 2px !important; }
@@ -96,8 +98,9 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
           #pdf-content .text-center { text-align: center !important; }
           #pdf-content .text-right { text-align: right !important; }
           #pdf-content .font-bold { font-weight: 700 !important; }
-          .no-print { display: none !important; }
           #pdf-content .break-inside { page-break-inside: avoid !important; }
+          #pdf-content .no-print { display: none !important; }
+          #pdf-content .page-break { display: none !important; }
         }
         @page {
           margin: 1.2cm;
@@ -207,18 +210,8 @@ export const PdfGenerator: React.FC<PdfGeneratorProps> = ({ result, onClose }) =
 
       {/* Botões */}
       <div className="mt-4 flex justify-end gap-3 no-print">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 border border-[#D8D3CB] rounded-lg hover:bg-[#F9F7F3] text-sm"
-        >
-          Fechar
-        </button>
-        <button
-          onClick={handlePrint}
-          className="px-4 py-2 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] text-sm"
-        >
-          Baixar PDF (Imprimir)
-        </button>
+        <button onClick={onClose} className="px-4 py-2 border border-[#D8D3CB] rounded-lg hover:bg-[#F9F7F3] text-sm">Fechar</button>
+        <button onClick={handlePrint} className="px-4 py-2 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13] text-sm">Baixar PDF (Imprimir)</button>
       </div>
     </div>
   );
