@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DiagnosticFormData, DiagnosticResult, CompanyCNPJData } from '../types';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { CnpjStep } from './steps/CnpjStep';
@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import RevenueModelStep from './RevenueModelStep';
 import CheckoutModal from './checkout/CheckoutModal';
+import CheckoutSuccess from './pages/CheckoutSuccess';
 
 const MIN_PROCESSING_MS = 3600;
 
@@ -76,6 +77,21 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // 🔥 Verifica se o usuário voltou do Stripe com sucesso
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const sessionId = params.get('session_id');
+
+    if (success === 'true' && sessionId) {
+      setShowSuccess(true);
+      // Limpa a URL para não ficar suja
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const totalWizardSteps = 16;
 
@@ -178,11 +194,15 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setShowPdfModal(false);
     setValidationError(null);
     setShowCheckout(false);
+    setShowSuccess(false);
+    setIsProcessing(false);
     if (onStepChange) onStepChange(1);
     if (onCompanyChange) onCompanyChange('');
   };
 
   const runDiagnosticCalculation = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     setCurrentStep(15);
     if (onStepChange) onStepChange(15);
 
@@ -207,9 +227,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const [result] = await Promise.all([fetchResult, minDelay]);
     setDiagnosticResult(result);
+    setIsProcessing(false);
+    setShowSuccess(false);
     setCurrentStep(16);
     if (onStepChange) onStepChange(16);
   };
+
+  // ===== RENDER =====
+  if (showSuccess) {
+    return <CheckoutSuccess onContinue={runDiagnosticCalculation} />;
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6">
@@ -332,14 +359,14 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
-      {/* 🔥 Checkout Modal */}
+      {/* Checkout Modal */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}
           onClose={() => setShowCheckout(false)}
           onSuccess={() => {
             setShowCheckout(false);
-            runDiagnosticCalculation();
+            setShowSuccess(true);
           }}
         />
       )}
