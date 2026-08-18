@@ -203,7 +203,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🔥 Função para limpar dados e recomeçar
+  // 🔥 Função para limpar dados e recomeçar COM RECARREGAMENTO DA PÁGINA
   const resetAll = () => {
     localStorage.removeItem('tfazzio_diagnostic_data');
     setFormData(INITIAL_FORM_DATA);
@@ -216,6 +216,11 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setIsProcessing(false);
     if (onStepChange) onStepChange(1);
     if (onCompanyChange) onCompanyChange('');
+    
+    // 🔥 Força o recarregamento da página para garantir que todos os dados sejam limpos
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const runDiagnosticCalculation = async () => {
