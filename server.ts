@@ -8,10 +8,10 @@ import { calculateBreakEven, generateFullDiagnostic } from './src/utils/diagnost
 import { DiagnosticFormData, EvidenceData, GooglePlacesEvidence, NewsItemEvidence } from './src/types';
 import Stripe from 'stripe';
 
+console.log('🚀 SERVIDOR INICIADO COM SUCESSO');
 console.log('🔑 GOOGLE_PLACES_API_KEY:', process.env.GOOGLE_PLACES_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? '✅ Configurada' : '❌ Não configurada');
-console.log('🔑 STRIPE_PRICE_ID:', process.env.STRIPE_PRICE_ID ? '✅ Configurada' : '❌ Não configurada');
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
@@ -210,7 +210,7 @@ async function startServer() {
     catch (err: any) { return res.json({ news: [] }); }
   });
 
-  // ===== CHECKOUT COM BYPASS DE TESTE =====
+  // ===== CHECKOUT =====
   app.post('/api/checkout/create', async (req, res) => {
     try {
       console.log('📦 Requisição de checkout recebida:', req.body);
@@ -218,17 +218,16 @@ async function startServer() {
       const { email, cupom } = req.body;
       const priceId = process.env.STRIPE_PRICE_ID;
 
-      // 🟢 BYPASS: Se o cupom começar com TESTE_TFAZZIO_, libera sem ir para o Stripe
+      if (!priceId) {
+        console.error('❌ STRIPE_PRICE_ID não está configurada');
+        return res.status(500).json({ error: 'ID do preço não configurado' });
+      }
+
       if (cupom && cupom.startsWith('TTFAZZIO')) {
         console.log('🎫 Cupom de teste TTFAZZIO detectado! BYPASS ATIVADO.');
         return res.json({ 
           url: `https://ponto.tfazzio.com.br/checkout/success?session_id=teste_${Date.now()}`
         });
-      }
-
-      if (!priceId) {
-        console.error('❌ STRIPE_PRICE_ID não está configurada');
-        return res.status(500).json({ error: 'ID do preço não configurado' });
       }
 
       console.log('🔄 Criando sessão Stripe para pagamento real...');
@@ -259,7 +258,6 @@ async function startServer() {
     }
   });
 
-  // ===== ROTAS DE RETORNO =====
   app.get('/checkout/success', (req, res) => {
     const sessionId = req.query.session_id;
     console.log('✅ Checkout success para session_id:', sessionId);
@@ -273,6 +271,7 @@ async function startServer() {
   // ===== DIAGNÓSTICO =====
   app.post('/api/diagnostico/gerar', async (req, res) => {
     try {
+      console.log('📊 Recebendo solicitação de diagnóstico (sem IA)...');
       const formData: DiagnosticFormData = req.body;
       const baseResult = generateFullDiagnostic(formData);
       const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
@@ -283,6 +282,81 @@ async function startServer() {
     } catch (error: any) {
       console.error('Error calculating diagnostic:', error);
       return res.status(500).json({ error: 'Erro ao processar diagnóstico', details: error.message });
+    }
+  });
+
+  // ===== DIAGNÓSTICO COM IA (COM TIMEOUT DE 15 SEGUNDOS) =====
+  app.post('/api/diagnostico/ia-gerar', async (req, res) => {
+    console.log('🤖 Iniciando geração com IA...');
+    const formData: DiagnosticFormData = req.body;
+    const baseResult = generateFullDiagnostic(formData);
+    const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
+    const evidencePromise = getEvidenceData(companyName, formData.cityState || '');
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      console.warn('⚠️ GEMINI_API_KEY não configurada. Usando fallback local.');
+      const evidence = await evidencePromise;
+      const result = { ...baseResult, evidenceData: evidence };
+      registrarLeadPago(formData, result);
+      return res.json(result);
+    }
+
+    try {
+      console.log('🔄 Chamando API do Gemini (com timeout de 15s)...');
+      const ai = new GoogleGenAI({ apiKey, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
+      const breakEven = baseResult.breakEven;
+      const prompt = `Você é um consultor empresarial executivo sênior do grupo TFAZZIO, especialista em reestruturação e aceleração de PMEs brasileiras.
+Analise os dados reais do diagnóstico empresarial "Ponto de Impacto" para a seguinte empresa:
+DADOS DA EMPRESA:
+- Razão Social/Nome: ${formData.companyName || formData.cnpjData?.razaoSocial || 'Empresa PME'}
+- CNPJ: ${formData.cnpj || 'Não informado'}
+- Porte / CNAE: ${formData.cnpjData?.porte || 'PME'} - ${formData.cnpjData?.cnaeDescricao || formData.segment}
+- Segmento: ${formData.segment} | Tempo no Mercado: ${formData.timeInMarket} | Funcionários: ${formData.employeesCount} | Regime: ${formData.taxRegime}
+DADOS FINANCEIROS:
+- Faturamento Mensal: R$ ${formData.monthlyRevenue} | Custos Fixos Totais: R$ ${breakEven.fixedCostsTotal}
+- Break-Even: R$ ${breakEven.breakEvenRevenue} (${breakEven.breakEvenPercentage}%) | Margem de Contribuição: ${breakEven.contributionMarginPercent}%
+- Lucro Líquido Estimado: R$ ${breakEven.estimatedNetProfit} (${breakEven.estimatedNetMarginPercent}%)
+GARGALOS: Principal: ${baseResult.primaryBottleneck.name} (${baseResult.primaryBottleneck.score}) | Secundário: ${baseResult.secondaryBottleneck.name} (${baseResult.secondaryBottleneck.score})
+Objetivo: "${formData.mainGoal || 'Expandir de forma estruturada'}" | Dificuldade: "${formData.biggestDifficulty || 'Gargalo operacional'}"
+TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSummary": "...", "textualDiagnosis": "...", "strategicRecommendations": ["...","...","...","..."]}. Responda APENAS em JSON válido em português do Brasil.`;
+
+      // CRIA UMA PROMESSA COM TIMEOUT DE 15 SEGUNDOS
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Gemini API timeout após 15 segundos')), 15000)
+      );
+
+      // CORRE A IA E O TIMEOUT EM PARALELO (QUEM GANHAR PRIMEIRO VENCE)
+      const response = await Promise.race([
+        ai.models.generateContent({ model: 'gemini-3.6-flash', contents: prompt, config: { responseMimeType: 'application/json', temperature: 0.7 } }),
+        timeoutPromise
+      ]) as any;
+
+      const responseText = response.text || '';
+      console.log('✅ Resposta do Gemini recebida com sucesso.');
+      
+      const evidence = await evidencePromise;
+
+      try {
+        const aiParsed = JSON.parse(responseText.trim());
+        const mergedResult = { ...baseResult, executiveSummary: aiParsed.executiveSummary || baseResult.executiveSummary, textualDiagnosis: aiParsed.textualDiagnosis || baseResult.textualDiagnosis, strategicRecommendations: aiParsed.strategicRecommendations || baseResult.strategicRecommendations, aiGenerated: true, evidenceData: evidence };
+        registrarLeadPago(formData, mergedResult);
+        console.log('🎉 Diagnóstico com IA concluído!');
+        return res.json(mergedResult);
+      } catch (pErr) {
+        console.warn('⚠️ Erro ao analisar JSON da IA. Usando fallback.');
+        const fallbackResult = { ...baseResult, evidenceData: evidence };
+        registrarLeadPago(formData, fallbackResult);
+        return res.json(fallbackResult);
+      }
+    } catch (aiErr: any) {
+      console.error('⏰ TIMEOUT OU ERRO NA IA GEMINI:', aiErr.message || aiErr);
+      // FALLBACK: Retorna o diagnóstico local sem a IA
+      const evidence = await evidencePromise;
+      const fallbackResult = { ...baseResult, evidenceData: evidence };
+      registrarLeadPago(formData, fallbackResult);
+      console.log('✅ Diagnóstico gerado via fallback local (sem IA)');
+      return res.json(fallbackResult);
     }
   });
 
