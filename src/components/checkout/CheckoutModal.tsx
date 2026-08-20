@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { X, CreditCard, Lock, Sparkles } from 'lucide-react';
 
-// 🔥 FALLBACK: se não tiver chave, não carrega o Stripe
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
-  : null;
+// 🔥 REMOVEMOS O STRIPE DO FRONTEND - Vai direto para o backend
+// O Stripe só vai ser chamado no server.ts
 
 interface CheckoutModalProps {
   email: string;
@@ -23,21 +20,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
     setError(null);
 
     try {
-      // 🔥 Se não tiver Stripe configurado, usa fallback TTFAZZIO
-      if (!stripePromise) {
-        console.warn('⚠️ Stripe não configurado. Usando fallback TTFAZZIO.');
-        const response = await fetch('/api/checkout/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, cupom: cupom || 'TTFAZZIO' }),
-        });
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url;
-        }
-        return;
-      }
-
       const response = await fetch('/api/checkout/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,7 +43,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
     }
   };
 
-  // 🔥 Verifica se o cupom de teste foi digitado (TTFAZZIO - mantido no código, mas oculto do usuário)
   const isTestCoupon = cupom && cupom.toUpperCase().startsWith('TTFAZZIO');
 
   return (
