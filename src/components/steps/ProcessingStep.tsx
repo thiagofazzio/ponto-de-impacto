@@ -19,15 +19,11 @@ export const ProcessingStep: React.FC = () => {
       setActiveStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
     }, 700);
     
-    // 🔥 TIMEOUT DE SEGURANÇA: Se ficar mais de 30 segundos, recarrega a página
-    const safetyTimeout = setTimeout(() => {
-      console.warn('⏰ ProcessingStep: Timeout de 30 segundos. Recarregando...');
-      window.location.reload();
-    }, 30000);
+    // 🔥 REMOVIDO O TIMEOUT DE SEGURANÇA - O diagnóstico controla o tempo
+    // O WizardContainer vai avançar quando a resposta chegar
     
     return () => {
       clearInterval(timer);
-      clearTimeout(safetyTimeout);
     };
   }, []);
 
