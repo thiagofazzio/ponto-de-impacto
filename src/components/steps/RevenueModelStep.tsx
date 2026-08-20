@@ -42,7 +42,6 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
     { value: 'outro', label: 'Outro' },
   ];
 
-  // 🔥 Função que salva e avança
   const handleNext = () => {
     onNext({
       revenueModel,
@@ -61,7 +60,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
           Como sua empresa realmente ganha a maior parte do dinheiro?
         </h2>
         <p className="text-[#5A6270] text-sm mb-6">
-          Selecione o modelo de negócio principal da sua empresa.
+          Selecione o modelo de negócio principal e o setor da sua empresa.
         </p>
 
         {/* Modelo de Receita */}
@@ -141,7 +140,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
       <WizardNavigation
         currentStep={2}
         totalSteps={13}
-        onPrevious={() => {}} // Não tem volta da step 1
+        onPrevious={() => {}}
         onNext={handleNext}
         isNextDisabled={!isFormValid}
         nextLabel="Continuar"

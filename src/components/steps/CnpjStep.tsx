@@ -8,6 +8,7 @@ interface CnpjStepProps {
   cnpjData: CompanyCNPJData | null;
   onUpdate: (cnpj: string, data: CompanyCNPJData | null) => void;
   onNext: () => void;
+  onPrevious: () => void; // 🔥 NOVO: recebe a função de voltar
   formData: DiagnosticFormData;
   updateFormData: (fields: Partial<DiagnosticFormData>) => void;
 }
@@ -17,6 +18,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
   cnpjData,
   onUpdate,
   onNext,
+  onPrevious,
   formData,
   updateFormData,
 }) => {
@@ -39,6 +41,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
     if (raw.length <= 14) {
       setLocalCnpj(formatCnpj(raw));
       setError(null);
+      // 🔥 Só busca se tiver 14 dígitos
       if (raw.length === 14) {
         fetchCnpj(raw);
       }
@@ -56,26 +59,43 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
       }
       const data = await response.json();
       onUpdate(rawCnpj, data);
+      // 🔥 Se encontrou dados, desativa o modo manual
       setManualMode(false);
     } catch (err: any) {
       setError(err.message || 'Erro ao buscar CNPJ. Preencha os dados manualmente.');
+      // 🔥 Se deu erro, ativa o modo manual
       setManualMode(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleManualSubmit = () => {
-    if (formData.companyName && formData.segment) {
+  // 🔥 Função para avançar
+  const handleNext = () => {
+    // Se tem CNPJ preenchido, valida
+    if (cnpjData) {
       onNext();
-    } else {
-      setError('Preencha o Nome da Empresa e o Segmento para continuar.');
+      return;
     }
+    // Se está em modo manual, valida os campos
+    if (manualMode && formData.companyName && formData.segment) {
+      onNext();
+      return;
+    }
+    setError('Preencha os dados da empresa para continuar.');
   };
 
-  const isFormValid = () => {
+  // 🔥 Verifica se pode avançar
+  const canProceed = () => {
     if (cnpjData) return true;
-    return formData.companyName && formData.segment;
+    if (manualMode && formData.companyName && formData.segment) return true;
+    return false;
+  };
+
+  // 🔥 Ativa modo manual
+  const enableManualMode = () => {
+    setManualMode(true);
+    setError(null);
   };
 
   return (
@@ -85,7 +105,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
           <span className="text-[#6B0F1A]">Dados</span> da Empresa
         </h2>
         <p className="text-[#5A6270] text-sm mt-1">
-          Informe o CNPJ para preencher automaticamente ou insira os dados manualmente.
+          Informe o CNPJ para preencher automaticamente.
         </p>
       </div>
 
@@ -116,7 +136,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
           </p>
         </div>
 
-        {/* 🔥 ERRO E MODO MANUAL */}
+        {/* 🔥 ERRO */}
         {error && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -124,7 +144,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
           </div>
         )}
 
-        {/* 🔥 DADOS DO CNPJ (quando encontrado) */}
+        {/* 🔥 DADOS DO CNPJ (quando encontrado) - SEMPRE VISÍVEL */}
         {cnpjData && !manualMode && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-3">
             <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
@@ -156,7 +176,7 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
               )}
             </div>
             <button
-              onClick={() => setManualMode(true)}
+              onClick={enableManualMode}
               className="text-xs text-[#6B0F1A] font-semibold hover:underline"
             >
               Corrigir dados manualmente
@@ -164,8 +184,8 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
           </div>
         )}
 
-        {/* 🔥 MODO MANUAL */}
-        {(manualMode || !cnpjData) && (
+        {/* 🔥 MODO MANUAL - SÓ APARECE SE CLICOU EM "Corrigir" OU SE DEU ERRO */}
+        {(manualMode || (!cnpjData && localCnpj.length > 0)) && (
           <div className="space-y-4">
             <div className="p-3 bg-[#F9F7F3] rounded-xl border border-[#D8D3CB]">
               <p className="text-xs text-[#5A6270]">
@@ -233,7 +253,10 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
 
             {cnpjData && (
               <button
-                onClick={() => setManualMode(false)}
+                onClick={() => {
+                  setManualMode(false);
+                  setError(null);
+                }}
                 className="text-xs text-[#6B0F1A] font-semibold hover:underline"
               >
                 Voltar aos dados automáticos
@@ -243,13 +266,13 @@ export const CnpjStep: React.FC<CnpjStepProps> = ({
         )}
       </div>
 
-      {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION */}
+      {/* 🔥 NAVEGAÇÃO */}
       <WizardNavigation
         currentStep={4}
         totalSteps={13}
-        onPrevious={() => {}}
-        onNext={handleManualSubmit}
-        isNextDisabled={!isFormValid()}
+        onPrevious={onPrevious}
+        onNext={handleNext}
+        isNextDisabled={!canProceed()}
         nextLabel="Continuar"
         showPrevious={true}
       />

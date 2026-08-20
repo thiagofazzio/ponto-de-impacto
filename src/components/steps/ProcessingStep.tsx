@@ -18,23 +18,26 @@ export const ProcessingStep: React.FC = () => {
     const timer = setInterval(() => {
       setActiveStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
     }, 700);
-    return () => clearInterval(timer);
+    
+    // 🔥 TIMEOUT DE SEGURANÇA: Se ficar mais de 30 segundos, recarrega a página
+    const safetyTimeout = setTimeout(() => {
+      console.warn('⏰ ProcessingStep: Timeout de 30 segundos. Recarregando...');
+      window.location.reload();
+    }, 30000);
+    
+    return () => {
+      clearInterval(timer);
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   return (
     <div className="max-w-xl mx-auto my-12 p-8 bg-white border border-[#D8D3CB] rounded-3xl shadow-xl text-center space-y-8">
-      {/* 🔥 SPINNER ANIMADO - Versão melhorada com múltiplos anéis */}
+      {/* Spinner animado */}
       <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
-        {/* Anel externo pulsante */}
         <div className="absolute inset-0 bg-[#6B0F1A]/5 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-        
-        {/* Anel médio girando */}
         <div className="absolute inset-1 rounded-full border-4 border-[#D8D3CB] border-t-[#6B0F1A] animate-spin" style={{ animationDuration: '1.5s' }} />
-        
-        {/* Anel interno girando em sentido oposto */}
         <div className="absolute inset-3 rounded-full border-4 border-[#D8D3CB]/50 border-b-[#D4AF37] animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
-        
-        {/* Ícone central */}
         <div className="w-14 h-14 rounded-2xl bg-[#6B0F1A] flex items-center justify-center text-[#D4AF37] shadow-xl relative z-10 border border-[#500B13]">
           <Sparkles className="w-7 h-7 animate-pulse stroke-[2.5]" />
         </div>
@@ -53,7 +56,6 @@ export const ProcessingStep: React.FC = () => {
           className="bg-[#6B0F1A] h-full transition-all duration-500 rounded-full relative"
           style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
         >
-          {/* Efeito de brilho na barra */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
         </div>
       </div>
@@ -87,7 +89,6 @@ export const ProcessingStep: React.FC = () => {
         })}
       </div>
 
-      {/* 🔥 CSS para o efeito shimmer */}
       <style>{`
         @keyframes shimmer {
           0% { background-position: -200% 0; }
