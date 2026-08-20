@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DiagnosticFormData } from '../../types';
 import { Info, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { WizardNavigation } from '../WizardNavigation';
 
 interface FinancialDataStepProps {
   formData: DiagnosticFormData;
@@ -141,12 +140,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
   const totalFixedCosts = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
   const totalVariablePercent = variableItems.reduce((sum, item) => sum + (item.percent || 0), 0);
 
-  // Verifica se o formulário está válido
-  const isFormValid = 
-    monthlyRevenue > 0 && 
-    formData.employeesCount && 
-    formData.responsavelFinanceiro;
-
   return (
     <div className="space-y-6">
       <div>
@@ -160,7 +153,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
         
-        {/* 🔥 GRID 2x2 - Funcionários + Faturamento | Custos Fixos + Custos Variáveis */}
+        {/* GRID 2x2 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           
           {/* Número de Funcionários */}
@@ -636,17 +629,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
         </div>
 
       </div>
-
-      {/* Navegação */}
-      <WizardNavigation
-        currentStep={5}
-        totalSteps={13}
-        onPrevious={() => {}}
-        onNext={() => {}}
-        isNextDisabled={!isFormValid}
-        nextLabel="Continuar"
-        showPrevious={true}
-      />
     </div>
   );
 };
