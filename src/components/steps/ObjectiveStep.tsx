@@ -5,7 +5,6 @@ interface ObjectiveStepProps {
   mainGoal: string;
   biggestDifficulty: string;
   onUpdate: (data: { mainGoal: string; biggestDifficulty: string }) => void;
-  onNext?: () => void;
 }
 
 const goalOptions = [
@@ -47,10 +46,32 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
     }
   }, [selectedGoal, selectedDifficulty, customGoal, customDifficulty, onUpdate]);
 
-  // Verifica se o formulário está válido
+  // 🔥 Verifica se o formulário está válido
   const isGoalValid = selectedGoal && (selectedGoal !== 'outro_objetivo' || customGoal.trim());
   const isDifficultyValid = selectedDifficulty && (selectedDifficulty !== 'outro_desafio' || customDifficulty.trim());
   const isFormValid = isGoalValid && isDifficultyValid;
+
+  // 🔥 Função para avançar - CHAMA O onUpdate para salvar e depois avança
+  const handleNext = () => {
+    if (isFormValid) {
+      const goalValue = selectedGoal === 'outro_objetivo' ? customGoal : selectedGoal;
+      const difficultyValue = selectedDifficulty === 'outro_desafio' ? customDifficulty : selectedDifficulty;
+      
+      // Salva os dados antes de avançar
+      onUpdate({
+        mainGoal: goalValue,
+        biggestDifficulty: difficultyValue,
+      });
+      
+      // 🔥 Dispara o evento para o WizardContainer saber que deve avançar
+      // O WizardContainer vai ouvir o onUpdate e chamar nextStep()
+      // Mas como o ObjectiveStep não tem acesso ao nextStep, usamos um evento personalizado
+      window.dispatchEvent(new CustomEvent('objectiveStepComplete'));
+    }
+  };
+
+  // 🔥 Para compatibilidade com o WizardContainer, também expomos via props
+  // Mas como o WizardContainer não passa onNext, usamos o evento acima
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -149,12 +170,12 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
         </div>
       </div>
 
-      {/* Navegação */}
+      {/* 🔥 NAVEGAÇÃO - COM onNext FUNCIONANDO */}
       <WizardNavigation
         currentStep={3}
         totalSteps={13}
-        onPrevious={() => {}}
-        onNext={() => {}}
+        onPrevious={() => {}} // Voltar será controlado pelo WizardContainer
+        onNext={handleNext}
         isNextDisabled={!isFormValid}
         nextLabel="Continuar"
         showPrevious={true}
