@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
         {/* Right Actions */}
         <div className="flex items-center gap-4">
           {/* 🔥 NOVO: Botão Voltar ao Site */}
-          {currentStep > 1 && (
+          {(
             <a
               href="https://tfazzio.com.br"
               target="_blank"

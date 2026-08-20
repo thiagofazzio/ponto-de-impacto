@@ -143,7 +143,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const validateStep = (): boolean => {
     setValidationError(null);
     
-    // Step 3 - Objetivos
     if (currentStep === 3) {
       if (!formData.mainGoal || !formData.biggestDifficulty) {
         setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
@@ -151,7 +150,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
     
-    // Step 5 - Financeiro
     if (currentStep === 5) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
@@ -167,7 +165,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
     
-    // Step 6 - Comercial
     if (currentStep === 6) {
       if (!formData.responsavelComercial) {
         setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
@@ -187,7 +184,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       }
     }
     
-    // Step 14 - Revisão (validação de contato)
     if (currentStep === 14) {
       if (!formData.contactName || formData.contactName.trim() === '') {
         setValidationError('Por favor, informe seu nome completo.');
@@ -197,7 +193,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         setValidationError('Por favor, informe um e-mail válido.');
         return false;
       }
-      // 🔥 Validação melhorada do WhatsApp
       const phoneDigits = formData.contactPhone.replace(/\D/g, '');
       if (phoneDigits.length < 10 || phoneDigits.length > 12) {
         setValidationError('Por favor, informe um WhatsApp válido (DDD + 8 ou 9 dígitos).');
@@ -215,7 +210,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const nextStep = () => {
     if (!validateStep()) return;
     
-    // 🔥 Checkout na etapa 4 (CNPJ) se não pagou
     if (currentStep === 4 && !formData.paymentConfirmed) {
       setShowCheckout(true);
       return;
@@ -242,6 +236,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ============================================================
+  // 🔥 runDiagnosticCalculation - USANDO ROTA SIMPLES
+  // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -252,7 +249,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const fetchResult = (async (): Promise<DiagnosticResult> => {
       try {
-        const response = await fetch('/api/diagnostico/gerar', {
+        // 🔥 USANDO A ROTA SIMPLES (SEM EVIDÊNCIAS) PARA TESTAR
+        const response = await fetch('/api/diagnostico/gerar-simples', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -275,9 +273,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (onStepChange) onStepChange(16);
   };
 
-  // ============================================================
-  // TELA DE SUCESSO APÓS PAGAMENTO
-  // ============================================================
   if (showSuccess) {
     return (
       <CheckoutSuccess 
@@ -286,9 +281,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     );
   }
 
-  // ============================================================
-  // RENDER PRINCIPAL
-  // ============================================================
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6">
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6">
@@ -300,16 +292,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {/* ==========================================================
-                STEP 1 - WELCOME
-            ========================================================== */}
-            {currentStep === 1 && (
-              <WelcomeStep onStart={nextStep} />
-            )}
-
-            {/* ==========================================================
-                STEP 2 - REVENUE MODEL
-            ========================================================== */}
+            {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
+            
             {currentStep === 2 && (
               <RevenueModelStep
                 onNext={(data) => {
@@ -324,10 +308,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 initialData={formData}
               />
             )}
-
-            {/* ==========================================================
-                STEP 3 - OBJECTIVE
-            ========================================================== */}
+            
             {currentStep === 3 && (
               <ObjectiveStep
                 mainGoal={formData.mainGoal}
@@ -335,38 +316,23 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 onUpdate={(data) => updateFormData(data)}
               />
             )}
-
-            {/* ==========================================================
-                STEP 4 - CNPJ (TEM NAVEGAÇÃO PRÓPRIA)
-            ========================================================== */}
+            
             {currentStep === 4 && (
               <CnpjStep 
                 cnpj={formData.cnpj} 
                 cnpjData={formData.cnpjData} 
                 onUpdate={handleCnpjUpdate} 
                 onNext={nextStep}
+                onPrevious={prevStep}
                 formData={formData}
                 updateFormData={updateFormData}
               />
             )}
-
-            {/* ==========================================================
-                STEP 5 - FINANCIAL DATA
-            ========================================================== */}
-            {currentStep === 5 && (
-              <FinancialDataStep formData={formData} onUpdate={updateFormData} />
-            )}
-
-            {/* ==========================================================
-                STEP 6 - COMMERCIAL DATA
-            ========================================================== */}
-            {currentStep === 6 && (
-              <CommercialDataStep formData={formData} onUpdate={updateFormData} />
-            )}
-
-            {/* ==========================================================
-                STEPS 7-12 - SELF ASSESSMENT (6 áreas)
-            ========================================================== */}
+            
+            {currentStep === 5 && <FinancialDataStep formData={formData} onUpdate={updateFormData} />}
+            
+            {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
+            
             {currentStep === 7 && (
               <SelfAssessmentStep 
                 areaKey="Financeiro" 
@@ -444,17 +410,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 }} 
               />
             )}
-
-            {/* ==========================================================
-                STEP 13 - STRATEGIC QUESTIONS
-            ========================================================== */}
-            {currentStep === 13 && (
-              <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />
-            )}
-
-            {/* ==========================================================
-                STEP 14 - REVIEW
-            ========================================================== */}
+            
+            {currentStep === 13 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
+            
             {currentStep === 14 && (
               <ReviewStep 
                 formData={formData} 
@@ -462,15 +420,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 onRunDiagnostic={runDiagnosticCalculation} 
               />
             )}
-
-            {/* ==========================================================
-                STEP 15 - PROCESSING
-            ========================================================== */}
+            
             {currentStep === 15 && <ProcessingStep />}
-
-            {/* ==========================================================
-                STEP 16 - RESULT
-            ========================================================== */}
+            
             {currentStep === 16 && diagnosticResult && (
               <ReportDashboard 
                 result={diagnosticResult} 
@@ -481,9 +433,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           </motion.div>
         </AnimatePresence>
 
-        {/* ============================================================
-            VALIDAÇÃO DE ERRO
-        ============================================================ */}
         {validationError && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
@@ -492,32 +441,24 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* ============================================================
-          NAVEGAÇÃO - Usando WizardNavigation
-          🔥 REMOVIDO O BOTÃO ANTIGO! Agora só o WizardNavigation
-      ============================================================ */}
-      
-      {/* Etapas 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 */}
-      {/* 🔥 Etapa 4 (CNPJ) tem navegação própria dentro do componente */}
-      {/* 🔥 Etapa 1 (Welcome) não tem navegação padrão */}
-      {currentStep >= 2 && currentStep <= 14 && currentStep !== 4 && (
+      {/* 🔥 NAVEGAÇÃO - APENAS NAS ETAPAS QUE NÃO TÊM NAVEGAÇÃO PRÓPRIA */}
+      {/* Etapas com navegação própria: 2 (Revenue), 4 (CNPJ), 14 (Review) */}
+      {/* Etapas sem navegação: 3, 5, 6, 7, 8, 9, 10, 11, 12, 13 */}
+      {currentStep >= 3 && currentStep <= 13 && currentStep !== 4 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation
             currentStep={currentStep}
             totalSteps={TOTAL_STEPS}
             onPrevious={prevStep}
             onNext={nextStep}
-            isNextDisabled={currentStep === 14 && !formData.consentGiven}
-            isLastStep={currentStep === 14}
-            nextLabel={currentStep === 14 ? 'Processar Diagnóstico' : 'Avançar'}
+            isNextDisabled={false}
+            isLastStep={false}
+            nextLabel="Avançar"
             showPrevious={currentStep > 1}
           />
         </div>
       )}
 
-      {/* ============================================================
-          MODAL PDF
-      ============================================================ */}
       {showPdfModal && diagnosticResult && (
         <div className="fixed inset-0 z-50 bg-[#1A1A1A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 max-w-4xl w-full space-y-4 shadow-xl">
@@ -535,9 +476,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
-      {/* ============================================================
-          CHECKOUT MODAL
-      ============================================================ */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}
