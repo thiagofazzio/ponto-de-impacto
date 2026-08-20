@@ -5,7 +5,8 @@ interface ObjectiveStepProps {
   mainGoal: string;
   biggestDifficulty: string;
   onUpdate: (data: { mainGoal: string; biggestDifficulty: string }) => void;
-  onNext: () => void;  // 🔥 NOVA PROP
+  onNext: () => void;
+  onPrevious: () => void; // 🔥 NOVA PROP
 }
 
 const goalOptions = [
@@ -173,13 +174,13 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({
 
       {/* 🔥 NAVEGAÇÃO - COM onNext FUNCIONANDO */}
       <WizardNavigation
-        currentStep={3}
-        totalSteps={13}
-        onPrevious={() => {}} // Voltar será controlado pelo WizardContainer
-        onNext={handleNext}
-        isNextDisabled={!isFormValid}
-        nextLabel="Continuar"
-        showPrevious={true}
+  currentStep={3}
+  totalSteps={13}
+  onPrevious={onPrevious} // ✅ PASSANDO A FUNÇÃO
+  onNext={handleNext}
+  isNextDisabled={!isFormValid}
+  nextLabel="Continuar"
+  showPrevious={true}
       />
     </div>
   );

@@ -7,6 +7,7 @@ interface ReviewStepProps {
   formData: DiagnosticFormData;
   onUpdate: (fields: Partial<DiagnosticFormData>) => void;
   onRunDiagnostic: () => void;
+  onPrevious: () => void; // 🔥 NOVA PROP
 }
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRunDiagnostic }) => {
@@ -150,14 +151,14 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
 
       {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION COM BOTÃO PERSONALIZADO */}
       <WizardNavigation
-        currentStep={14}
-        totalSteps={13}
-        onPrevious={() => {}}
-        onNext={handleRunDiagnostic}
-        isNextDisabled={!isContactValid}
-        isLastStep={true}
-        nextLabel="Processar Diagnóstico"
-        showPrevious={true}
+  currentStep={14}
+  totalSteps={13}
+  onPrevious={onPrevious} // ✅ PASSANDO A FUNÇÃO
+  onNext={handleRunDiagnostic}
+  isNextDisabled={!isContactValid}
+  isLastStep={true}
+  nextLabel="Processar Diagnóstico"
+  showPrevious={true}
       />
     </div>
   );

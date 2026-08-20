@@ -138,14 +138,14 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
 
       {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION */}
       <WizardNavigation
-        currentStep={2}
-        totalSteps={13}
-        onPrevious={() => {}}
-        onNext={handleNext}
-        isNextDisabled={!isFormValid}
-        nextLabel="Continuar"
-        showPrevious={false}
-      />
+  currentStep={2}
+  totalSteps={13}
+  onPrevious={() => {}} // Voltar não tem função porque não há etapa anterior (Step 1 é Welcome)
+  onNext={handleNext}
+  isNextDisabled={!isFormValid}
+  nextLabel="Continuar"
+  showPrevious={false} // Mantém desabilitado porque não há volta da Step 1
+/>
     </div>
   );
 };
