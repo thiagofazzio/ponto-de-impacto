@@ -18,23 +18,17 @@ console.log('🔑 STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? '
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
 
-// ============================================================
-// 🔥 FUNÇÃO REGISTRAR LEAD - AGORA COM TODAS AS INFORMAÇÕES
-// ============================================================
 function registrarLeadPago(formData: DiagnosticFormData, result: any) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     
     const record = {
-      // ===== DADOS PESSOAIS =====
       timestamp: new Date().toISOString(),
       pago: true,
       nome: formData.contactName || '',
       email: formData.contactEmail || '',
       telefone: formData.contactPhone || '',
       consentimento: !!formData.consentGiven,
-      
-      // ===== DADOS DA EMPRESA =====
       empresa: formData.companyName || formData.cnpjData?.razaoSocial || '',
       cnpj: formData.cnpj || '',
       segmento: formData.segment || '',
@@ -42,8 +36,6 @@ function registrarLeadPago(formData: DiagnosticFormData, result: any) {
       porte: formData.cnpjData?.porte || formData.employeesCount || '',
       tempoMercado: formData.timeInMarket || '',
       regimeTributario: formData.taxRegime || '',
-      
-      // ===== DADOS FINANCEIROS =====
       faturamentoMensal: formData.monthlyRevenue ?? null,
       custosFixos: formData.fixedCosts ?? null,
       custosVariaveisPercent: formData.variableCostsPercent ?? null,
@@ -51,43 +43,29 @@ function registrarLeadPago(formData: DiagnosticFormData, result: any) {
       proLabore: formData.ownerSalary ?? null,
       ticketMedio: formData.averageTicket ?? null,
       clientesMes: formData.monthlyClients ?? null,
-      
-      // ===== DADOS COMERCIAIS =====
       taxaConversao: formData.conversionRate ?? null,
       usaCRM: formData.hasCRM ?? null,
       equipeComercial: formData.salesTeamSize ?? null,
       temGestorComercial: formData.hasSalesManager ?? null,
-      
-      // ===== AUTOAVALIAÇÃO (1-5) =====
       notaFinanceiro: formData.scoreFinanceiro ?? null,
       notaComercial: formData.scoreComercial ?? null,
       notaOperacao: formData.scoreOperacao ?? null,
       notaGestao: formData.scoreGestao ?? null,
       notaPessoas: formData.scorePessoas ?? null,
       notaEstrategia: formData.scoreEstrategia ?? null,
-      
-      // ===== PERGUNTAS ESTRATÉGICAS =====
       funcionaSemDono: formData.runsWithoutOwner30Days ?? null,
       conheceMargemLiquida: formData.knowsNetMargin ?? null,
       temFluxoCaixaProjetado: formData.hasProjectedCashFlow ?? null,
       temPlanoCrescimento: formData.hasGrowthGoalsAndPlan ?? null,
-      
-      // ===== OBJETIVO E DOR =====
       objetivoPrincipal: formData.mainGoal || '',
       maiorDificuldade: formData.biggestDifficulty || '',
-      
-      // ===== MODELO DE RECEITA =====
       modeloReceita: formData.revenueModel || '',
       modeloReceitaCustom: formData.customRevenueModel || '',
       areaAtuacao: formData.areaAtuacao || '',
       areaAtuacaoCustom: formData.customArea || '',
-      
-      // ===== RESPONSÁVEIS =====
       responsavelFinanceiro: formData.responsavelFinanceiro || '',
       responsavelComercial: formData.responsavelComercial || '',
       responsavelOperacoes: formData.responsavelOperacoes || '',
-      
-      // ===== RESULTADO DO DIAGNÓSTICO =====
       indiceClareza: result?.clarityIndex ?? null,
       statusClareza: result?.clarityStatus ?? null,
       gargaloPrincipal: result?.primaryBottleneck?.name ?? null,
@@ -96,8 +74,6 @@ function registrarLeadPago(formData: DiagnosticFormData, result: any) {
       notaGargaloSecundario: result?.secondaryBottleneck?.score ?? null,
       breakEven: result?.breakEven?.breakEvenRevenue ?? null,
       lucroLiquido: result?.breakEven?.estimatedNetProfit ?? null,
-      
-      // ===== RESUMO EXECUTIVO =====
       resumoExecutivo: result?.executiveSummary || '',
       recomendacoes: result?.strategicRecommendations || [],
     };
@@ -203,14 +179,10 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
   
-  // ============================================================
-  // 🔥 ROTA DO WEBHOOK - Deve vir ANTES do express.json()
-  // ============================================================
+  // ROTA DO WEBHOOK - Deve vir ANTES do express.json()
   app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
-  // ============================================================
   // MIDDLEWARE PARA JSON (depois do webhook)
-  // ============================================================
   app.use(express.json({ limit: '10mb' }));
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -342,24 +314,40 @@ async function startServer() {
     res.redirect('https://ponto.tfazzio.com.br/?canceled=true');
   });
 
-  // ===== DIAGNÓSTICO =====
+  // ============================================================
+  // 🔥 DIAGNÓSTICO COMPLETO (COM EVIDÊNCIAS)
+  // ============================================================
   app.post('/api/diagnostico/gerar', async (req, res) => {
     try {
-      console.log('📊 Recebendo solicitação de diagnóstico (sem IA)...');
+      console.log('📊 [1/6] Recebendo solicitação de diagnóstico...');
       const formData: DiagnosticFormData = req.body;
+      console.log('📊 [2/6] Dados recebidos:', {
+        empresa: formData.companyName || formData.cnpjData?.razaoSocial || 'Não informado',
+        cnpj: formData.cnpj || 'Não informado',
+        faturamento: formData.monthlyRevenue || 0
+      });
+      
+      console.log('📊 [3/6] Calculando diagnóstico local...');
       const baseResult = generateFullDiagnostic(formData);
+      console.log('📊 [4/6] Diagnóstico local calculado. Índice de Clareza:', baseResult.clarityIndex);
+      
       const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
+      console.log('📊 [5/6] Buscando evidências externas para:', companyName);
       const evidence = await getEvidenceData(companyName, formData.cityState || '');
+      console.log('✅ [6/6] Evidências coletadas. Google Places:', evidence.googlePlaces.status);
+      
       const result = { ...baseResult, evidenceData: evidence };
       registrarLeadPago(formData, result);
+      console.log('✅ Diagnóstico completo! Retornando para o cliente.');
       return res.json(result);
     } catch (error: any) {
-      console.error('Error calculating diagnostic:', error);
+      console.error('❌ ERRO NO DIAGNÓSTICO:', error);
+      console.error('❌ Stack trace:', error.stack);
       return res.status(500).json({ error: 'Erro ao processar diagnóstico', details: error.message });
     }
   });
 
-  // ===== DIAGNÓSTICO COM IA (COM TIMEOUT DE 15 SEGUNDOS) =====
+  // ===== DIAGNÓSTICO COM IA =====
   app.post('/api/diagnostico/ia-gerar', async (req, res) => {
     console.log('🤖 Iniciando geração com IA...');
     const formData: DiagnosticFormData = req.body;
@@ -395,12 +383,10 @@ GARGALOS: Principal: ${baseResult.primaryBottleneck.name} (${baseResult.primaryB
 Objetivo: "${formData.mainGoal || 'Expandir de forma estruturada'}" | Dificuldade: "${formData.biggestDifficulty || 'Gargalo operacional'}"
 TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSummary": "...", "textualDiagnosis": "...", "strategicRecommendations": ["...","...","...","..."]}. Responda APENAS em JSON válido em português do Brasil.`;
 
-      // CRIA UMA PROMESSA COM TIMEOUT DE 15 SEGUNDOS
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Gemini API timeout após 15 segundos')), 15000)
       );
 
-      // CORRE A IA E O TIMEOUT EM PARALELO (QUEM GANHAR PRIMEIRO VENCE)
       const response = await Promise.race([
         ai.models.generateContent({ model: 'gemini-3.6-flash', contents: prompt, config: { responseMimeType: 'application/json', temperature: 0.7 } }),
         timeoutPromise
@@ -425,7 +411,6 @@ TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSu
       }
     } catch (aiErr: any) {
       console.error('⏰ TIMEOUT OU ERRO NA IA GEMINI:', aiErr.message || aiErr);
-      // FALLBACK: Retorna o diagnóstico local sem a IA
       const evidence = await evidencePromise;
       const fallbackResult = { ...baseResult, evidenceData: evidence };
       registrarLeadPago(formData, fallbackResult);

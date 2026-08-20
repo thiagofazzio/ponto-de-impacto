@@ -237,7 +237,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   };
 
   // ============================================================
-  // 🔥 runDiagnosticCalculation - USANDO ROTA SIMPLES
+  // 🔥 runDiagnosticCalculation - USANDO ROTA COMPLETA
   // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
@@ -249,8 +249,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const fetchResult = (async (): Promise<DiagnosticResult> => {
       try {
-        // 🔥 USANDO A ROTA SIMPLES (SEM EVIDÊNCIAS) PARA TESTAR
-        const response = await fetch('/api/diagnostico/gerar-simples', {
+        // 🔥 ROTA COMPLETA (COM EVIDÊNCIAS)
+        const response = await fetch('/api/diagnostico/gerar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
