@@ -1,7 +1,6 @@
 import React from 'react';
 import { DiagnosticFormData } from '../../types';
 import { CheckSquare, XSquare } from 'lucide-react';
-import { WizardNavigation } from '../WizardNavigation';
 
 interface CommercialDataStepProps {
   formData: DiagnosticFormData;
@@ -9,15 +8,6 @@ interface CommercialDataStepProps {
 }
 
 export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData, onUpdate }) => {
-  // Verifica se o formulário está válido
-  const isFormValid = 
-    formData.responsavelComercial && 
-    formData.responsavelOperacoes && 
-    formData.salesTeamSize !== undefined &&
-    formData.salesTeamSize !== null &&
-    formData.hasSalesManager !== undefined &&
-    formData.hasSalesManager !== null;
-
   return (
     <div className="space-y-6">
       <div>
@@ -273,17 +263,6 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
         </div>
 
       </div>
-
-      {/* Navegação */}
-      <WizardNavigation
-        currentStep={6}
-        totalSteps={13}
-        onPrevious={() => {}}
-        onNext={() => {}}
-        isNextDisabled={!isFormValid}
-        nextLabel="Continuar"
-        showPrevious={true}
-      />
     </div>
   );
 };
