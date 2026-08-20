@@ -42,7 +42,8 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
     { value: 'outro', label: 'Outro' },
   ];
 
-  const handleSubmit = () => {
+  // 🔥 Função que salva e avança
+  const handleNext = () => {
     onNext({
       revenueModel,
       customModel: revenueModel === 'outro' ? customModel : '',
@@ -136,12 +137,12 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         </div>
       </div>
 
-      {/* Navegação */}
+      {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION */}
       <WizardNavigation
         currentStep={2}
         totalSteps={13}
         onPrevious={() => {}} // Não tem volta da step 1
-        onNext={handleSubmit}
+        onNext={handleNext}
         isNextDisabled={!isFormValid}
         nextLabel="Continuar"
         showPrevious={false}

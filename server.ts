@@ -18,27 +18,90 @@ console.log('🔑 STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? '
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
 
+// ============================================================
+// 🔥 FUNÇÃO REGISTRAR LEAD - AGORA COM TODAS AS INFORMAÇÕES
+// ============================================================
 function registrarLeadPago(formData: DiagnosticFormData, result: any) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    
     const record = {
+      // ===== DADOS PESSOAIS =====
       timestamp: new Date().toISOString(),
       pago: true,
       nome: formData.contactName || '',
       email: formData.contactEmail || '',
       telefone: formData.contactPhone || '',
       consentimento: !!formData.consentGiven,
+      
+      // ===== DADOS DA EMPRESA =====
       empresa: formData.companyName || formData.cnpjData?.razaoSocial || '',
       cnpj: formData.cnpj || '',
       segmento: formData.segment || '',
       cidade: formData.cityState || '',
+      porte: formData.cnpjData?.porte || formData.employeesCount || '',
+      tempoMercado: formData.timeInMarket || '',
+      regimeTributario: formData.taxRegime || '',
+      
+      // ===== DADOS FINANCEIROS =====
       faturamentoMensal: formData.monthlyRevenue ?? null,
-      indiceClareza: result?.clarityIndex ?? null,
-      gargaloPrincipal: result?.primaryBottleneck?.name ?? null,
-      gargaloSecundario: result?.secondaryBottleneck?.name ?? null,
+      custosFixos: formData.fixedCosts ?? null,
+      custosVariaveisPercent: formData.variableCostsPercent ?? null,
+      impostosPercent: formData.taxesPercent ?? null,
+      proLabore: formData.ownerSalary ?? null,
+      ticketMedio: formData.averageTicket ?? null,
+      clientesMes: formData.monthlyClients ?? null,
+      
+      // ===== DADOS COMERCIAIS =====
+      taxaConversao: formData.conversionRate ?? null,
+      usaCRM: formData.hasCRM ?? null,
+      equipeComercial: formData.salesTeamSize ?? null,
+      temGestorComercial: formData.hasSalesManager ?? null,
+      
+      // ===== AUTOAVALIAÇÃO (1-5) =====
+      notaFinanceiro: formData.scoreFinanceiro ?? null,
+      notaComercial: formData.scoreComercial ?? null,
+      notaOperacao: formData.scoreOperacao ?? null,
+      notaGestao: formData.scoreGestao ?? null,
+      notaPessoas: formData.scorePessoas ?? null,
+      notaEstrategia: formData.scoreEstrategia ?? null,
+      
+      // ===== PERGUNTAS ESTRATÉGICAS =====
+      funcionaSemDono: formData.runsWithoutOwner30Days ?? null,
+      conheceMargemLiquida: formData.knowsNetMargin ?? null,
+      temFluxoCaixaProjetado: formData.hasProjectedCashFlow ?? null,
+      temPlanoCrescimento: formData.hasGrowthGoalsAndPlan ?? null,
+      
+      // ===== OBJETIVO E DOR =====
       objetivoPrincipal: formData.mainGoal || '',
       maiorDificuldade: formData.biggestDifficulty || '',
+      
+      // ===== MODELO DE RECEITA =====
+      modeloReceita: formData.revenueModel || '',
+      modeloReceitaCustom: formData.customRevenueModel || '',
+      areaAtuacao: formData.areaAtuacao || '',
+      areaAtuacaoCustom: formData.customArea || '',
+      
+      // ===== RESPONSÁVEIS =====
+      responsavelFinanceiro: formData.responsavelFinanceiro || '',
+      responsavelComercial: formData.responsavelComercial || '',
+      responsavelOperacoes: formData.responsavelOperacoes || '',
+      
+      // ===== RESULTADO DO DIAGNÓSTICO =====
+      indiceClareza: result?.clarityIndex ?? null,
+      statusClareza: result?.clarityStatus ?? null,
+      gargaloPrincipal: result?.primaryBottleneck?.name ?? null,
+      notaGargaloPrincipal: result?.primaryBottleneck?.score ?? null,
+      gargaloSecundario: result?.secondaryBottleneck?.name ?? null,
+      notaGargaloSecundario: result?.secondaryBottleneck?.score ?? null,
+      breakEven: result?.breakEven?.breakEvenRevenue ?? null,
+      lucroLiquido: result?.breakEven?.estimatedNetProfit ?? null,
+      
+      // ===== RESUMO EXECUTIVO =====
+      resumoExecutivo: result?.executiveSummary || '',
+      recomendacoes: result?.strategicRecommendations || [],
     };
+    
     fs.appendFileSync(LEADS_FILE, JSON.stringify(record) + '\n');
 
     const webhookUrl = process.env.LEAD_WEBHOOK_URL;

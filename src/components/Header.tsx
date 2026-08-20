@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Target, RefreshCw, ShieldCheck, Home } from 'lucide-react';
 
 interface HeaderProps {
   currentStep: number;
@@ -20,11 +20,9 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
   };
 
   // 🔥 Calcula a porcentagem do progresso baseado no TOTAL_STEPS (13 etapas)
-  // Mapeamento: Step 1 = 0%, Step 14 = 100%
   const getProgressPercentage = () => {
     if (currentStep <= 1) return 0;
     if (currentStep >= 14) return 100;
-    // Step 2 = 8%, Step 13 = 92%
     return ((currentStep - 1) / (totalSteps - 1)) * 100;
   };
 
@@ -76,6 +74,19 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
+          {/* 🔥 NOVO: Botão Voltar ao Site */}
+          {currentStep > 1 && (
+            <a
+              href="https://tfazzio.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5A6270] hover:text-[#6B0F1A] bg-[#F9F7F3] hover:bg-[#E8E2D8] border border-[#D8D3CB] rounded-lg transition"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Voltar ao site</span>
+            </a>
+          )}
+
           {companyName && (
             <div className="hidden lg:flex flex-col items-end text-xs">
               <span className="text-[#5A6270] font-semibold uppercase text-[10px]">Empresa</span>

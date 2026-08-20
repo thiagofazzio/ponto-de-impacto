@@ -43,7 +43,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
     }
   };
 
-  // 🔥 Verifica se o cupom TTFAZZIO foi digitado
+  // 🔥 Verifica se o cupom de teste foi digitado (TTFAZZIO - mantido no código, mas oculto do usuário)
   const isTestCoupon = cupom && cupom.toUpperCase().startsWith('TTFAZZIO');
 
   return (
@@ -72,6 +72,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
           <p className="text-xs text-[#5A6270]">Pagamento único via cartão de crédito</p>
         </div>
 
+        {/* 🔥 Campo de cupom SEM referência ao TTFAZZIO */}
         <div className="mb-4">
           <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
             Tem um cupom?
@@ -81,7 +82,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
               type="text"
               value={cupom}
               onChange={(e) => setCupom(e.target.value)}
-              placeholder="Código do cupom (ex: TTFAZZIO)"
+              placeholder="Digite seu código promocional"
               className={`w-full bg-[#F9F7F3] border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20 ${
                 isTestCoupon ? 'border-[#D4AF37] bg-[#F4E8C1]' : 'border-[#D8D3CB]'
               }`}
@@ -95,7 +96,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
           {isTestCoupon && (
             <p className="text-xs text-emerald-700 font-semibold mt-1 flex items-center gap-1">
               <Sparkles className="w-3 h-3" />
-              Cupom de teste ativado! O pagamento será pulado.
+              Cupom válido! O pagamento será liberado.
             </p>
           )}
         </div>
@@ -114,7 +115,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
           ) : (
             <>
               <Lock className="w-4 h-4" />
-              {isTestCoupon ? '🆓 Ativar Diagnóstico Grátis (Teste)' : 'Pagar R$ 489,70'}
+              {isTestCoupon ? '🆕 Liberar Diagnóstico' : 'Pagar R$ 489,70'}
             </>
           )}
         </button>
@@ -127,10 +128,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
 
         <p className="text-xs text-[#5A6270] text-center mt-4">
           Pagamento seguro via <strong className="text-[#1A1A1A]">Stripe</strong>. Seu cartão não será armazenado.
-        </p>
-
-        <p className="text-[10px] text-[#5A6270] text-center mt-2 opacity-50">
-          Cupom <strong className="text-[#6B0F1A]">TTFAZZIO</strong> para testes internos
         </p>
       </div>
     </div>

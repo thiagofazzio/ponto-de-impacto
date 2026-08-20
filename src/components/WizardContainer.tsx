@@ -197,8 +197,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         setValidationError('Por favor, informe um e-mail válido.');
         return false;
       }
-      if (!formData.contactPhone || formData.contactPhone.replace(/\D/g, '').length < 10) {
-        setValidationError('Por favor, informe um WhatsApp válido (DDD + número).');
+      // 🔥 Validação melhorada do WhatsApp
+      const phoneDigits = formData.contactPhone.replace(/\D/g, '');
+      if (phoneDigits.length < 10 || phoneDigits.length > 12) {
+        setValidationError('Por favor, informe um WhatsApp válido (DDD + 8 ou 9 dígitos).');
         return false;
       }
       if (!formData.consentGiven) {
@@ -233,7 +235,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🔥 Função para pular direto para o relatório (usado no CheckoutSuccess)
   const handleContinueAfterPayment = () => {
     setShowSuccess(false);
     setCurrentStep(5);
@@ -244,7 +245,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
-    setCurrentStep(15); // Processing
+    setCurrentStep(15);
     if (onStepChange) onStepChange(15);
 
     const minDelay = new Promise<void>((resolve) => setTimeout(resolve, MIN_PROCESSING_MS));
@@ -270,7 +271,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setDiagnosticResult(result);
     setIsProcessing(false);
     setShowSuccess(false);
-    setCurrentStep(16); // Resultado
+    setCurrentStep(16);
     if (onStepChange) onStepChange(16);
   };
 
@@ -336,7 +337,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             )}
 
             {/* ==========================================================
-                STEP 4 - CNPJ
+                STEP 4 - CNPJ (TEM NAVEGAÇÃO PRÓPRIA)
             ========================================================== */}
             {currentStep === 4 && (
               <CnpjStep 
@@ -493,10 +494,12 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
       {/* ============================================================
           NAVEGAÇÃO - Usando WizardNavigation
-          Aplica-se apenas às etapas que precisam de navegação
+          🔥 REMOVIDO O BOTÃO ANTIGO! Agora só o WizardNavigation
       ============================================================ */}
       
-      {/* Etapas 2 a 14 (exceto 4 que tem navegação própria no CnpjStep) */}
+      {/* Etapas 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 */}
+      {/* 🔥 Etapa 4 (CNPJ) tem navegação própria dentro do componente */}
+      {/* 🔥 Etapa 1 (Welcome) não tem navegação padrão */}
       {currentStep >= 2 && currentStep <= 14 && currentStep !== 4 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation
@@ -511,9 +514,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           />
         </div>
       )}
-
-      {/* Etapa 4 (CNPJ) tem navegação própria dentro do componente */}
-      {/* Etapa 1 (Welcome) não tem navegação padrão */}
 
       {/* ============================================================
           MODAL PDF
