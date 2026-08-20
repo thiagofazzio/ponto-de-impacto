@@ -6,7 +6,7 @@ interface ObjectiveStepProps {
   biggestDifficulty: string;
   onUpdate: (data: { mainGoal: string; biggestDifficulty: string }) => void;
   onNext: () => void;
-  onPrevious: () => void; // 🔥 NOVA PROP
+  onPrevious: () => void; // 🔥 NOVO
 }
 
 const goalOptions = [
@@ -31,7 +31,8 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({
   mainGoal, 
   biggestDifficulty, 
   onUpdate,
-  onNext  // 🔥 RECEBENDO A FUNÇÃO
+  onNext,
+  onPrevious // 🔥 RECEBENDO
 }) => {
   const [selectedGoal, setSelectedGoal] = useState<string>(mainGoal || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>(biggestDifficulty || '');
@@ -53,24 +54,20 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({
     }
   }, [selectedGoal, selectedDifficulty, customGoal, customDifficulty, onUpdate]);
 
-  // 🔥 Verifica se o formulário está válido
   const isGoalValid = selectedGoal && (selectedGoal !== 'outro_objetivo' || customGoal.trim());
   const isDifficultyValid = selectedDifficulty && (selectedDifficulty !== 'outro_desafio' || customDifficulty.trim());
   const isFormValid = isGoalValid && isDifficultyValid;
 
-  // 🔥 Função para avançar - Salva e chama onNext
   const handleNext = () => {
     if (isFormValid) {
       const goalValue = selectedGoal === 'outro_objetivo' ? customGoal : selectedGoal;
       const difficultyValue = selectedDifficulty === 'outro_desafio' ? customDifficulty : selectedDifficulty;
       
-      // Salva os dados
       onUpdate({
         mainGoal: goalValue,
         biggestDifficulty: difficultyValue,
       });
       
-      // 🔥 CHAMA O onNext DO WIZARD CONTAINER
       onNext();
     }
   };
@@ -172,15 +169,15 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({
         </div>
       </div>
 
-      {/* 🔥 NAVEGAÇÃO - COM onNext FUNCIONANDO */}
+      {/* 🔥 NAVEGAÇÃO - COM VOLTAR FUNCIONANDO */}
       <WizardNavigation
-  currentStep={3}
-  totalSteps={13}
-  onPrevious={onPrevious} // ✅ PASSANDO A FUNÇÃO
-  onNext={handleNext}
-  isNextDisabled={!isFormValid}
-  nextLabel="Continuar"
-  showPrevious={true}
+        currentStep={3}
+        totalSteps={13}
+        onPrevious={onPrevious} // ✅ FUNCIONANDO
+        onNext={handleNext}
+        isNextDisabled={!isFormValid}
+        nextLabel="Continuar"
+        showPrevious={true}
       />
     </div>
   );

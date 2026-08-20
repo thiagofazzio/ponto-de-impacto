@@ -23,23 +23,26 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
   const [customArea, setCustomArea] = useState(initialData.customArea || '');
 
   const revenueOptions = [
-    { value: 'produtos', label: 'Venda de Produtos' },
-    { value: 'servicos', label: 'Prestação de Serviços' },
-    { value: 'ambos', label: 'Produtos e Serviços' },
-    { value: 'assinatura', label: 'Assinatura / Recorrência' },
-    { value: 'outro', label: 'Outro modelo' },
+    { value: 'produtos', label: 'Venda de Produtos', icon: '📦' },
+    { value: 'servicos', label: 'Prestação de Serviços', icon: '💼' },
+    { value: 'assinatura', label: 'Assinatura / Recorrência', icon: '🔄' },
+    { value: 'marketplace', label: 'Marketplace / Plataforma', icon: '🏪' },
+    { value: 'hibrido', label: 'Híbrido', icon: '🔀' },
+    { value: 'outro', label: 'Outro modelo', icon: '💡' },
   ];
 
   const areaOptions = [
-    { value: 'varejo', label: 'Varejo' },
-    { value: 'industria', label: 'Indústria' },
-    { value: 'servicos', label: 'Serviços' },
-    { value: 'tecnologia', label: 'Tecnologia' },
-    { value: 'alimentos', label: 'Alimentos' },
-    { value: 'saude', label: 'Saúde' },
-    { value: 'educacao', label: 'Educação' },
-    { value: 'consultoria', label: 'Consultoria' },
-    { value: 'outro', label: 'Outro' },
+    { value: 'alimentacao', label: 'Alimentação', icon: '🍽️' },
+    { value: 'saude', label: 'Saúde & Bem-estar', icon: '🏥' },
+    { value: 'financas', label: 'Finanças & Seguros', icon: '💰' },
+    { value: 'tecnologia', label: 'Tecnologia & Software', icon: '💻' },
+    { value: 'educacao', label: 'Educação & Treinamento', icon: '📚' },
+    { value: 'consultoria', label: 'Consultoria & Serviços', icon: '💼' },
+    { value: 'varejo', label: 'Varejo & Comércio', icon: '🛍️' },
+    { value: 'imobiliario', label: 'Imobiliário & Construção', icon: '🏗️' },
+    { value: 'logistica', label: 'Logística & Transporte', icon: '🚚' },
+    { value: 'entretenimento', label: 'Entretenimento & Mídia', icon: '🎬' },
+    { value: 'outro', label: 'Outro setor', icon: '💡' },
   ];
 
   const handleNext = () => {
@@ -60,7 +63,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
           Como sua empresa realmente ganha a maior parte do dinheiro?
         </h2>
         <p className="text-[#5A6270] text-sm mb-6">
-          Selecione o modelo de negócio principal e o setor da sua empresa.
+          Isso nos ajuda a entender melhor seu negócio e personalizar o diagnóstico.
         </p>
 
         {/* Modelo de Receita */}
@@ -84,6 +87,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
                   }
                 `}
               >
+                <span className="mr-2">{option.icon}</span>
                 {option.label}
               </button>
             ))}
@@ -104,7 +108,7 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
           <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
             Em qual setor sua empresa atua? *
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {areaOptions.map((option) => (
               <button
                 key={option.value}
@@ -113,13 +117,14 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
                   if (option.value !== 'outro') setCustomArea('');
                 }}
                 className={`
-                  px-3 py-2 text-sm font-medium rounded-lg border transition text-left
+                  px-4 py-2.5 text-sm font-medium rounded-lg border transition text-left
                   ${areaAtuacao === option.value
                     ? 'bg-[#6B0F1A] text-white border-[#6B0F1A]'
                     : 'bg-white text-[#1A1A1A] border-[#D8D3CB] hover:border-[#6B0F1A] hover:bg-[#F9F7F3]'
                   }
                 `}
               >
+                <span className="mr-2">{option.icon}</span>
                 {option.label}
               </button>
             ))}
@@ -136,16 +141,16 @@ const RevenueModelStep: React.FC<RevenueModelStepProps> = ({ onNext, initialData
         </div>
       </div>
 
-      {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION */}
+      {/* 🔥 NAVEGAÇÃO - RevenueModelStep NÃO TEM VOLTAR (não há etapa anterior) */}
       <WizardNavigation
-  currentStep={2}
-  totalSteps={13}
-  onPrevious={() => {}} // Voltar não tem função porque não há etapa anterior (Step 1 é Welcome)
-  onNext={handleNext}
-  isNextDisabled={!isFormValid}
-  nextLabel="Continuar"
-  showPrevious={false} // Mantém desabilitado porque não há volta da Step 1
-/>
+        currentStep={2}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={handleNext}
+        isNextDisabled={!isFormValid}
+        nextLabel="Continuar"
+        showPrevious={false}
+      />
     </div>
   );
 };

@@ -19,9 +19,7 @@ import CheckoutModal from './checkout/CheckoutModal';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import { WizardNavigation } from './WizardNavigation';
 
-// 📌 ÚNICA FONTE DE VERDADE PARA O TOTAL DE ETAPAS
 const TOTAL_STEPS = 13;
-
 const MIN_PROCESSING_MS = 3600;
 
 const INITIAL_FORM_DATA: DiagnosticFormData = {
@@ -85,7 +83,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🔥 Carrega dados do localStorage
   useEffect(() => {
     const savedData = localStorage.getItem('tfazzio_diagnostic_data');
     if (savedData) {
@@ -96,12 +93,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     }
   }, []);
 
-  // 🔥 Salva dados no localStorage sempre que mudar
   useEffect(() => {
     localStorage.setItem('tfazzio_diagnostic_data', JSON.stringify(formData));
   }, [formData]);
 
-  // 🔥 Verifica se o usuário voltou do Stripe com sucesso
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -236,9 +231,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ============================================================
-  // 🔥 runDiagnosticCalculation - USANDO ROTA COMPLETA
-  // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -249,7 +241,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const fetchResult = (async (): Promise<DiagnosticResult> => {
       try {
-        // 🔥 ROTA COMPLETA (COM EVIDÊNCIAS)
         const response = await fetch('/api/diagnostico/gerar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -309,14 +300,13 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
             
-            {/* 🔥 PASSANDO onNext PARA ObjectiveStep */}
             {currentStep === 3 && (
               <ObjectiveStep
-    mainGoal={formData.mainGoal}
-    biggestDifficulty={formData.biggestDifficulty}
-    onUpdate={(data) => updateFormData(data)}
-    onNext={nextStep}
-    onPrevious={prevStep} // 🔥 PASSANDO
+                mainGoal={formData.mainGoal}
+                biggestDifficulty={formData.biggestDifficulty}
+                onUpdate={(data) => updateFormData(data)}
+                onNext={nextStep}
+                onPrevious={prevStep}
               />
             )}
             
@@ -418,10 +408,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             
             {currentStep === 14 && (
               <ReviewStep 
-    formData={formData} 
-    onUpdate={updateFormData} 
-    onRunDiagnostic={runDiagnosticCalculation}
-    onPrevious={prevStep} // 🔥 PASSANDO
+                formData={formData} 
+                onUpdate={updateFormData} 
+                onRunDiagnostic={runDiagnosticCalculation}
+                onPrevious={prevStep}
               />
             )}
             
@@ -445,9 +435,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* 🔥 NAVEGAÇÃO - APENAS NAS ETAPAS QUE NÃO TÊM NAVEGAÇÃO PRÓPRIA */}
-      {/* Etapas com navegação própria: 2 (Revenue), 3 (Objective), 4 (CNPJ), 14 (Review) */}
-      {/* Etapas sem navegação: 5, 6, 7, 8, 9, 10, 11, 12, 13 */}
+      {/* NAVEGAÇÃO - APENAS NAS ETAPAS QUE NÃO TÊM NAVEGAÇÃO PRÓPRIA */}
       {currentStep >= 5 && currentStep <= 13 && currentStep !== 4 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation

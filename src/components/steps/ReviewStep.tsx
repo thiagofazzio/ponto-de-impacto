@@ -7,16 +7,20 @@ interface ReviewStepProps {
   formData: DiagnosticFormData;
   onUpdate: (fields: Partial<DiagnosticFormData>) => void;
   onRunDiagnostic: () => void;
-  onPrevious: () => void; // 🔥 NOVA PROP
+  onPrevious: () => void; // 🔥 NOVO
 }
 
-export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRunDiagnostic }) => {
+export const ReviewStep: React.FC<ReviewStepProps> = ({ 
+  formData, 
+  onUpdate, 
+  onRunDiagnostic,
+  onPrevious // 🔥 RECEBENDO
+}) => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail);
   
-  // Validação de telefone com 10 a 12 dígitos
   const phoneDigits = formData.contactPhone.replace(/\D/g, '');
   const isValidPhone = phoneDigits.length >= 10 && phoneDigits.length <= 12;
   
@@ -26,7 +30,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
     isValidPhone &&
     formData.consentGiven;
 
-  // 🔥 Função para formatar telefone enquanto digita
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '');
     if (digits.length === 0) return '';
@@ -35,7 +38,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   };
 
-  // 🔥 Função para exibir funcionários com formato amigável
   const getEmployeesLabel = (value: string) => {
     const labels: Record<string, string> = {
       '1_5': '1 a 5',
@@ -47,7 +49,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
     return labels[value] || value;
   };
 
-  // 🔥 Manipulador para o botão "Processar Diagnóstico"
   const handleRunDiagnostic = () => {
     if (isContactValid) {
       console.log('🚀 Iniciando diagnóstico...');
@@ -149,16 +150,16 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
         </div>
       </div>
 
-      {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION COM BOTÃO PERSONALIZADO */}
+      {/* 🔥 NAVEGAÇÃO - COM VOLTAR FUNCIONANDO */}
       <WizardNavigation
-  currentStep={14}
-  totalSteps={13}
-  onPrevious={onPrevious} // ✅ PASSANDO A FUNÇÃO
-  onNext={handleRunDiagnostic}
-  isNextDisabled={!isContactValid}
-  isLastStep={true}
-  nextLabel="Processar Diagnóstico"
-  showPrevious={true}
+        currentStep={14}
+        totalSteps={13}
+        onPrevious={onPrevious} // ✅ FUNCIONANDO
+        onNext={handleRunDiagnostic}
+        isNextDisabled={!isContactValid}
+        isLastStep={true}
+        nextLabel="Processar Diagnóstico"
+        showPrevious={true}
       />
     </div>
   );
