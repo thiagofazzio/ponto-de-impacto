@@ -75,8 +75,10 @@ export interface DiagnosticFormData {
   responsavelComercial: string;
   responsavelOperacoes: string;
 
-  // Pagamento (NOVO)
+  // 🔥 Pagamento (NOVO)
   paymentConfirmed?: boolean;
+  paymentStatus?: 'pending' | 'paid' | 'test' | 'failed';
+  stripeSessionId?: string;
 }
 
 export interface BreakEvenAnalysis {
@@ -191,4 +193,21 @@ export interface DiagnosticResult {
     concentrationMessage: string | null;
     rentInsight: string | null;
   };
+}
+
+// 🔥 Interface para o Lead salvo no JSONL
+export interface LeadRecord {
+  id: string;
+  companyName: string;
+  cnpj: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  paymentStatus: 'pending' | 'paid' | 'test' | 'failed';
+  paymentConfirmed: boolean;
+  stripeSessionId?: string;
+  diagnosticResult?: DiagnosticResult;
+  formData: DiagnosticFormData;
+  createdAt: string;
+  updatedAt: string;
 }

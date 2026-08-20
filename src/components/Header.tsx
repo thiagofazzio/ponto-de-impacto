@@ -13,8 +13,19 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
 
   // 🔥 Função que limpa o localStorage e recarrega a página
   const handleReset = () => {
-    localStorage.removeItem('tfazzio_diagnostic_data');
-    window.location.reload();
+    if (confirm('Tem certeza que deseja reiniciar o diagnóstico? Todos os dados preenchidos serão perdidos.')) {
+      localStorage.removeItem('tfazzio_diagnostic_data');
+      window.location.reload();
+    }
+  };
+
+  // 🔥 Calcula a porcentagem do progresso baseado no TOTAL_STEPS (13 etapas)
+  // Mapeamento: Step 1 = 0%, Step 14 = 100%
+  const getProgressPercentage = () => {
+    if (currentStep <= 1) return 0;
+    if (currentStep >= 14) return 100;
+    // Step 2 = 8%, Step 13 = 92%
+    return ((currentStep - 1) / (totalSteps - 1)) * 100;
   };
 
   return (
@@ -43,11 +54,13 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
         <div className="hidden md:flex items-center gap-4">
           {!isReport && currentStep > 1 && currentStep < 15 && (
             <div className="flex items-center gap-3 bg-[#F9F7F3] px-4 py-1.5 rounded-full border border-[#D8D3CB]">
-              <span className="text-xs font-semibold text-[#5A6270]">Etapa {currentStep - 1} de {totalSteps - 3}</span>
+              <span className="text-xs font-semibold text-[#5A6270]">
+                Etapa {currentStep} de {totalSteps}
+              </span>
               <div className="w-32 bg-[#E8E2D8] h-2 rounded-full overflow-hidden">
                 <div
                   className="bg-[#6B0F1A] h-full transition-all duration-300 rounded-full"
-                  style={{ width: `${((currentStep - 1) / (totalSteps - 3)) * 100}%` }}
+                  style={{ width: `${getProgressPercentage()}%` }}
                 />
               </div>
             </div>
@@ -89,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ currentStep, totalSteps, onReset
         <div className="md:hidden w-full bg-[#E8E2D8] h-1">
           <div
             className="bg-[#6B0F1A] h-full transition-all duration-300"
-            style={{ width: `${((currentStep - 1) / (totalSteps - 3)) * 100}%` }}
+            style={{ width: `${getProgressPercentage()}%` }}
           />
         </div>
       )}

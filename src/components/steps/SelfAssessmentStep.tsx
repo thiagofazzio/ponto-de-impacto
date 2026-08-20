@@ -1,11 +1,12 @@
 import React from 'react';
-import { Star, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import { WizardNavigation } from '../WizardNavigation';
 
 interface SelfAssessmentStepProps {
   areaKey: string;
   areaTitle: string;
-  stepNumber: number; // 6 to 11
-  currentValue: number; // 1 to 5
+  stepNumber: number;
+  currentValue: number;
   onSelect: (val: number) => void;
 }
 
@@ -81,11 +82,26 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
 }) => {
   const guide = AREA_GUIDES[areaKey] || AREA_GUIDES['Financeiro'];
 
+  // Mapeia stepNumber para currentStep no WizardNavigation
+  // Step 7 = Financeiro, 8 = Comercial, 9 = Operacao, 10 = Gestao, 11 = Pessoas, 12 = Estrategia
+  const getCurrentStep = () => {
+    const mapping: Record<number, number> = {
+      7: 7,
+      8: 8,
+      9: 9,
+      10: 10,
+      11: 11,
+      12: 12,
+    };
+    return mapping[stepNumber] || 7;
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa {stepNumber} de 16 • Autoavaliação Direcionada</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Como você avalia a área de {areaTitle}?</h2>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
+          Como você avalia a área de <span className="text-[#6B0F1A]">{areaTitle}</span>?
+        </h2>
         <p className="text-[#5A6270] text-sm mt-1">{guide.subtitle}</p>
       </div>
 
@@ -141,6 +157,17 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
           })}
         </div>
       </div>
+
+      {/* Navegação */}
+      <WizardNavigation
+        currentStep={getCurrentStep()}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={() => {}}
+        isNextDisabled={!currentValue}
+        nextLabel="Continuar"
+        showPrevious={true}
+      />
     </div>
   );
 };

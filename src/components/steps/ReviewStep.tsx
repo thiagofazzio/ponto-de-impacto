@@ -1,6 +1,7 @@
 import React from 'react';
 import { DiagnosticFormData } from '../../types';
-import { ArrowRight, Building, Mail } from 'lucide-react';
+import { Building, Mail } from 'lucide-react';
+import { WizardNavigation } from '../WizardNavigation';
 
 interface ReviewStepProps {
   formData: DiagnosticFormData;
@@ -45,10 +46,16 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
     return labels[value] || value;
   };
 
+  // 🔥 Manipulador para o botão "Processar Diagnóstico"
+  const handleRunDiagnostic = () => {
+    if (isContactValid) {
+      onRunDiagnostic();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 14 de 14 • Revisão</span>
         <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Tudo pronto para gerar o seu relatório!</h2>
         <p className="text-[#5A6270] text-sm mt-1">Revise os dados da sua empresa antes do processamento do diagnóstico estratégico TFAZZIO.</p>
       </div>
@@ -138,27 +145,19 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
             <span>Concordo em receber o diagnóstico e ser contatado pela TFAZZIO, e autorizo o uso dos dados informados para essa finalidade.</span>
           </label>
         </div>
-
-        <div className="pt-2">
-          <button 
-            id="btn-generate-report-final" 
-            onClick={onRunDiagnostic} 
-            disabled={!isContactValid}
-            className="w-full py-4 bg-[#6B0F1A] hover:bg-[#500B13] disabled:opacity-40 disabled:hover:bg-[#6B0F1A] disabled:cursor-not-allowed text-white font-extrabold text-lg rounded-xl shadow-lg flex items-center justify-center gap-3 transition hover:scale-[1.01] cursor-pointer"
-          >
-            <span>Processar Diagnóstico & Gerar Relatório Visual</span>
-            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-          </button>
-          {!isContactValid && (
-            <p className="text-center text-xs text-[#5A6270] mt-2">
-              {!formData.contactName.trim() && '• Preencha seu nome '}
-              {!isValidEmail && formData.contactName.trim() && '• E-mail inválido '}
-              {!isValidPhone && formData.contactName.trim() && isValidEmail && '• WhatsApp inválido (10-12 dígitos) '}
-              {!formData.consentGiven && formData.contactName.trim() && isValidEmail && isValidPhone && '• Aceite os termos '}
-            </p>
-          )}
-        </div>
       </div>
+
+      {/* Navegação */}
+      <WizardNavigation
+        currentStep={14}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={handleRunDiagnostic}
+        isNextDisabled={!isContactValid}
+        isLastStep={true}
+        nextLabel="Processar Diagnóstico"
+        showPrevious={true}
+      />
     </div>
   );
 };

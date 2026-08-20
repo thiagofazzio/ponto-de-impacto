@@ -386,7 +386,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
       </div>
 
-      {/* Evidências Coletadas - CARDS HORIZONTAIS */}
+      {/* 🔥 Evidências Coletadas - CARDS VERTICAIS (UM EMBAIXO DO OUTRO) */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -404,7 +404,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 🔥 CARDS EM LISTA VERTICAL (um embaixo do outro) */}
+        <div className="space-y-4">
+          
           {/* Card 1: BrasilAPI / CNPJ */}
           <div className="bg-[#F9F7F3] rounded-2xl p-5 border border-[#D8D3CB] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-2">
@@ -416,7 +418,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               </span>
             </div>
 
-            <div className="space-y-2 text-xs text-[#1A1A1A]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#1A1A1A]">
               <div>
                 <span className="text-[#5A6270] block font-medium">Razão Social:</span>
                 <span className="font-bold text-sm text-[#1A1A1A]">{form.cnpjData?.razaoSocial || form.companyName}</span>
@@ -425,22 +427,20 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 <span className="text-[#5A6270] block font-medium">Nome Fantasia:</span>
                 <span className="font-semibold">{form.cnpjData?.nomeFantasia || 'Não informado'}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div>
-                  <span className="text-[#5A6270] block font-medium">Porte:</span>
-                  <span className="font-bold text-[#6B0F1A]">{form.cnpjData?.porte || 'PME'}</span>
-                </div>
-                <div>
-                  <span className="text-[#5A6270] block font-medium">Capital Social:</span>
-                  <span className="font-semibold">{form.cnpjData?.capitalSocial ? formatCurrency(form.cnpjData.capitalSocial) : 'N/A'}</span>
-                </div>
+              <div>
+                <span className="text-[#5A6270] block font-medium">Porte:</span>
+                <span className="font-bold text-[#6B0F1A]">{form.cnpjData?.porte || 'PME'}</span>
               </div>
-              <div className="pt-1">
+              <div>
+                <span className="text-[#5A6270] block font-medium">Capital Social:</span>
+                <span className="font-semibold">{form.cnpjData?.capitalSocial ? formatCurrency(form.cnpjData.capitalSocial) : 'N/A'}</span>
+              </div>
+              <div className="sm:col-span-2">
                 <span className="text-[#5A6270] block font-medium">Atividade Principal (CNAE):</span>
                 <span className="text-[11px] font-medium text-[#1A1A1A]">{form.cnpjData?.cnaeCodigo} - {form.cnpjData?.cnaeDescricao || form.segment}</span>
               </div>
               {form.cnpjData?.logradouro && (
-                <div className="pt-1">
+                <div className="sm:col-span-2">
                   <span className="text-[#5A6270] block font-medium">Endereço Registrado:</span>
                   <span className="text-[11px] text-[#5A6270]">{form.cnpjData.logradouro}, {form.cnpjData.municipio} - {form.cnpjData.uf}</span>
                 </div>
@@ -465,7 +465,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
 
             {evidence?.googlePlaces?.rating ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div className="p-3 bg-white rounded-2xl border border-[#D8D3CB] text-center shrink-0">
                     <span className="text-3xl font-black text-[#6B0F1A]">{evidence.googlePlaces.rating}</span>
                     <span className="text-[10px] block text-[#5A6270] font-bold">★ de 5.0</span>
@@ -478,7 +478,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                     {evidence.googlePlaces.address && (
                       <p className="text-[11px] text-[#5A6270] mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-[#6B0F1A]" />
-                        <span className="truncate max-w-[200px]">{evidence.googlePlaces.address}</span>
+                        <span>{evidence.googlePlaces.address}</span>
                       </p>
                     )}
                   </div>
@@ -547,9 +547,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* SECTION 2: RADAR CHART & HEATMAP */}
+      {/* SECTION 2: RADAR CHART & HEATMAP - mantido igual */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
         {/* Radar Chart */}
         <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 shadow-md space-y-4">
           <div className="flex justify-between items-center border-b border-[#D8D3CB] pb-3">
@@ -561,7 +560,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               <p className="text-xs text-[#5A6270]">Comparativo das suas notas vs Benchmark PME (7.5)</p>
             </div>
           </div>
-
           <div className="w-full h-72 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
@@ -587,7 +585,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
               <p className="text-xs text-[#5A6270]">Status atual da operação (Verde, Amarelo, Vermelho)</p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             {(Object.values(result.areaScores) as AreaScoreInfo[]).map((area) => (
               <div
@@ -608,10 +605,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* SECTION 3: FINANCIAL BREAK-EVEN ANALYSIS */}
+      {/* SECTION 3: FINANCIAL BREAK-EVEN ANALYSIS - mantido igual */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -624,15 +620,12 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           </div>
         </div>
 
-        {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
             <span className="text-xs text-[#5A6270] block font-medium">Ponto de Equilíbrio (Break-Even)</span>
             <span className="text-xl font-mono font-extrabold text-[#6B0F1A]">{formatCurrency(breakEven.breakEvenRevenue)}</span>
             <p className="text-[11px] text-[#5A6270]">Mínimo necessário p/ zerar custos</p>
           </div>
-
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
             <span className="text-xs text-[#5A6270] block font-medium">Ocupação do Faturamento</span>
             <span className={`text-xl font-mono font-extrabold ${breakEven.breakEvenPercentage > 85 ? 'text-rose-700' : 'text-emerald-700'}`}>
@@ -640,13 +633,11 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             </span>
             <p className="text-[11px] text-[#5A6270]">% da receita gasta em custos</p>
           </div>
-
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
             <span className="text-xs text-[#5A6270] block font-medium">Margem de Contribuição %</span>
             <span className="text-xl font-mono font-extrabold text-[#6B0F1A]">{breakEven.contributionMarginPercent}%</span>
             <p className="text-[11px] text-[#5A6270]">Margem que sobra pós variáveis</p>
           </div>
-
           <div className="p-4 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] space-y-1">
             <span className="text-xs text-[#5A6270] block font-medium">Lucro Líquido Estimado</span>
             <span className={`text-xl font-mono font-extrabold ${breakEven.estimatedNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
@@ -654,10 +645,8 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             </span>
             <p className="text-[11px] text-[#5A6270]">Margem líquida: {breakEven.estimatedNetMarginPercent}%</p>
           </div>
-
         </div>
 
-        {/* Break-Even Progress Bar */}
         <div className="space-y-2 bg-[#F9F7F3] p-4 rounded-2xl border border-[#D8D3CB]">
           <div className="flex justify-between items-center text-xs font-semibold">
             <span className="text-[#1A1A1A]">Termômetro de Ponto de Equilíbrio</span>
@@ -667,7 +656,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 : `Abaixo do Break-Even (Déficit de ${formatCurrency(breakEven.breakEvenRevenue - breakEven.monthlyRevenue)})`}
             </span>
           </div>
-          
           <div className="w-full bg-[#E8E2D8] h-3 rounded-full overflow-hidden flex">
             <div
               className={`h-full transition-all duration-500 ${
@@ -680,10 +668,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             Você precisa atender a pelo menos <strong className="text-[#1A1A1A]">{breakEven.breakEvenClientsNeeded} clientes/mês</strong> com ticket médio de {formatCurrency(form.averageTicket || 1)} para cobrir todos os seus custos fixos operacionais.
           </p>
         </div>
-
       </div>
 
-      {/* SECTION 4: 90-DAY ACTION PLAN */}
+      {/* SECTION 4: 90-DAY ACTION PLAN - mantido igual */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#D8D3CB] pb-4">
           <div>
@@ -691,8 +678,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             <h2 className="text-2xl font-black text-[#1A1A1A] mt-0.5">Plano de Ação de 90 Dias (3 Fases)</h2>
             <p className="text-[#5A6270] text-xs">Focado em eliminar o gargalo de {primaryBottleneck.name}</p>
           </div>
-
-          {/* Phase Tabs */}
           <div className="flex items-center gap-2 bg-[#F9F7F3] p-1.5 rounded-2xl border border-[#D8D3CB]">
             {[1, 2, 3].map((ph) => (
               <button
@@ -710,7 +695,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           </div>
         </div>
 
-        {/* Phase Header */}
         <div className="p-4 rounded-2xl bg-[#F4E8C1] border border-[#D4AF37]/50 space-y-1">
           <div className="flex justify-between items-center text-xs font-extrabold text-[#6B0F1A]">
             <span>{currentPhase.period} • {currentPhase.title}</span>
@@ -719,11 +703,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           <p className="text-sm font-bold text-[#1A1A1A]">{currentPhase.goal}</p>
         </div>
 
-        {/* Tasks List */}
         <div className="space-y-3">
           {currentPhase.tasks.map((task) => {
             const isDone = completedTasks[task.id];
-
             return (
               <div
                 key={task.id}
@@ -737,7 +719,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 <button type="button" className="mt-0.5 shrink-0 text-[#6B0F1A]">
                   {isDone ? <CheckSquare className="w-5 h-5 text-emerald-600" /> : <Square className="w-5 h-5 text-[#5A6270]" />}
                 </button>
-
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h4 className="font-extrabold text-sm text-[#1A1A1A]">{task.title}</h4>
@@ -757,7 +738,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* SECTION 5: EXECUTIVE TEXTUAL DIAGNOSIS & AI RECOMMENDATIONS */}
+      {/* SECTION 5: EXECUTIVE TEXTUAL DIAGNOSIS & AI RECOMMENDATIONS - mantido igual */}
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
         <div className="flex items-center justify-between border-b border-[#D8D3CB] pb-4">
           <div>
@@ -772,19 +753,16 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
           )}
         </div>
 
-        {/* Executive Summary */}
         <div className="p-5 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] text-sm leading-relaxed space-y-3">
           <h4 className="font-bold text-[#6B0F1A] text-base">Resumo do Cenário:</h4>
           <p className="text-[#5A6270]">{result.executiveSummary}</p>
         </div>
 
-        {/* Detailed Text Diagnosis */}
         <div className="p-5 rounded-2xl bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] text-sm leading-relaxed space-y-3">
           <h4 className="font-bold text-[#6B0F1A] text-base">Análise de Riscos e Gargalos:</h4>
           <div className="whitespace-pre-line text-xs sm:text-sm text-[#5A6270]">{result.textualDiagnosis}</div>
         </div>
 
-        {/* Strategic Recommendations */}
         <div className="space-y-3">
           <h4 className="font-bold text-[#1A1A1A] text-sm uppercase tracking-wider">Recomendações Estratégicas Prioritárias:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -800,7 +778,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </div>
       </div>
 
-      {/* SECTION 6: STRATEGIC SESSION CTA */}
+      {/* SECTION 6: STRATEGIC SESSION CTA - mantido igual */}
       <div className="bg-[#6B0F1A] rounded-3xl p-8 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-[#500B13]">
         <div className="space-y-2 max-w-2xl text-center md:text-left">
           <span className="text-xs font-black uppercase tracking-wider bg-[#D4AF37] text-[#1A1A1A] px-3 py-1 rounded-full">
@@ -813,7 +791,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
             Agende uma Sessão Estratégica de Diagnóstico com os consultores do Grupo TFAZZIO para aprofundar na implementação do seu Ponto de Impacto.
           </p>
         </div>
-
         <button
           id="btn-schedule-session"
           onClick={() => setShowModalCTA(true)}
@@ -824,7 +801,7 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
         </button>
       </div>
 
-      {/* STRATEGIC SESSION MODAL */}
+      {/* STRATEGIC SESSION MODAL - mantido igual */}
       {showModalCTA && (
         <div className="fixed inset-0 z-50 bg-[#1A1A1A]/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 text-[#1A1A1A] relative shadow-2xl">
@@ -840,11 +817,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 ✕
               </button>
             </div>
-
             <p className="text-xs text-[#5A6270] leading-relaxed">
               Na Sessão Estratégica de 45 minutos com o consultor Thiago Fazzio e equipe, iremos revisar o seu relatório em detalhes e montar a rota de execução personalizada para o seu negócio.
             </p>
-
             <div className="space-y-3">
               <a
                 href={`https://wa.me/5516992752758?text=Ol%C3%A1%20Thiago!%20Acabei%20de%20fazer%20o%20diagn%C3%B3stico%20Ponto%20de%20Impacto%20para%20a%20empresa%20${encodeURIComponent(
@@ -857,7 +832,6 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ result, onDown
                 <MessageSquare className="w-4 h-4" />
                 <span>Falar com Thiago Fazzio via WhatsApp</span>
               </a>
-
               <button
                 onClick={() => {
                   alert('Sua solicitação foi recebida com sucesso! Em breve a equipe TFAZZIO entrará em contato.');

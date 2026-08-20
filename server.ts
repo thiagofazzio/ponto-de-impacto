@@ -7,11 +7,13 @@ import { GoogleGenAI } from '@google/genai';
 import { calculateBreakEven, generateFullDiagnostic } from './src/utils/diagnosticCalculator';
 import { DiagnosticFormData, EvidenceData, GooglePlacesEvidence, NewsItemEvidence } from './src/types';
 import Stripe from 'stripe';
+import { handleStripeWebhook } from './src/api/webhook/stripe';
 
 console.log('🚀 SERVIDOR INICIADO COM SUCESSO');
 console.log('🔑 GOOGLE_PLACES_API_KEY:', process.env.GOOGLE_PLACES_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Configurada' : '❌ Não configurada');
 console.log('🔑 STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? '✅ Configurada' : '❌ Não configurada');
+console.log('🔑 STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? '✅ Configurada' : '❌ Não configurada');
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.jsonl');
@@ -137,6 +139,15 @@ async function getEvidenceData(companyName: string, cityState: string): Promise<
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
+  
+  // ============================================================
+  // 🔥 ROTA DO WEBHOOK - Deve vir ANTES do express.json()
+  // ============================================================
+  app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
+  // ============================================================
+  // MIDDLEWARE PARA JSON (depois do webhook)
+  // ============================================================
   app.use(express.json({ limit: '10mb' }));
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {

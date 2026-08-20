@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { X, CreditCard, Lock } from 'lucide-react';
+import { X, CreditCard, Lock, Sparkles } from 'lucide-react';
 
 const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || '');
 
@@ -43,6 +43,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
     }
   };
 
+  // 🔥 Verifica se o cupom TTFAZZIO foi digitado
+  const isTestCoupon = cupom && cupom.toUpperCase().startsWith('TTFAZZIO');
+
   return (
     <div className="fixed inset-0 z-50 bg-[#1A1A1A]/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white border border-[#D8D3CB] rounded-3xl p-6 sm:p-8 max-w-md w-full relative shadow-2xl">
@@ -73,26 +76,45 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
           <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
             Tem um cupom?
           </label>
-          <input
-            type="text"
-            value={cupom}
-            onChange={(e) => setCupom(e.target.value)}
-            placeholder="Código do cupom"
-            className="w-full bg-[#F9F7F3] border border-[#D8D3CB] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={cupom}
+              onChange={(e) => setCupom(e.target.value)}
+              placeholder="Código do cupom (ex: TTFAZZIO)"
+              className={`w-full bg-[#F9F7F3] border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20 ${
+                isTestCoupon ? 'border-[#D4AF37] bg-[#F4E8C1]' : 'border-[#D8D3CB]'
+              }`}
+            />
+            {isTestCoupon && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+              </div>
+            )}
+          </div>
+          {isTestCoupon && (
+            <p className="text-xs text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              Cupom de teste ativado! O pagamento será pulado.
+            </p>
+          )}
         </div>
 
         <button
           onClick={handleCheckout}
           disabled={loading}
-          className="w-full py-3.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full py-3.5 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed ${
+            isTestCoupon 
+              ? 'bg-emerald-600 hover:bg-emerald-700' 
+              : 'bg-[#6B0F1A] hover:bg-[#500B13]'
+          }`}
         >
           {loading ? (
             <span className="inline-block animate-spin">⟳</span>
           ) : (
             <>
               <Lock className="w-4 h-4" />
-              Pagar R$ 489,70
+              {isTestCoupon ? '🆓 Ativar Diagnóstico Grátis (Teste)' : 'Pagar R$ 489,70'}
             </>
           )}
         </button>
@@ -105,6 +127,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
 
         <p className="text-xs text-[#5A6270] text-center mt-4">
           Pagamento seguro via <strong className="text-[#1A1A1A]">Stripe</strong>. Seu cartão não será armazenado.
+        </p>
+
+        <p className="text-[10px] text-[#5A6270] text-center mt-2 opacity-50">
+          Cupom <strong className="text-[#6B0F1A]">TTFAZZIO</strong> para testes internos
         </p>
       </div>
     </div>

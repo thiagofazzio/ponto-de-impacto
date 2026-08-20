@@ -1,6 +1,7 @@
 import React from 'react';
 import { DiagnosticFormData } from '../../types';
-import { ShoppingCart, Users, CheckSquare, XSquare, Zap, User, Briefcase, Clipboard } from 'lucide-react';
+import { CheckSquare, XSquare } from 'lucide-react';
+import { WizardNavigation } from '../WizardNavigation';
 
 interface CommercialDataStepProps {
   formData: DiagnosticFormData;
@@ -8,10 +9,18 @@ interface CommercialDataStepProps {
 }
 
 export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData, onUpdate }) => {
+  // Verifica se o formulário está válido
+  const isFormValid = 
+    formData.responsavelComercial && 
+    formData.responsavelOperacoes && 
+    formData.salesTeamSize !== undefined &&
+    formData.salesTeamSize !== null &&
+    formData.hasSalesManager !== undefined &&
+    formData.hasSalesManager !== null;
+
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 6 de 16</span>
         <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
           <span className="text-[#6B0F1A]">Estrutura Comercial</span> e Processo de Vendas
         </h2>
@@ -78,7 +87,6 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
           </div>
         </div>
 
-        {/* 🔥 ORDEM INVERTIDA: Gestor primeiro, depois tamanho da equipe */}
         {/* Gestor de Vendas */}
         <div className="border-t border-[#D8D3CB] pt-5 mt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
@@ -265,6 +273,17 @@ export const CommercialDataStep: React.FC<CommercialDataStepProps> = ({ formData
         </div>
 
       </div>
+
+      {/* Navegação */}
+      <WizardNavigation
+        currentStep={6}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={() => {}}
+        isNextDisabled={!isFormValid}
+        nextLabel="Continuar"
+        showPrevious={true}
+      />
     </div>
   );
 };

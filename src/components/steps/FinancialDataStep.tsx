@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DiagnosticFormData } from '../../types';
-import { DollarSign, PieChart, Info, Landmark, Users, User, Briefcase, Clipboard, Plus, Trash2, ChevronDown, ChevronRight, Percent } from 'lucide-react';
+import { Info, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { WizardNavigation } from '../WizardNavigation';
 
 interface FinancialDataStepProps {
   formData: DiagnosticFormData;
@@ -140,10 +141,15 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
   const totalFixedCosts = costItems.reduce((sum, item) => sum + (item.value || 0), 0);
   const totalVariablePercent = variableItems.reduce((sum, item) => sum + (item.percent || 0), 0);
 
+  // Verifica se o formulário está válido
+  const isFormValid = 
+    monthlyRevenue > 0 && 
+    formData.employeesCount && 
+    formData.responsavelFinanceiro;
+
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 5 de 16</span>
         <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
           <span className="text-[#6B0F1A]">Números Financeiros</span> da Empresa
         </h2>
@@ -154,8 +160,10 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
 
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-5 sm:p-6 space-y-6 shadow-sm">
         
-        {/* Número de Funcionários e Faturamento */}
+        {/* 🔥 GRID 2x2 - Funcionários + Faturamento | Custos Fixos + Custos Variáveis */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          
+          {/* Número de Funcionários */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
               Número de Funcionários *
@@ -174,6 +182,7 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             <p className="text-[11px] text-[#5A6270]">Total de colaboradores na empresa.</p>
           </div>
 
+          {/* Faturamento Mensal */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
@@ -184,7 +193,6 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             <div className="relative">
               <span className="absolute left-3.5 top-2.5 text-[#5A6270] font-semibold text-sm">R$</span>
               <input
-                id="input-monthly-revenue"
                 type="number"
                 min={0}
                 step={1000}
@@ -196,21 +204,18 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
             </div>
             <p className="text-[11px] text-[#5A6270]">Média bruta dos últimos 3 a 6 meses.</p>
           </div>
-        </div>
 
-        {/* Custos Fixos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-[#D8D3CB] pt-5">
+          {/* Custos Fixos */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                2. Custos Fixos Mensais (R$) *
+                Custos Fixos Mensais (R$) *
               </label>
               <span className="text-xs font-mono font-bold text-[#6B0F1A]">{formatCurrency(totalFixedCosts)}</span>
             </div>
             <div className="relative">
               <span className="absolute left-3.5 top-2.5 text-[#5A6270] font-semibold text-sm">R$</span>
               <input
-                id="input-fixed-costs"
                 type="number"
                 min={0}
                 step={500}
@@ -239,6 +244,43 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
               <span className="text-[11px] text-[#5A6270]">
                 {costItems.length > 1 ? `${costItems.length} itens detalhados` : 'Insira os valores detalhadamente'}
               </span>
+            </div>
+          </div>
+
+          {/* Custos Variáveis */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                Custos Variáveis (%)
+              </label>
+              <span className="text-xs font-mono font-bold text-[#6B0F1A]">{Math.round(totalVariablePercent)}%</span>
+            </div>
+            <input
+              type="number"
+              min={0}
+              max={95}
+              step={0.5}
+              value={Math.round(totalVariablePercent)}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (variableItems.length > 1) {
+                  setVariableItems([{ id: Date.now().toString(), name: 'Outros variáveis', percent: val }]);
+                } else {
+                  onUpdate({ variableCostsPercent: val });
+                }
+              }}
+              className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] text-[#5A6270]">Insumos / Comissões / Taxas de cartão</span>
+              <button
+                type="button"
+                onClick={() => setShowVariableDetails(!showVariableDetails)}
+                className="text-xs text-[#6B0F1A] font-semibold flex items-center gap-1 hover:underline"
+              >
+                {showVariableDetails ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                {showVariableDetails ? 'Ocultar' : 'Detalhar'} variáveis
+              </button>
             </div>
           </div>
         </div>
@@ -327,135 +369,93 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
           </div>
         )}
 
-        {/* Custos Variáveis - SEM BARRINHA */}
-        <div className="border-t border-[#D8D3CB] pt-5 mt-2">
-          <div className="flex justify-between items-center">
-            <div className="flex-1">
-              <div className="flex justify-between items-center">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                  3. Custos Variáveis (%)
-                </label>
-                <span className="text-xs font-mono font-bold text-[#6B0F1A]">{Math.round(totalVariablePercent)}%</span>
-              </div>
-              <input
-                type="number"
-                min={0}
-                max={95}
-                step={0.5}
-                value={Math.round(totalVariablePercent)}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  if (variableItems.length > 1) {
-                    setVariableItems([{ id: Date.now().toString(), name: 'Outros variáveis', percent: val }]);
-                  } else {
-                    onUpdate({ variableCostsPercent: val });
-                  }
-                }}
-                className="w-full bg-[#F9F7F3] border border-[#D8D3CB] focus:border-[#6B0F1A] text-[#1A1A1A] rounded-xl px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#6B0F1A]/20"
-              />
-              <div className="flex justify-between text-[11px] text-[#5A6270] mt-1">
-                <span>Insumos / Comissões / Taxas de cartão</span>
-                <span>Atualmente: {Math.round(totalVariablePercent)}%</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowVariableDetails(!showVariableDetails)}
-              className="text-xs text-[#6B0F1A] font-semibold flex items-center gap-1 hover:underline ml-4 shrink-0"
-            >
-              {showVariableDetails ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              {showVariableDetails ? 'Ocultar' : 'Detalhar'} variáveis
-            </button>
+        {/* Estímulo para detalhar custos variáveis */}
+        {!showVariableDetails && variableItems.length === 1 && (
+          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>💡 Clique em "Detalhar variáveis" para entender o impacto de cada custo na sua margem.</span>
           </div>
+        )}
 
-          {/* Estímulo para detalhar custos variáveis */}
-          {!showVariableDetails && variableItems.length === 1 && (
-            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
-              <Info className="w-4 h-4 shrink-0" />
-              <span>💡 Clique em "Detalhar variáveis" para entender o impacto de cada custo na sua margem.</span>
+        {/* Detalhamento de Custos Variáveis */}
+        {showVariableDetails && (
+          <div className="mt-3 pt-3 border-t border-[#D8D3CB]">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                📊 Detalhamento dos Custos Variáveis
+              </h4>
+              <span className="text-xs font-bold text-[#6B0F1A]">
+                Total: {Math.round(totalVariablePercent)}%
+              </span>
             </div>
-          )}
 
-          {/* Detalhamento de Custos Variáveis */}
-          {showVariableDetails && (
-            <div className="mt-3 pt-3 border-t border-[#D8D3CB]">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                  📊 Detalhamento dos Custos Variáveis
-                </h4>
-                <span className="text-xs font-bold text-[#6B0F1A]">
-                  Total: {Math.round(totalVariablePercent)}%
-                </span>
-              </div>
-
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {variableItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 bg-[#F9F7F3] p-2 rounded-lg border border-[#D8D3CB]">
-                    <span className="text-xs font-medium text-[#1A1A1A] flex-1 truncate">
-                      {item.name}
-                    </span>
-                    <div className="relative w-24">
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={0.5}
-                        value={item.percent || ''}
-                        onChange={(e) => updateVariableItem(item.id, Number(e.target.value))}
-                        className="w-full bg-white border border-[#D8D3CB] rounded-lg px-2 py-1 text-xs font-mono focus:border-[#6B0F1A] focus:outline-none text-right"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">%</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeVariableItem(item.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                      disabled={variableItems.length === 1}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {variableItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 bg-[#F9F7F3] p-2 rounded-lg border border-[#D8D3CB]">
+                  <span className="text-xs font-medium text-[#1A1A1A] flex-1 truncate">
+                    {item.name}
+                  </span>
+                  <div className="relative w-24">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      value={item.percent || ''}
+                      onChange={(e) => updateVariableItem(item.id, Number(e.target.value))}
+                      className="w-full bg-white border border-[#D8D3CB] rounded-lg px-2 py-1 text-xs font-mono focus:border-[#6B0F1A] focus:outline-none text-right"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">%</span>
                   </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2 mt-3">
-                <select
-                  value={newVariableCategory}
-                  onChange={(e) => setNewVariableCategory(e.target.value)}
-                  className="flex-1 bg-white border border-[#D8D3CB] rounded-lg px-3 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none"
-                >
-                  <option value="">Selecione uma categoria...</option>
-                  {CATEGORIAS_VARIAVEIS.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <div className="relative w-20">
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.5}
-                    value={newVariablePercent}
-                    onChange={(e) => setNewVariablePercent(e.target.value)}
-                    placeholder="%"
-                    className="w-full bg-white border border-[#D8D3CB] rounded-lg px-2 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none text-right pr-6"
-                  />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">%</span>
+                  <button
+                    type="button"
+                    onClick={() => removeVariableItem(item.id)}
+                    className="text-red-500 hover:text-red-700 p-1"
+                    disabled={variableItems.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={addVariableItem}
-                  disabled={!newVariableCategory || !newVariablePercent}
-                  className="px-3 py-1.5 bg-[#6B0F1A] text-white rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#500B13] transition flex items-center gap-1"
-                >
-                  <Plus size={14} /> Adicionar
-                </button>
-              </div>
+              ))}
             </div>
-          )}
-        </div>
 
-        {/* Regime Tributário e Impostos sobre Venda - CORRIGIDO */}
+            <div className="flex items-center gap-2 mt-3">
+              <select
+                value={newVariableCategory}
+                onChange={(e) => setNewVariableCategory(e.target.value)}
+                className="flex-1 bg-white border border-[#D8D3CB] rounded-lg px-3 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none"
+              >
+                <option value="">Selecione uma categoria...</option>
+                {CATEGORIAS_VARIAVEIS.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <div className="relative w-20">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={newVariablePercent}
+                  onChange={(e) => setNewVariablePercent(e.target.value)}
+                  placeholder="%"
+                  className="w-full bg-white border border-[#D8D3CB] rounded-lg px-2 py-1.5 text-xs focus:border-[#6B0F1A] focus:outline-none text-right pr-6"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#5A6270]">%</span>
+              </div>
+              <button
+                type="button"
+                onClick={addVariableItem}
+                disabled={!newVariableCategory || !newVariablePercent}
+                className="px-3 py-1.5 bg-[#6B0F1A] text-white rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#500B13] transition flex items-center gap-1"
+              >
+                <Plus size={14} /> Adicionar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Regime Tributário e Impostos sobre Venda */}
         <div className="border-t border-[#D8D3CB] pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
@@ -636,6 +636,17 @@ export const FinancialDataStep: React.FC<FinancialDataStepProps> = ({ formData, 
         </div>
 
       </div>
+
+      {/* Navegação */}
+      <WizardNavigation
+        currentStep={5}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={() => {}}
+        isNextDisabled={!isFormValid}
+        nextLabel="Continuar"
+        showPrevious={true}
+      />
     </div>
   );
 };

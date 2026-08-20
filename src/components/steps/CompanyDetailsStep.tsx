@@ -1,6 +1,7 @@
 import React from 'react';
 import { DiagnosticFormData, TimeInMarket, EmployeesCount, TaxRegime } from '../../types';
 import { Building, MapPin, Users, Calendar, ShieldAlert } from 'lucide-react';
+import { WizardNavigation } from '../WizardNavigation';
 
 interface CompanyDetailsStepProps {
   formData: DiagnosticFormData;
@@ -11,7 +12,6 @@ export const CompanyDetailsStep: React.FC<CompanyDetailsStepProps> = ({ formData
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 3 de 16 • Perfil Operacional</span>
         <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">Dados gerais da sua empresa</h2>
         <p className="text-[#5A6270] text-sm mt-1">
           Confirme ou ajuste as informações sobre o momento e porte do seu negócio.
@@ -124,6 +124,16 @@ export const CompanyDetailsStep: React.FC<CompanyDetailsStepProps> = ({ formData
         </div>
 
       </div>
+
+      {/* Navegação */}
+      <WizardNavigation
+        currentStep={4}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={() => {}}
+        nextLabel="Continuar"
+        showPrevious={true}
+      />
     </div>
   );
 };

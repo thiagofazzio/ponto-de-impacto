@@ -11,12 +11,16 @@ import { ReviewStep } from './steps/ReviewStep';
 import { ProcessingStep } from './steps/ProcessingStep';
 import { ReportDashboard } from './report/ReportDashboard';
 import { PdfGenerator } from './report/PdfGenerator';
-import { ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import RevenueModelStep from './RevenueModelStep';
 import CheckoutModal from './checkout/CheckoutModal';
 import CheckoutSuccess from './pages/CheckoutSuccess';
+import { WizardNavigation } from './WizardNavigation';
+
+// 📌 ÚNICA FONTE DE VERDADE PARA O TOTAL DE ETAPAS
+const TOTAL_STEPS = 13;
 
 const MIN_PROCESSING_MS = 3600;
 
@@ -110,8 +114,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     }
   }, []);
 
-  const totalWizardSteps = 16;
-
   const updateFormData = (fields: Partial<DiagnosticFormData>) => {
     setFormData((prev) => {
       const updated = { ...prev, ...fields };
@@ -140,12 +142,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const validateStep = (): boolean => {
     setValidationError(null);
+    
+    // Step 3 - Objetivos
     if (currentStep === 3) {
       if (!formData.mainGoal || !formData.biggestDifficulty) {
         setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
         return false;
       }
     }
+    
+    // Step 5 - Financeiro
     if (currentStep === 5) {
       if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
         setValidationError('Por favor, informe um faturamento mensal válido.');
@@ -160,6 +166,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         return false;
       }
     }
+    
+    // Step 6 - Comercial
     if (currentStep === 6) {
       if (!formData.responsavelComercial) {
         setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
@@ -178,12 +186,34 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         return false;
       }
     }
+    
+    // Step 14 - Revisão (validação de contato)
+    if (currentStep === 14) {
+      if (!formData.contactName || formData.contactName.trim() === '') {
+        setValidationError('Por favor, informe seu nome completo.');
+        return false;
+      }
+      if (!formData.contactEmail || !formData.contactEmail.includes('@')) {
+        setValidationError('Por favor, informe um e-mail válido.');
+        return false;
+      }
+      if (!formData.contactPhone || formData.contactPhone.replace(/\D/g, '').length < 10) {
+        setValidationError('Por favor, informe um WhatsApp válido (DDD + número).');
+        return false;
+      }
+      if (!formData.consentGiven) {
+        setValidationError('Você precisa concordar com os termos para continuar.');
+        return false;
+      }
+    }
+    
     return true;
   };
 
   const nextStep = () => {
     if (!validateStep()) return;
     
+    // 🔥 Checkout na etapa 4 (CNPJ) se não pagou
     if (currentStep === 4 && !formData.paymentConfirmed) {
       setShowCheckout(true);
       return;
@@ -203,12 +233,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🔥 Reset removido daqui porque agora é feito pelo Header
+  // 🔥 Função para pular direto para o relatório (usado no CheckoutSuccess)
+  const handleContinueAfterPayment = () => {
+    setShowSuccess(false);
+    setCurrentStep(5);
+    if (onStepChange) onStepChange(5);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
-    setCurrentStep(15);
+    setCurrentStep(15); // Processing
     if (onStepChange) onStepChange(15);
 
     const minDelay = new Promise<void>((resolve) => setTimeout(resolve, MIN_PROCESSING_MS));
@@ -234,23 +270,24 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setDiagnosticResult(result);
     setIsProcessing(false);
     setShowSuccess(false);
-    setCurrentStep(16);
+    setCurrentStep(16); // Resultado
     if (onStepChange) onStepChange(16);
   };
 
+  // ============================================================
+  // TELA DE SUCESSO APÓS PAGAMENTO
+  // ============================================================
   if (showSuccess) {
     return (
       <CheckoutSuccess 
-        onContinue={() => {
-          setShowSuccess(false);
-          setCurrentStep(5);
-          if (onStepChange) onStepChange(5);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }} 
+        onContinue={handleContinueAfterPayment}
       />
     );
   }
 
+  // ============================================================
+  // RENDER PRINCIPAL
+  // ============================================================
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6">
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6">
@@ -262,7 +299,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
+            {/* ==========================================================
+                STEP 1 - WELCOME
+            ========================================================== */}
+            {currentStep === 1 && (
+              <WelcomeStep onStart={nextStep} />
+            )}
+
+            {/* ==========================================================
+                STEP 2 - REVENUE MODEL
+            ========================================================== */}
             {currentStep === 2 && (
               <RevenueModelStep
                 onNext={(data) => {
@@ -277,6 +323,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 initialData={formData}
               />
             )}
+
+            {/* ==========================================================
+                STEP 3 - OBJECTIVE
+            ========================================================== */}
             {currentStep === 3 && (
               <ObjectiveStep
                 mainGoal={formData.mainGoal}
@@ -284,6 +334,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 onUpdate={(data) => updateFormData(data)}
               />
             )}
+
+            {/* ==========================================================
+                STEP 4 - CNPJ
+            ========================================================== */}
             {currentStep === 4 && (
               <CnpjStep 
                 cnpj={formData.cnpj} 
@@ -294,49 +348,141 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 updateFormData={updateFormData}
               />
             )}
-            {currentStep === 5 && <FinancialDataStep formData={formData} onUpdate={updateFormData} />}
-            {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
+
+            {/* ==========================================================
+                STEP 5 - FINANCIAL DATA
+            ========================================================== */}
+            {currentStep === 5 && (
+              <FinancialDataStep formData={formData} onUpdate={updateFormData} />
+            )}
+
+            {/* ==========================================================
+                STEP 6 - COMMERCIAL DATA
+            ========================================================== */}
+            {currentStep === 6 && (
+              <CommercialDataStep formData={formData} onUpdate={updateFormData} />
+            )}
+
+            {/* ==========================================================
+                STEPS 7-12 - SELF ASSESSMENT (6 áreas)
+            ========================================================== */}
             {currentStep === 7 && (
-              <SelfAssessmentStep areaKey="Financeiro" areaTitle="Financeiro & Caixa" stepNumber={7}
+              <SelfAssessmentStep 
+                areaKey="Financeiro" 
+                areaTitle="Financeiro & Caixa" 
+                stepNumber={7}
                 currentValue={formData.scoreFinanceiro}
-                onSelect={(val) => { updateFormData({ scoreFinanceiro: val }); nextStep(); }} />
+                onSelect={(val) => { 
+                  updateFormData({ scoreFinanceiro: val }); 
+                  nextStep(); 
+                }} 
+              />
             )}
+            
             {currentStep === 8 && (
-              <SelfAssessmentStep areaKey="Comercial" areaTitle="Comercial & Vendas" stepNumber={8}
+              <SelfAssessmentStep 
+                areaKey="Comercial" 
+                areaTitle="Comercial & Vendas" 
+                stepNumber={8}
                 currentValue={formData.scoreComercial}
-                onSelect={(val) => { updateFormData({ scoreComercial: val }); nextStep(); }} />
+                onSelect={(val) => { 
+                  updateFormData({ scoreComercial: val }); 
+                  nextStep(); 
+                }} 
+              />
             )}
+            
             {currentStep === 9 && (
-              <SelfAssessmentStep areaKey="Operacao" areaTitle="Operação & Entrega" stepNumber={9}
+              <SelfAssessmentStep 
+                areaKey="Operacao" 
+                areaTitle="Operação & Entrega" 
+                stepNumber={9}
                 currentValue={formData.scoreOperacao}
-                onSelect={(val) => { updateFormData({ scoreOperacao: val }); nextStep(); }} />
+                onSelect={(val) => { 
+                  updateFormData({ scoreOperacao: val }); 
+                  nextStep(); 
+                }} 
+              />
             )}
+            
             {currentStep === 10 && (
-              <SelfAssessmentStep areaKey="Gestao" areaTitle="Gestão & Processos" stepNumber={10}
+              <SelfAssessmentStep 
+                areaKey="Gestao" 
+                areaTitle="Gestão & Processos" 
+                stepNumber={10}
                 currentValue={formData.scoreGestao}
-                onSelect={(val) => { updateFormData({ scoreGestao: val }); nextStep(); }} />
+                onSelect={(val) => { 
+                  updateFormData({ scoreGestao: val }); 
+                  nextStep(); 
+                }} 
+              />
             )}
+            
             {currentStep === 11 && (
-              <SelfAssessmentStep areaKey="Pessoas" areaTitle="Pessoas & Liderança" stepNumber={11}
+              <SelfAssessmentStep 
+                areaKey="Pessoas" 
+                areaTitle="Pessoas & Liderança" 
+                stepNumber={11}
                 currentValue={formData.scorePessoas}
-                onSelect={(val) => { updateFormData({ scorePessoas: val }); nextStep(); }} />
+                onSelect={(val) => { 
+                  updateFormData({ scorePessoas: val }); 
+                  nextStep(); 
+                }} 
+              />
             )}
+            
             {currentStep === 12 && (
-              <SelfAssessmentStep areaKey="Estrategia" areaTitle="Estratégia & Visão" stepNumber={12}
+              <SelfAssessmentStep 
+                areaKey="Estrategia" 
+                areaTitle="Estratégia & Visão" 
+                stepNumber={12}
                 currentValue={formData.scoreEstrategia}
-                onSelect={(val) => { updateFormData({ scoreEstrategia: val }); nextStep(); }} />
+                onSelect={(val) => { 
+                  updateFormData({ scoreEstrategia: val }); 
+                  nextStep(); 
+                }} 
+              />
             )}
-            {currentStep === 13 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
+
+            {/* ==========================================================
+                STEP 13 - STRATEGIC QUESTIONS
+            ========================================================== */}
+            {currentStep === 13 && (
+              <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />
+            )}
+
+            {/* ==========================================================
+                STEP 14 - REVIEW
+            ========================================================== */}
             {currentStep === 14 && (
-              <ReviewStep formData={formData} onUpdate={updateFormData} onRunDiagnostic={runDiagnosticCalculation} />
+              <ReviewStep 
+                formData={formData} 
+                onUpdate={updateFormData} 
+                onRunDiagnostic={runDiagnosticCalculation} 
+              />
             )}
+
+            {/* ==========================================================
+                STEP 15 - PROCESSING
+            ========================================================== */}
             {currentStep === 15 && <ProcessingStep />}
+
+            {/* ==========================================================
+                STEP 16 - RESULT
+            ========================================================== */}
             {currentStep === 16 && diagnosticResult && (
-              <ReportDashboard result={diagnosticResult} onDownloadPdf={() => setShowPdfModal(true)} onRestart={() => window.location.reload()} />
+              <ReportDashboard 
+                result={diagnosticResult} 
+                onDownloadPdf={() => setShowPdfModal(true)} 
+                onRestart={() => window.location.reload()} 
+              />
             )}
           </motion.div>
         </AnimatePresence>
 
+        {/* ============================================================
+            VALIDAÇÃO DE ERRO
+        ============================================================ */}
         {validationError && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
@@ -345,34 +491,53 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* Rodapé com navegação */}
-      {currentStep > 1 && currentStep < 15 && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6 mt-6 border-t border-[#D8D3CB] flex items-center justify-between">
-          <button type="button" onClick={prevStep}
-            className="px-5 py-2.5 bg-white hover:bg-[#F9F7F3] border border-[#D8D3CB] text-[#1A1A1A] font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-pointer shadow-sm">
-            <ArrowLeft className="w-4 h-4" /><span>Voltar</span>
-          </button>
-          <button type="button" onClick={nextStep}
-            className="px-6 py-2.5 bg-[#6B0F1A] hover:bg-[#500B13] text-white font-bold text-xs rounded-lg shadow-sm flex items-center gap-2 transition cursor-pointer">
-            <span>Avançar</span><ArrowRight className="w-4 h-4 stroke-[2.5]" />
-          </button>
+      {/* ============================================================
+          NAVEGAÇÃO - Usando WizardNavigation
+          Aplica-se apenas às etapas que precisam de navegação
+      ============================================================ */}
+      
+      {/* Etapas 2 a 14 (exceto 4 que tem navegação própria no CnpjStep) */}
+      {currentStep >= 2 && currentStep <= 14 && currentStep !== 4 && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
+          <WizardNavigation
+            currentStep={currentStep}
+            totalSteps={TOTAL_STEPS}
+            onPrevious={prevStep}
+            onNext={nextStep}
+            isNextDisabled={currentStep === 14 && !formData.consentGiven}
+            isLastStep={currentStep === 14}
+            nextLabel={currentStep === 14 ? 'Processar Diagnóstico' : 'Avançar'}
+            showPrevious={currentStep > 1}
+          />
         </div>
       )}
 
-      {/* Modal PDF */}
+      {/* Etapa 4 (CNPJ) tem navegação própria dentro do componente */}
+      {/* Etapa 1 (Welcome) não tem navegação padrão */}
+
+      {/* ============================================================
+          MODAL PDF
+      ============================================================ */}
       {showPdfModal && diagnosticResult && (
         <div className="fixed inset-0 z-50 bg-[#1A1A1A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 max-w-4xl w-full space-y-4 shadow-xl">
             <div className="flex justify-between items-center border-b border-[#D8D3CB] pb-3">
               <h3 className="text-lg font-bold text-[#1A1A1A]">Visualização de Impressão e PDF - TFAZZIO</h3>
-              <button onClick={() => setShowPdfModal(false)} className="text-[#5A6270] hover:text-[#1A1A1A] font-bold p-1 cursor-pointer">✕ Fechar</button>
+              <button 
+                onClick={() => setShowPdfModal(false)} 
+                className="text-[#5A6270] hover:text-[#1A1A1A] font-bold p-1 cursor-pointer"
+              >
+                ✕ Fechar
+              </button>
             </div>
             <PdfGenerator result={diagnosticResult} onClose={() => setShowPdfModal(false)} />
           </div>
         </div>
       )}
 
-      {/* Checkout Modal */}
+      {/* ============================================================
+          CHECKOUT MODAL
+      ============================================================ */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { DiagnosticFormData } from '../../types';
-import { CheckCircle2, XCircle, ShieldQuestion, Zap, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
+import { WizardNavigation } from '../WizardNavigation';
 
 interface StrategicQuestionsStepProps {
   formData: DiagnosticFormData;
@@ -35,11 +36,15 @@ export const StrategicQuestionsStep: React.FC<StrategicQuestionsStepProps> = ({ 
     },
   ];
 
+  // Verifica se todas as perguntas foram respondidas
+  const allAnswered = questions.every(q => q.val !== undefined && q.val !== null);
+
   return (
     <div className="space-y-6">
       <div>
-        <span className="text-xs font-bold text-[#6B0F1A] uppercase tracking-wider">Etapa 12 de 16 • Perguntas Estratégicas</span>
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">4 Testes de Autonomia e Maturidade</h2>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
+          4 Testes de Autonomia e Maturidade
+        </h2>
         <p className="text-[#5A6270] text-sm mt-1">
           Responda honestamente Sim ou Não para calibrar a nota final de governança do seu negócio.
         </p>
@@ -58,7 +63,7 @@ export const StrategicQuestionsStep: React.FC<StrategicQuestionsStepProps> = ({ 
                 type="button"
                 onClick={() => onUpdate({ [q.key]: true })}
                 className={`py-2.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                  q.val
+                  q.val === true
                     ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
                     : 'bg-white border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
                 }`}
@@ -71,7 +76,7 @@ export const StrategicQuestionsStep: React.FC<StrategicQuestionsStepProps> = ({ 
                 type="button"
                 onClick={() => onUpdate({ [q.key]: false })}
                 className={`py-2.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                  !q.val
+                  q.val === false
                     ? 'bg-rose-50 border-rose-500 text-rose-800 shadow-sm'
                     : 'bg-white border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
                 }`}
@@ -83,6 +88,17 @@ export const StrategicQuestionsStep: React.FC<StrategicQuestionsStepProps> = ({ 
           </div>
         ))}
       </div>
+
+      {/* Navegação */}
+      <WizardNavigation
+        currentStep={13}
+        totalSteps={13}
+        onPrevious={() => {}}
+        onNext={() => {}}
+        isNextDisabled={!allAnswered}
+        nextLabel="Continuar"
+        showPrevious={true}
+      />
     </div>
   );
 };
