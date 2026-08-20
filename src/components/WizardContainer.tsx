@@ -309,11 +309,13 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
             
+            {/* 🔥 PASSANDO onNext PARA ObjectiveStep */}
             {currentStep === 3 && (
               <ObjectiveStep
                 mainGoal={formData.mainGoal}
                 biggestDifficulty={formData.biggestDifficulty}
                 onUpdate={(data) => updateFormData(data)}
+                onNext={nextStep}
               />
             )}
             

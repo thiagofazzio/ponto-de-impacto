@@ -5,6 +5,7 @@ interface ObjectiveStepProps {
   mainGoal: string;
   biggestDifficulty: string;
   onUpdate: (data: { mainGoal: string; biggestDifficulty: string }) => void;
+  onNext: () => void;  // 🔥 NOVA PROP
 }
 
 const goalOptions = [
@@ -25,7 +26,12 @@ const difficultyOptions = [
   { id: 'outro_desafio', label: 'Outro', icon: '💡', description: 'Descreva seu desafio específico' },
 ];
 
-const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficulty, onUpdate }) => {
+const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ 
+  mainGoal, 
+  biggestDifficulty, 
+  onUpdate,
+  onNext  // 🔥 RECEBENDO A FUNÇÃO
+}) => {
   const [selectedGoal, setSelectedGoal] = useState<string>(mainGoal || '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>(biggestDifficulty || '');
   const [customGoal, setCustomGoal] = useState<string>('');
@@ -51,27 +57,22 @@ const ObjectiveStep: React.FC<ObjectiveStepProps> = ({ mainGoal, biggestDifficul
   const isDifficultyValid = selectedDifficulty && (selectedDifficulty !== 'outro_desafio' || customDifficulty.trim());
   const isFormValid = isGoalValid && isDifficultyValid;
 
-  // 🔥 Função para avançar - CHAMA O onUpdate para salvar e depois avança
+  // 🔥 Função para avançar - Salva e chama onNext
   const handleNext = () => {
     if (isFormValid) {
       const goalValue = selectedGoal === 'outro_objetivo' ? customGoal : selectedGoal;
       const difficultyValue = selectedDifficulty === 'outro_desafio' ? customDifficulty : selectedDifficulty;
       
-      // Salva os dados antes de avançar
+      // Salva os dados
       onUpdate({
         mainGoal: goalValue,
         biggestDifficulty: difficultyValue,
       });
       
-      // 🔥 Dispara o evento para o WizardContainer saber que deve avançar
-      // O WizardContainer vai ouvir o onUpdate e chamar nextStep()
-      // Mas como o ObjectiveStep não tem acesso ao nextStep, usamos um evento personalizado
-      window.dispatchEvent(new CustomEvent('objectiveStepComplete'));
+      // 🔥 CHAMA O onNext DO WIZARD CONTAINER
+      onNext();
     }
   };
-
-  // 🔥 Para compatibilidade com o WizardContainer, também expomos via props
-  // Mas como o WizardContainer não passa onNext, usamos o evento acima
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
