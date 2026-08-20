@@ -49,6 +49,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
   // 🔥 Manipulador para o botão "Processar Diagnóstico"
   const handleRunDiagnostic = () => {
     if (isContactValid) {
+      console.log('🚀 Iniciando diagnóstico...');
       onRunDiagnostic();
     }
   };
@@ -147,7 +148,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData, onUpdate, onRu
         </div>
       </div>
 
-      {/* Navegação */}
+      {/* 🔥 NAVEGAÇÃO - APENAS WIZARD NAVIGATION COM BOTÃO PERSONALIZADO */}
       <WizardNavigation
         currentStep={14}
         totalSteps={13}
