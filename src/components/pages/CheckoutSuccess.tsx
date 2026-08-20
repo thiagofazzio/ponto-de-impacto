@@ -38,23 +38,23 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ onContinue }) => {
 
   return (
     <div className="max-w-xl mx-auto my-12 p-8 bg-white border border-[#D8D3CB] rounded-3xl shadow-xl text-center space-y-8">
-      {/* 🔥 SPINNER ANIMADO - IGUAL AO PROCESSINGSTEP */}
+      {/* 🔥 SPINNER ANIMADO - SEM QUADRADO VERDE */}
       <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
-        {/* Anel externo pulsante */}
-        <div className="absolute inset-0 bg-emerald-500/5 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+        {/* Anel externo pulsante - TFAZZIO */}
+        <div className="absolute inset-0 bg-[#6B0F1A]/5 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
         
-        {/* Anel médio girando */}
-        <div className="absolute inset-1 rounded-full border-4 border-[#D8D3CB] border-t-emerald-600 animate-spin" style={{ animationDuration: '1.5s' }} />
+        {/* Anel médio girando - TFAZZIO */}
+        <div className="absolute inset-1 rounded-full border-4 border-[#D8D3CB] border-t-[#6B0F1A] animate-spin" style={{ animationDuration: '1.5s' }} />
         
-        {/* Anel interno girando em sentido oposto */}
-        <div className="absolute inset-3 rounded-full border-4 border-[#D8D3CB]/50 border-b-emerald-600 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+        {/* Anel interno girando em sentido oposto - Dourado */}
+        <div className="absolute inset-3 rounded-full border-4 border-[#D8D3CB]/50 border-b-[#D4AF37] animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
         
-        {/* Ícone central */}
-        <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-xl relative z-10 border border-emerald-700">
+        {/* 🔥 ÍCONE CENTRAL - SEM QUADRADO, APENAS O ÍCONE */}
+        <div className="relative z-10">
           {progress < 100 ? (
-            <Loader2 className="w-7 h-7 animate-spin" />
+            <Loader2 className="w-10 h-10 text-[#6B0F1A] animate-spin" strokeWidth={2} />
           ) : (
-            <CheckCircle2 className="w-7 h-7" />
+            <CheckCircle2 className="w-10 h-10 text-emerald-600" strokeWidth={2} />
           )}
         </div>
       </div>
@@ -68,10 +68,10 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ onContinue }) => {
         </p>
       </div>
 
-      {/* Barra de progresso com brilho */}
+      {/* Barra de progresso com brilho - TFAZZIO */}
       <div className="relative w-full bg-[#E8E2D8] h-3 rounded-full overflow-hidden border border-[#D8D3CB]">
         <div 
-          className="bg-emerald-600 h-full transition-all duration-500 rounded-full relative"
+          className="bg-[#6B0F1A] h-full transition-all duration-500 rounded-full relative"
           style={{ width: `${progress}%` }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
@@ -82,7 +82,7 @@ const CheckoutSuccess: React.FC<CheckoutSuccessProps> = ({ onContinue }) => {
       <div className="text-xs text-[#5A6270] font-medium">
         {progress < 100 ? (
           <span className="flex items-center justify-center gap-2">
-            <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="inline-block w-2 h-2 bg-[#6B0F1A] rounded-full animate-pulse" />
             Processando...
           </span>
         ) : (
