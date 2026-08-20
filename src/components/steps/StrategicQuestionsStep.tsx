@@ -1,7 +1,6 @@
 import React from 'react';
 import { DiagnosticFormData } from '../../types';
 import { CheckCircle2, XCircle } from 'lucide-react';
-import { WizardNavigation } from '../WizardNavigation';
 
 interface StrategicQuestionsStepProps {
   formData: DiagnosticFormData;
@@ -35,9 +34,6 @@ export const StrategicQuestionsStep: React.FC<StrategicQuestionsStepProps> = ({ 
       val: formData.hasGrowthGoalsAndPlan,
     },
   ];
-
-  // Verifica se todas as perguntas foram respondidas
-  const allAnswered = questions.every(q => q.val !== undefined && q.val !== null);
 
   return (
     <div className="space-y-6">
@@ -88,17 +84,6 @@ export const StrategicQuestionsStep: React.FC<StrategicQuestionsStepProps> = ({ 
           </div>
         ))}
       </div>
-
-      {/* Navegação */}
-      <WizardNavigation
-        currentStep={13}
-        totalSteps={13}
-        onPrevious={() => {}}
-        onNext={() => {}}
-        isNextDisabled={!allAnswered}
-        nextLabel="Continuar"
-        showPrevious={true}
-      />
     </div>
   );
 };
