@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { WizardNavigation } from '../WizardNavigation';
 
 interface SelfAssessmentStepProps {
   areaKey: string;
@@ -82,20 +81,6 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
 }) => {
   const guide = AREA_GUIDES[areaKey] || AREA_GUIDES['Financeiro'];
 
-  // Mapeia stepNumber para currentStep no WizardNavigation
-  // Step 7 = Financeiro, 8 = Comercial, 9 = Operacao, 10 = Gestao, 11 = Pessoas, 12 = Estrategia
-  const getCurrentStep = () => {
-    const mapping: Record<number, number> = {
-      7: 7,
-      8: 8,
-      9: 9,
-      10: 10,
-      11: 11,
-      12: 12,
-    };
-    return mapping[stepNumber] || 7;
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -157,17 +142,6 @@ export const SelfAssessmentStep: React.FC<SelfAssessmentStepProps> = ({
           })}
         </div>
       </div>
-
-      {/* Navegação */}
-      <WizardNavigation
-        currentStep={getCurrentStep()}
-        totalSteps={13}
-        onPrevious={() => {}}
-        onNext={() => {}}
-        isNextDisabled={!currentValue}
-        nextLabel="Continuar"
-        showPrevious={true}
-      />
     </div>
   );
 };
