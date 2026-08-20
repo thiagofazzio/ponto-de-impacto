@@ -442,9 +442,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       </div>
 
       {/* 🔥 NAVEGAÇÃO - APENAS NAS ETAPAS QUE NÃO TÊM NAVEGAÇÃO PRÓPRIA */}
-      {/* Etapas com navegação própria: 2 (Revenue), 4 (CNPJ), 14 (Review) */}
-      {/* Etapas sem navegação: 3, 5, 6, 7, 8, 9, 10, 11, 12, 13 */}
-      {currentStep >= 3 && currentStep <= 13 && currentStep !== 4 && (
+      {/* Etapas com navegação própria: 2 (Revenue), 3 (Objective), 4 (CNPJ), 14 (Review) */}
+      {/* Etapas sem navegação: 5, 6, 7, 8, 9, 10, 11, 12, 13 */}
+      {currentStep >= 5 && currentStep <= 13 && currentStep !== 4 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation
             currentStep={currentStep}
