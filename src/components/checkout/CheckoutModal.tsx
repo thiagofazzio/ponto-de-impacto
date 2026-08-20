@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { X, CreditCard, Lock, Sparkles } from 'lucide-react';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+// 🔥 FALLBACK: se não tiver chave, não carrega o Stripe
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY 
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 interface CheckoutModalProps {
   email: string;
@@ -20,6 +23,21 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
     setError(null);
 
     try {
+      // 🔥 Se não tiver Stripe configurado, usa fallback TTFAZZIO
+      if (!stripePromise) {
+        console.warn('⚠️ Stripe não configurado. Usando fallback TTFAZZIO.');
+        const response = await fetch('/api/checkout/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, cupom: cupom || 'TTFAZZIO' }),
+        });
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+        }
+        return;
+      }
+
       const response = await fetch('/api/checkout/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,7 +90,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ email, onClose, onSuccess
           <p className="text-xs text-[#5A6270]">Pagamento único via cartão de crédito</p>
         </div>
 
-        {/* 🔥 Campo de cupom SEM referência ao TTFAZZIO */}
         <div className="mb-4">
           <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
             Tem um cupom?
