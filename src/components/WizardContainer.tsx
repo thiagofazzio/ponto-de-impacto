@@ -1,26 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { DiagnosticFormData, DiagnosticResult, CompanyCNPJData } from '../types';
+import { DiagnosticFormData, DiagnosticResult, CompanyCNPJData, Pergunta } from '../types';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { CnpjStep } from './steps/CnpjStep';
-import ObjectiveStep from './steps/ObjectiveStep';
-import { FinancialDataStep } from './steps/FinancialDataStep';
-import { CommercialDataStep } from './steps/CommercialDataStep';
-import { SelfAssessmentStep } from './steps/SelfAssessmentStep';
-import { StrategicQuestionsStep } from './steps/StrategicQuestionsStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { ProcessingStep } from './steps/ProcessingStep';
 import { ReportDashboard } from './report/ReportDashboard';
 import { PdfGenerator } from './report/PdfGenerator';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
-import RevenueModelStep from './RevenueModelStep';
 import CheckoutModal from './checkout/CheckoutModal';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import { WizardNavigation } from './WizardNavigation';
+import { DynamicStep } from './steps/DynamicStep';
+import { 
+  iniciarInvestigacao, 
+  avancarInvestigacao, 
+  isDiagnosticoCompleto,
+  EstadoInvestigacao,
+  gerarPerguntasGratis
+} from '../utils/questionSelector';
+import { gerarHipoteses, identificarLimitadorPrincipal, projetarProximoLimitador } from '../utils/hypothesisEngine';
+import { gerarResultadoSimulacao, gerarTextoSimulacao } from '../utils/simulationEngine';
+import { getPerguntasAtivas } from '../config/questionMap';
+
+// ============================================================
+// CONSTANTES
+// ============================================================
 
 const TOTAL_STEPS = 13;
 const MIN_PROCESSING_MS = 3600;
+
+// ============================================================
+// ESTADO INICIAL
+// ============================================================
 
 const INITIAL_FORM_DATA: DiagnosticFormData = {
   cnpj: '',
@@ -33,23 +46,23 @@ const INITIAL_FORM_DATA: DiagnosticFormData = {
   timeInMarket: '3_5',
   employeesCount: '6_15',
   taxRegime: 'Simples Nacional',
-  monthlyRevenue: 150000,
-  fixedCosts: 45000,
+  monthlyRevenue: 0,
+  fixedCosts: 0,
   variableCostsPercent: 30,
   taxesPercent: 8,
-  ownerSalary: 12000,
-  averageTicket: 2500,
-  monthlyClients: 60,
+  ownerSalary: 0,
+  averageTicket: 0,
+  monthlyClients: 0,
   conversionRate: 25,
-  hasCRM: true,
-  salesTeamSize: 2,
+  hasCRM: false,
+  salesTeamSize: 0,
   hasSalesManager: false,
   scoreFinanceiro: 3,
-  scoreComercial: 2,
+  scoreComercial: 3,
   scoreOperacao: 3,
-  scoreGestao: 2,
+  scoreGestao: 3,
   scorePessoas: 3,
-  scoreEstrategia: 2,
+  scoreEstrategia: 3,
   runsWithoutOwner30Days: false,
   knowsNetMargin: false,
   hasProjectedCashFlow: false,
@@ -73,7 +86,12 @@ interface WizardContainerProps {
   onCompanyChange?: (name: string) => void;
 }
 
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
+
 export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, onCompanyChange }) => {
+  // ===== ESTADOS =====
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<DiagnosticFormData>(INITIAL_FORM_DATA);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
@@ -82,33 +100,93 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // ===== ESTADOS DO DIAGNÓSTICO 2.0 =====
+  const [investigacao, setInvestigacao] = useState<EstadoInvestigacao | null>(null);
+  const [perguntaAtual, setPerguntaAtual] = useState<Pergunta | null>(null);
+  const [isUpgradeMode, setIsUpgradeMode] = useState(false);
+  const [respostasGratis, setRespostasGratis] = useState<Record<string, any>>({});
+  const [modoGratis, setModoGratis] = useState(false);
 
+  // ============================================================
+  // CARREGAR DADOS DO LOCALSTORAGE
+  // ============================================================
   useEffect(() => {
     const savedData = localStorage.getItem('tfazzio_diagnostic_data');
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         setFormData(prev => ({ ...prev, ...parsed }));
+        
+        // Se já tem dados, inicia a investigação
+        if (parsed.companyName || parsed.cnpj) {
+          iniciarDiagnosticoAdaptativo(parsed);
+        }
       } catch (e) { /* ignora */ }
     }
   }, []);
 
+  // ============================================================
+  // SALVAR DADOS NO LOCALSTORAGE
+  // ============================================================
   useEffect(() => {
     localStorage.setItem('tfazzio_diagnostic_data', JSON.stringify(formData));
   }, [formData]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const success = params.get('success');
-    const sessionId = params.get('session_id');
+  // ============================================================
+  // INICIAR DIAGNÓSTICO ADAPTATIVO
+  // ============================================================
+  const iniciarDiagnosticoAdaptativo = (dadosIniciais: Partial<DiagnosticFormData>) => {
+    const estado = iniciarInvestigacao(dadosIniciais);
+    setInvestigacao(estado);
+    setPerguntaAtual(estado.proximaPergunta);
+    setModoGratis(false);
+    setIsUpgradeMode(false);
+  };
 
-    if (success === 'true' && sessionId) {
-      setShowSuccess(true);
-      setFormData(prev => ({ ...prev, paymentConfirmed: true }));
-      window.history.replaceState({}, document.title, window.location.pathname);
+  // ============================================================
+  // INICIAR DIAGNÓSTICO GRÁTIS
+  // ============================================================
+  const iniciarDiagnosticoGratis = () => {
+    const perguntas = gerarPerguntasGratis();
+    setModoGratis(true);
+    setPerguntaAtual(perguntas[0]);
+    setInvestigacao(null);
+    setCurrentStep(2);
+  };
+
+  // ============================================================
+  // AVANÇAR PERGUNTA (DIAGNÓSTICO ADAPTATIVO)
+  // ============================================================
+  const responderPergunta = (resposta: any) => {
+    if (!investigacao) return;
+
+    // Atualiza o formData com a resposta
+    const campoId = perguntaAtual?.id || '';
+    const dadosAtualizados = { ...formData, [campoId]: resposta };
+    setFormData(dadosAtualizados);
+
+    // Avança a investigação
+    const novoEstado = avancarInvestigacao(investigacao, resposta, campoId);
+    setInvestigacao(novoEstado);
+
+    // Atualiza a pergunta atual
+    if (novoEstado.proximaPergunta) {
+      setPerguntaAtual(novoEstado.proximaPergunta);
+    } else {
+      setPerguntaAtual(null);
+      // Se não tem mais perguntas, verifica se está completo
+      if (isDiagnosticoCompleto(novoEstado)) {
+        setCurrentStep(14); // Vai para revisão
+      }
     }
-  }, []);
 
+    setValidationError(null);
+  };
+
+  // ============================================================
+  // FUNÇÕES DE NAVEGAÇÃO (LEGACY)
+  // ============================================================
   const updateFormData = (fields: Partial<DiagnosticFormData>) => {
     setFormData((prev) => {
       const updated = { ...prev, ...fields };
@@ -137,68 +215,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const validateStep = (): boolean => {
     setValidationError(null);
-    
-    if (currentStep === 3) {
-      if (!formData.mainGoal || !formData.biggestDifficulty) {
-        setValidationError('Por favor, selecione um objetivo e um gargalo para continuar.');
-        return false;
-      }
-    }
-    
-    if (currentStep === 5) {
-      if (!formData.monthlyRevenue || formData.monthlyRevenue <= 0) {
-        setValidationError('Por favor, informe um faturamento mensal válido.');
-        return false;
-      }
-      if (!formData.employeesCount) {
-        setValidationError('Por favor, informe o número de funcionários.');
-        return false;
-      }
-      if (!formData.responsavelFinanceiro) {
-        setValidationError('Por favor, selecione quem é o responsável pela gestão financeira.');
-        return false;
-      }
-    }
-    
-    if (currentStep === 6) {
-      if (!formData.responsavelComercial) {
-        setValidationError('Por favor, selecione quem é o responsável pela área comercial.');
-        return false;
-      }
-      if (!formData.responsavelOperacoes) {
-        setValidationError('Por favor, selecione quem é o responsável pelas operações.');
-        return false;
-      }
-      if (formData.salesTeamSize === undefined || formData.salesTeamSize === null) {
-        setValidationError('Por favor, selecione o tamanho da equipe comercial.');
-        return false;
-      }
-      if (formData.hasSalesManager === undefined || formData.hasSalesManager === null) {
-        setValidationError('Por favor, informe se a equipe possui um gestor comercial dedicado.');
-        return false;
-      }
-    }
-    
-    if (currentStep === 14) {
-      if (!formData.contactName || formData.contactName.trim() === '') {
-        setValidationError('Por favor, informe seu nome completo.');
-        return false;
-      }
-      if (!formData.contactEmail || !formData.contactEmail.includes('@')) {
-        setValidationError('Por favor, informe um e-mail válido.');
-        return false;
-      }
-      const phoneDigits = formData.contactPhone.replace(/\D/g, '');
-      if (phoneDigits.length < 10 || phoneDigits.length > 12) {
-        setValidationError('Por favor, informe um WhatsApp válido (DDD + 8 ou 9 dígitos).');
-        return false;
-      }
-      if (!formData.consentGiven) {
-        setValidationError('Você precisa concordar com os termos para continuar.');
-        return false;
-      }
-    }
-    
+    // Validações adaptativas serão feitas no momento da resposta
     return true;
   };
 
@@ -231,20 +248,36 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ============================================================
+  // GERAR DIAGNÓSTICO - USANDO ROTA V2
+  // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
     setCurrentStep(15);
     if (onStepChange) onStepChange(15);
 
+    // Gera hipóteses e simulações (para enviar ao backend)
+    const hipoteses = gerarHipoteses(formData);
+    const limitadorPrincipal = identificarLimitadorPrincipal(hipoteses, formData);
+    const proximoLimitador = limitadorPrincipal ? projetarProximoLimitador(limitadorPrincipal, formData) : null;
+    const simulacao = gerarResultadoSimulacao(formData, formData.mainGoal || 'crescer_faturamento');
+
     const minDelay = new Promise<void>((resolve) => setTimeout(resolve, MIN_PROCESSING_MS));
 
     const fetchResult = (async (): Promise<DiagnosticResult> => {
       try {
-        const response = await fetch('/api/diagnostico/gerar', {
+        // 🔥 USANDO ROTA V2
+        const response = await fetch('/api/diagnostico/v2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ 
+            ...formData, 
+            hipoteses, 
+            limitadorPrincipal, 
+            proximoLimitador, 
+            simulacao 
+          }),
         });
         if (response.ok) {
           return (await response.json()) as DiagnosticResult;
@@ -264,6 +297,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (onStepChange) onStepChange(16);
   };
 
+  // ============================================================
+  // TELA DE SUCESSO
+  // ============================================================
   if (showSuccess) {
     return (
       <CheckoutSuccess 
@@ -272,6 +308,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     );
   }
 
+  // ============================================================
+  // RENDER PRINCIPAL
+  // ============================================================
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6">
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6">
@@ -283,33 +322,41 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
-            
-            {currentStep === 2 && (
-              <RevenueModelStep
-                onNext={(data) => {
-                  updateFormData({
-                    revenueModel: data.revenueModel,
-                    customRevenueModel: data.customModel,
-                    areaAtuacao: data.areaAtuacao,
-                    customArea: data.customArea,
-                  });
-                  nextStep();
-                }}
-                initialData={formData}
+            {/* STEP 1 - WELCOME */}
+            {currentStep === 1 && (
+              <WelcomeStep onStart={nextStep} />
+            )}
+
+            {/* STEP 2 - PERGUNTA DINÂMICA (DIAGNÓSTICO 2.0) */}
+            {currentStep === 2 && perguntaAtual && (
+              <DynamicStep
+                pergunta={perguntaAtual}
+                onResponder={responderPergunta}
+                isGratis={modoGratis}
+                totalPerguntas={modoGratis ? 5 : 15}
+                perguntasRespondidas={investigacao?.perguntasRespondidas.length || 0}
               />
             )}
-            
+
+            {/* STEP 3 - OBJETIVO & DESAFIOS (LEGACY) */}
             {currentStep === 3 && (
-              <ObjectiveStep
-                mainGoal={formData.mainGoal}
-                biggestDifficulty={formData.biggestDifficulty}
-                onUpdate={(data) => updateFormData(data)}
-                onNext={nextStep}
-                onPrevious={prevStep}
-              />
+              <div className="bg-white rounded-2xl p-6 border border-[#D8D3CB]">
+                <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4">
+                  Objetivos & Desafios
+                </h2>
+                <p className="text-[#5A6270] text-sm mb-6">
+                  Vamos entender melhor o que você quer alcançar.
+                </p>
+                <button
+                  onClick={nextStep}
+                  className="w-full py-3 bg-[#6B0F1A] text-white font-bold rounded-xl"
+                >
+                  Continuar
+                </button>
+              </div>
             )}
-            
+
+            {/* STEP 4 - CNPJ */}
             {currentStep === 4 && (
               <CnpjStep 
                 cnpj={formData.cnpj} 
@@ -321,91 +368,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 updateFormData={updateFormData}
               />
             )}
-            
-            {currentStep === 5 && <FinancialDataStep formData={formData} onUpdate={updateFormData} />}
-            
-            {currentStep === 6 && <CommercialDataStep formData={formData} onUpdate={updateFormData} />}
-            
-            {currentStep === 7 && (
-              <SelfAssessmentStep 
-                areaKey="Financeiro" 
-                areaTitle="Financeiro & Caixa" 
-                stepNumber={7}
-                currentValue={formData.scoreFinanceiro}
-                onSelect={(val) => { 
-                  updateFormData({ scoreFinanceiro: val }); 
-                  nextStep(); 
-                }} 
-              />
-            )}
-            
-            {currentStep === 8 && (
-              <SelfAssessmentStep 
-                areaKey="Comercial" 
-                areaTitle="Comercial & Vendas" 
-                stepNumber={8}
-                currentValue={formData.scoreComercial}
-                onSelect={(val) => { 
-                  updateFormData({ scoreComercial: val }); 
-                  nextStep(); 
-                }} 
-              />
-            )}
-            
-            {currentStep === 9 && (
-              <SelfAssessmentStep 
-                areaKey="Operacao" 
-                areaTitle="Operação & Entrega" 
-                stepNumber={9}
-                currentValue={formData.scoreOperacao}
-                onSelect={(val) => { 
-                  updateFormData({ scoreOperacao: val }); 
-                  nextStep(); 
-                }} 
-              />
-            )}
-            
-            {currentStep === 10 && (
-              <SelfAssessmentStep 
-                areaKey="Gestao" 
-                areaTitle="Gestão & Processos" 
-                stepNumber={10}
-                currentValue={formData.scoreGestao}
-                onSelect={(val) => { 
-                  updateFormData({ scoreGestao: val }); 
-                  nextStep(); 
-                }} 
-              />
-            )}
-            
-            {currentStep === 11 && (
-              <SelfAssessmentStep 
-                areaKey="Pessoas" 
-                areaTitle="Pessoas & Liderança" 
-                stepNumber={11}
-                currentValue={formData.scorePessoas}
-                onSelect={(val) => { 
-                  updateFormData({ scorePessoas: val }); 
-                  nextStep(); 
-                }} 
-              />
-            )}
-            
-            {currentStep === 12 && (
-              <SelfAssessmentStep 
-                areaKey="Estrategia" 
-                areaTitle="Estratégia & Visão" 
-                stepNumber={12}
-                currentValue={formData.scoreEstrategia}
-                onSelect={(val) => { 
-                  updateFormData({ scoreEstrategia: val }); 
-                  nextStep(); 
-                }} 
-              />
-            )}
-            
-            {currentStep === 13 && <StrategicQuestionsStep formData={formData} onUpdate={updateFormData} />}
-            
+
+            {/* STEP 14 - REVIEW */}
             {currentStep === 14 && (
               <ReviewStep 
                 formData={formData} 
@@ -414,9 +378,11 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 onPrevious={prevStep}
               />
             )}
-            
+
+            {/* STEP 15 - PROCESSING */}
             {currentStep === 15 && <ProcessingStep />}
-            
+
+            {/* STEP 16 - RESULT */}
             {currentStep === 16 && diagnosticResult && (
               <ReportDashboard 
                 result={diagnosticResult} 
@@ -435,8 +401,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* NAVEGAÇÃO - APENAS NAS ETAPAS QUE NÃO TÊM NAVEGAÇÃO PRÓPRIA */}
-      {currentStep >= 5 && currentStep <= 13 && currentStep !== 4 && (
+      {/* NAVEGAÇÃO - APENAS PARA ETAPAS LEGACY */}
+      {currentStep >= 3 && currentStep <= 14 && currentStep !== 4 && currentStep !== 2 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation
             currentStep={currentStep}
@@ -444,13 +410,14 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             onPrevious={prevStep}
             onNext={nextStep}
             isNextDisabled={false}
-            isLastStep={false}
-            nextLabel="Avançar"
+            isLastStep={currentStep === 14}
+            nextLabel={currentStep === 14 ? 'Processar Diagnóstico' : 'Avançar'}
             showPrevious={currentStep > 1}
           />
         </div>
       )}
 
+      {/* MODAL PDF */}
       {showPdfModal && diagnosticResult && (
         <div className="fixed inset-0 z-50 bg-[#1A1A1A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 max-w-4xl w-full space-y-4 shadow-xl">
@@ -468,6 +435,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
+      {/* CHECKOUT MODAL */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}
