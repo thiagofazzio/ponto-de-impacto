@@ -161,23 +161,19 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const responderPergunta = (resposta: any) => {
     if (!investigacao) return;
 
-    // Atualiza o formData com a resposta
     const campoId = perguntaAtual?.id || '';
     const dadosAtualizados = { ...formData, [campoId]: resposta };
     setFormData(dadosAtualizados);
 
-    // Avança a investigação
     const novoEstado = avancarInvestigacao(investigacao, resposta, campoId);
     setInvestigacao(novoEstado);
 
-    // Atualiza a pergunta atual
     if (novoEstado.proximaPergunta) {
       setPerguntaAtual(novoEstado.proximaPergunta);
     } else {
       setPerguntaAtual(null);
-      // Se não tem mais perguntas, verifica se está completo
       if (isDiagnosticoCompleto(novoEstado)) {
-        setCurrentStep(14); // Vai para revisão
+        setCurrentStep(14);
       }
     }
 
@@ -185,7 +181,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   };
 
   // ============================================================
-  // FUNÇÕES DE NAVEGAÇÃO (LEGACY)
+  // FUNÇÕES DE NAVEGAÇÃO
   // ============================================================
   const updateFormData = (fields: Partial<DiagnosticFormData>) => {
     setFormData((prev) => {
@@ -215,14 +211,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const validateStep = (): boolean => {
     setValidationError(null);
-    // Validações adaptativas serão feitas no momento da resposta
     return true;
   };
 
+  // ============================================================
+  // 🔥 NEXT STEP - VERIFICA PAGAMENTO NA ETAPA 4
+  // ============================================================
   const nextStep = () => {
     if (!validateStep()) return;
     
+    // 🔥 VERIFICA PAGAMENTO - Etapa 4 (CNPJ)
     if (currentStep === 4 && !formData.paymentConfirmed) {
+      console.log('💳 Abrindo checkout...');
       setShowCheckout(true);
       return;
     }
@@ -243,13 +243,14 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
   const handleContinueAfterPayment = () => {
     setShowSuccess(false);
+    setFormData(prev => ({ ...prev, paymentConfirmed: true }));
     setCurrentStep(5);
     if (onStepChange) onStepChange(5);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // ============================================================
-  // GERAR DIAGNÓSTICO - USANDO ROTA V2
+  // GERAR DIAGNÓSTICO - ROTA V2
   // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
@@ -257,7 +258,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setCurrentStep(15);
     if (onStepChange) onStepChange(15);
 
-    // Gera hipóteses e simulações (para enviar ao backend)
     const hipoteses = gerarHipoteses(formData);
     const limitadorPrincipal = identificarLimitadorPrincipal(hipoteses, formData);
     const proximoLimitador = limitadorPrincipal ? projetarProximoLimitador(limitadorPrincipal, formData) : null;
@@ -267,7 +267,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
 
     const fetchResult = (async (): Promise<DiagnosticResult> => {
       try {
-        // 🔥 USANDO ROTA V2
         const response = await fetch('/api/diagnostico/v2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -322,12 +321,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {/* STEP 1 - WELCOME */}
-            {currentStep === 1 && (
-              <WelcomeStep onStart={nextStep} />
-            )}
+            {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
 
-            {/* STEP 2 - PERGUNTA DINÂMICA (DIAGNÓSTICO 2.0) */}
             {currentStep === 2 && perguntaAtual && (
               <DynamicStep
                 pergunta={perguntaAtual}
@@ -338,25 +333,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
 
-            {/* STEP 3 - OBJETIVO & DESAFIOS (LEGACY) */}
             {currentStep === 3 && (
               <div className="bg-white rounded-2xl p-6 border border-[#D8D3CB]">
-                <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4">
-                  Objetivos & Desafios
-                </h2>
-                <p className="text-[#5A6270] text-sm mb-6">
-                  Vamos entender melhor o que você quer alcançar.
-                </p>
-                <button
-                  onClick={nextStep}
-                  className="w-full py-3 bg-[#6B0F1A] text-white font-bold rounded-xl"
-                >
+                <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4">Objetivos & Desafios</h2>
+                <p className="text-[#5A6270] text-sm mb-6">Vamos entender melhor o que você quer alcançar.</p>
+                <button onClick={nextStep} className="w-full py-3 bg-[#6B0F1A] text-white font-bold rounded-xl">
                   Continuar
                 </button>
               </div>
             )}
 
-            {/* STEP 4 - CNPJ */}
             {currentStep === 4 && (
               <CnpjStep 
                 cnpj={formData.cnpj} 
@@ -369,7 +355,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
 
-            {/* STEP 14 - REVIEW */}
             {currentStep === 14 && (
               <ReviewStep 
                 formData={formData} 
@@ -379,10 +364,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               />
             )}
 
-            {/* STEP 15 - PROCESSING */}
             {currentStep === 15 && <ProcessingStep />}
 
-            {/* STEP 16 - RESULT */}
             {currentStep === 16 && diagnosticResult && (
               <ReportDashboard 
                 result={diagnosticResult} 
@@ -401,7 +384,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* NAVEGAÇÃO - APENAS PARA ETAPAS LEGACY */}
+      {/* NAVEGAÇÃO LEGACY */}
       {currentStep >= 3 && currentStep <= 14 && currentStep !== 4 && currentStep !== 2 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation
@@ -423,10 +406,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 max-w-4xl w-full space-y-4 shadow-xl">
             <div className="flex justify-between items-center border-b border-[#D8D3CB] pb-3">
               <h3 className="text-lg font-bold text-[#1A1A1A]">Visualização de Impressão e PDF - TFAZZIO</h3>
-              <button 
-                onClick={() => setShowPdfModal(false)} 
-                className="text-[#5A6270] hover:text-[#1A1A1A] font-bold p-1 cursor-pointer"
-              >
+              <button onClick={() => setShowPdfModal(false)} className="text-[#5A6270] hover:text-[#1A1A1A] font-bold p-1 cursor-pointer">
                 ✕ Fechar
               </button>
             </div>

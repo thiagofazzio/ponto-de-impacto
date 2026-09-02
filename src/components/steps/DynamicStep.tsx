@@ -54,6 +54,10 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
     onResponder(resposta);
   };
 
+  // 🔥 Detecta se é campo monetário ou percentual
+  const isCurrency = pergunta.id.includes('capital') || pergunta.id.includes('giro') || pergunta.id.includes('faturamento') || pergunta.id.includes('ticket');
+  const isPercent = pergunta.id.includes('percent') || pergunta.id.includes('taxa') || pergunta.id.includes('margem') || pergunta.id.includes('retencao') || pergunta.tipo === 'range';
+
   const renderInput = () => {
     switch (pergunta.tipo) {
       case 'select':
@@ -134,13 +138,37 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
       case 'number':
         return (
           <div className="mt-4">
+            <div className="relative">
+              {isCurrency && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A6270] font-bold">R$</span>}
+              <input
+                type="number"
+                value={resposta || ''}
+                onChange={(e) => setResposta(Number(e.target.value))}
+                placeholder={isPercent ? 'Ex: 15' : isCurrency ? 'Ex: 50000' : 'Digite o valor...'}
+                className={`w-full px-4 py-3 border border-[#D8D3CB] rounded-xl focus:ring-2 focus:ring-[#6B0F1A] focus:border-transparent ${isCurrency ? 'pl-10' : ''}`}
+              />
+              {isPercent && !isCurrency && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6270] font-bold">%</span>}
+            </div>
+          </div>
+        );
+
+      case 'range':
+        const rangeValue = resposta !== null && resposta !== undefined ? resposta : 50;
+        return (
+          <div className="mt-4">
             <input
-              type="number"
-              value={resposta || ''}
+              type="range"
+              min={0}
+              max={100}
+              value={rangeValue}
               onChange={(e) => setResposta(Number(e.target.value))}
-              placeholder="Digite o valor..."
-              className="w-full px-4 py-3 border border-[#D8D3CB] rounded-xl focus:ring-2 focus:ring-[#6B0F1A] focus:border-transparent"
+              className="w-full accent-[#6B0F1A] h-2 rounded-lg"
             />
+            <div className="flex justify-between text-xs text-[#5A6270] mt-2">
+              <span>0%</span>
+              <span className="font-bold text-[#6B0F1A]">{rangeValue}%</span>
+              <span>100%</span>
+            </div>
           </div>
         );
 
@@ -149,8 +177,7 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
           <div className="mt-4 space-y-3">
             <p className="text-sm text-[#5A6270]">Distribua 100% entre os canais selecionados:</p>
             {pergunta.opcoes?.map((opcao) => {
-              // Verifica se a opção foi selecionada anteriormente
-              const canalSelecionado = true; // Simplificado
+              const canalSelecionado = true;
               if (!canalSelecionado) return null;
               return (
                 <div key={opcao.value} className="flex items-center gap-4">
@@ -198,7 +225,6 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <div>
         {isGratisStep && (
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F4E8C1] border border-[#D4AF37]/50 text-[#6B0F1A] text-xs font-extrabold uppercase mb-3">
@@ -206,27 +232,21 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
             <span>Diagnóstico Grátis • {perguntasRespondidas + 1} de 5</span>
           </div>
         )}
-        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">
-          {pergunta.texto}
-        </h2>
+        <h2 className="text-2xl font-extrabold text-[#1A1A1A] mt-1">{pergunta.texto}</h2>
         {pergunta.descricao && (
           <p className="text-[#5A6270] text-sm mt-1">{pergunta.descricao}</p>
         )}
       </div>
 
-      {/* CONTEÚDO */}
       <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 shadow-sm">
         {renderInput()}
-        {error && (
-          <p className="mt-3 text-sm text-red-500">{error}</p>
-        )}
+        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </div>
 
-      {/* NAVEGAÇÃO */}
       <WizardNavigation
         currentStep={2}
         totalSteps={isGratis ? 5 : 15}
-        onPrevious={() => {}} // A navegação anterior será controlada pelo WizardContainer
+        onPrevious={() => {}}
         onNext={handleSubmit}
         isNextDisabled={false}
         isLastStep={isGratisStep && perguntasRespondidas === 4}
