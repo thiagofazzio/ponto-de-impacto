@@ -8,6 +8,8 @@ import { calculateBreakEven, generateFullDiagnostic } from './src/utils/diagnost
 import { DiagnosticFormData, EvidenceData, GooglePlacesEvidence, NewsItemEvidence } from './src/types';
 import Stripe from 'stripe';
 import { handleStripeWebhook } from './src/api/webhook/stripe';
+import { gerarHipoteses, identificarLimitadorPrincipal, projetarProximoLimitador } from './src/utils/hypothesisEngine';
+import { gerarResultadoSimulacao, gerarTextoSimulacao } from './src/utils/simulationEngine';
 
 console.log('🚀 SERVIDOR INICIADO COM SUCESSO');
 console.log('🔑 GOOGLE_PLACES_API_KEY:', process.env.GOOGLE_PLACES_API_KEY ? '✅ Configurada' : '❌ Não configurada');
@@ -76,6 +78,10 @@ function registrarLeadPago(formData: DiagnosticFormData, result: any) {
       lucroLiquido: result?.breakEven?.estimatedNetProfit ?? null,
       resumoExecutivo: result?.executiveSummary || '',
       recomendacoes: result?.strategicRecommendations || [],
+      // Campos do V2
+      limitadorPrincipal: result?.limitadorPrincipal?.nome || null,
+      proximoLimitador: result?.proximoLimitador?.nome || null,
+      simulacao: result?.simulacao ? 'Simulação gerada' : null,
     };
     
     fs.appendFileSync(LEADS_FILE, JSON.stringify(record) + '\n');
@@ -189,7 +195,9 @@ async function startServer() {
     apiVersion: '2025-02-24.acacia',
   });
 
-  // ===== ROTAS PÚBLICAS =====
+  // ============================================================
+  // ROTAS PÚBLICAS
+  // ============================================================
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', service: 'Ponto de Impacto Diagnostic API (TFAZZIO)', timestamp: new Date().toISOString() });
   });
@@ -315,107 +323,81 @@ async function startServer() {
   });
 
   // ============================================================
-  // 🔥 DIAGNÓSTICO COMPLETO (COM EVIDÊNCIAS)
+  // DIAGNÓSTICO 1.0 (LEGADO)
   // ============================================================
   app.post('/api/diagnostico/gerar', async (req, res) => {
     try {
-      console.log('📊 [1/6] Recebendo solicitação de diagnóstico...');
+      console.log('📊 [1.0] Gerando diagnóstico legado...');
       const formData: DiagnosticFormData = req.body;
-      console.log('📊 [2/6] Dados recebidos:', {
-        empresa: formData.companyName || formData.cnpjData?.razaoSocial || 'Não informado',
-        cnpj: formData.cnpj || 'Não informado',
-        faturamento: formData.monthlyRevenue || 0
-      });
-      
-      console.log('📊 [3/6] Calculando diagnóstico local...');
       const baseResult = generateFullDiagnostic(formData);
-      console.log('📊 [4/6] Diagnóstico local calculado. Índice de Clareza:', baseResult.clarityIndex);
-      
       const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
-      console.log('📊 [5/6] Buscando evidências externas para:', companyName);
       const evidence = await getEvidenceData(companyName, formData.cityState || '');
-      console.log('✅ [6/6] Evidências coletadas. Google Places:', evidence.googlePlaces.status);
-      
       const result = { ...baseResult, evidenceData: evidence };
       registrarLeadPago(formData, result);
-      console.log('✅ Diagnóstico completo! Retornando para o cliente.');
+      console.log('✅ [1.0] Diagnóstico legado concluído!');
       return res.json(result);
     } catch (error: any) {
-      console.error('❌ ERRO NO DIAGNÓSTICO:', error);
-      console.error('❌ Stack trace:', error.stack);
+      console.error('❌ [1.0] Erro:', error);
       return res.status(500).json({ error: 'Erro ao processar diagnóstico', details: error.message });
     }
   });
 
-  // ===== DIAGNÓSTICO COM IA =====
-  app.post('/api/diagnostico/ia-gerar', async (req, res) => {
-    console.log('🤖 Iniciando geração com IA...');
-    const formData: DiagnosticFormData = req.body;
-    const baseResult = generateFullDiagnostic(formData);
-    const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
-    const evidencePromise = getEvidenceData(companyName, formData.cityState || '');
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      console.warn('⚠️ GEMINI_API_KEY não configurada. Usando fallback local.');
-      const evidence = await evidencePromise;
-      const result = { ...baseResult, evidenceData: evidence };
-      registrarLeadPago(formData, result);
-      return res.json(result);
-    }
-
+  // ============================================================
+  // DIAGNÓSTICO 2.0 (ADAPTATIVO)
+  // ============================================================
+  app.post('/api/diagnostico/v2', async (req, res) => {
     try {
-      console.log('🔄 Chamando API do Gemini (com timeout de 15s)...');
-      const ai = new GoogleGenAI({ apiKey, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
-      const breakEven = baseResult.breakEven;
-      const prompt = `Você é um consultor empresarial executivo sênior do grupo TFAZZIO, especialista em reestruturação e aceleração de PMEs brasileiras.
-Analise os dados reais do diagnóstico empresarial "Ponto de Impacto" para a seguinte empresa:
-DADOS DA EMPRESA:
-- Razão Social/Nome: ${formData.companyName || formData.cnpjData?.razaoSocial || 'Empresa PME'}
-- CNPJ: ${formData.cnpj || 'Não informado'}
-- Porte / CNAE: ${formData.cnpjData?.porte || 'PME'} - ${formData.cnpjData?.cnaeDescricao || formData.segment}
-- Segmento: ${formData.segment} | Tempo no Mercado: ${formData.timeInMarket} | Funcionários: ${formData.employeesCount} | Regime: ${formData.taxRegime}
-DADOS FINANCEIROS:
-- Faturamento Mensal: R$ ${formData.monthlyRevenue} | Custos Fixos Totais: R$ ${breakEven.fixedCostsTotal}
-- Break-Even: R$ ${breakEven.breakEvenRevenue} (${breakEven.breakEvenPercentage}%) | Margem de Contribuição: ${breakEven.contributionMarginPercent}%
-- Lucro Líquido Estimado: R$ ${breakEven.estimatedNetProfit} (${breakEven.estimatedNetMarginPercent}%)
-GARGALOS: Principal: ${baseResult.primaryBottleneck.name} (${baseResult.primaryBottleneck.score}) | Secundário: ${baseResult.secondaryBottleneck.name} (${baseResult.secondaryBottleneck.score})
-Objetivo: "${formData.mainGoal || 'Expandir de forma estruturada'}" | Dificuldade: "${formData.biggestDifficulty || 'Gargalo operacional'}"
-TAREFA: Gere uma análise executiva curta e personalizada em JSON: {"executiveSummary": "...", "textualDiagnosis": "...", "strategicRecommendations": ["...","...","...","..."]}. Responda APENAS em JSON válido em português do Brasil.`;
-
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Gemini API timeout após 15 segundos')), 15000)
-      );
-
-      const response = await Promise.race([
-        ai.models.generateContent({ model: 'gemini-3.6-flash', contents: prompt, config: { responseMimeType: 'application/json', temperature: 0.7 } }),
-        timeoutPromise
-      ]) as any;
-
-      const responseText = response.text || '';
-      console.log('✅ Resposta do Gemini recebida com sucesso.');
+      console.log('🧠 [DIAGNÓSTICO 2.0] Recebendo solicitação...');
+      const formData: DiagnosticFormData = req.body;
       
-      const evidence = await evidencePromise;
+      // 1. Gera hipóteses
+      const hipoteses = gerarHipoteses(formData);
+      console.log(`🧠 [DIAGNÓSTICO 2.0] ${hipoteses.length} hipóteses geradas`);
 
-      try {
-        const aiParsed = JSON.parse(responseText.trim());
-        const mergedResult = { ...baseResult, executiveSummary: aiParsed.executiveSummary || baseResult.executiveSummary, textualDiagnosis: aiParsed.textualDiagnosis || baseResult.textualDiagnosis, strategicRecommendations: aiParsed.strategicRecommendations || baseResult.strategicRecommendations, aiGenerated: true, evidenceData: evidence };
-        registrarLeadPago(formData, mergedResult);
-        console.log('🎉 Diagnóstico com IA concluído!');
-        return res.json(mergedResult);
-      } catch (pErr) {
-        console.warn('⚠️ Erro ao analisar JSON da IA. Usando fallback.');
-        const fallbackResult = { ...baseResult, evidenceData: evidence };
-        registrarLeadPago(formData, fallbackResult);
-        return res.json(fallbackResult);
-      }
-    } catch (aiErr: any) {
-      console.error('⏰ TIMEOUT OU ERRO NA IA GEMINI:', aiErr.message || aiErr);
-      const evidence = await evidencePromise;
-      const fallbackResult = { ...baseResult, evidenceData: evidence };
-      registrarLeadPago(formData, fallbackResult);
-      console.log('✅ Diagnóstico gerado via fallback local (sem IA)');
-      return res.json(fallbackResult);
+      // 2. Identifica limitador principal
+      const limitadorPrincipal = identificarLimitadorPrincipal(hipoteses, formData);
+      console.log(`🧠 [DIAGNÓSTICO 2.0] Limitador principal: ${limitadorPrincipal?.nome || 'Não identificado'}`);
+
+      // 3. Projeta próximo limitador
+      const proximoLimitador = limitadorPrincipal ? projetarProximoLimitador(limitadorPrincipal, formData) : null;
+      console.log(`🧠 [DIAGNÓSTICO 2.0] Próximo limitador: ${proximoLimitador?.nome || 'Não projetado'}`);
+
+      // 4. Simula cenários de crescimento
+      const simulacao = gerarResultadoSimulacao(formData, formData.mainGoal || 'crescer_faturamento');
+      console.log(`🧠 [DIAGNÓSTICO 2.0] ${simulacao.cenarios.length} cenários simulados`);
+
+      // 5. Gera diagnóstico local (legado)
+      const baseResult = generateFullDiagnostic(formData);
+
+      // 6. Busca evidências externas
+      const companyName = formData.companyName || formData.cnpjData?.razaoSocial || '';
+      const evidence = await getEvidenceData(companyName, formData.cityState || '');
+
+      // 7. Mescla os resultados
+      const result = {
+        ...baseResult,
+        evidenceData: evidence,
+        version: '2.0',
+        hipoteses,
+        limitadorPrincipal,
+        proximoLimitador,
+        simulacao,
+        textoSimulacao: gerarTextoSimulacao(simulacao, formData),
+        generatedAt: new Date().toLocaleString('pt-BR', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+      };
+
+      registrarLeadPago(formData, result);
+      console.log('✅ [DIAGNÓSTICO 2.0] Diagnóstico completo!');
+      return res.json(result);
+    } catch (error: any) {
+      console.error('❌ [DIAGNÓSTICO 2.0] Erro:', error);
+      return res.status(500).json({ error: 'Erro ao processar diagnóstico 2.0', details: error.message });
     }
   });
 
