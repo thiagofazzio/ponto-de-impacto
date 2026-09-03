@@ -311,9 +311,20 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {currentStep === 1 && (
-              <WelcomeStep onStart={nextStep} />
-            )}
+           {currentStep === 1 && (
+  <WelcomeStep onStart={() => {
+    // 🔥 Inicia o diagnóstico adaptativo com os dados iniciais
+    const dadosIniciais = {
+      ...formData,
+      companyName: formData.companyName || '',
+      cnpj: formData.cnpj || '',
+    };
+    iniciarDiagnosticoAdaptativo(dadosIniciais);
+    setCurrentStep(2);
+    if (onStepChange) onStepChange(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }} />
+)}
 
             {currentStep === 2 && perguntaAtual && (
               <DynamicStep
