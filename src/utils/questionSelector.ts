@@ -2,13 +2,7 @@
 // PONTO DE IMPACTO 2.0 - SELETOR DE PERGUNTAS
 // ============================================================
 
-import { 
-  DiagnosticFormData, 
-  Pergunta, 
-  Hipotese,
-  CanalReceita,
-  CanalAquisicao
-} from '../types';
+import { DiagnosticFormData, Pergunta, Hipotese } from '../types';
 import { getProximaPergunta, getPerguntasAtivas } from '../config/questionMap';
 import { gerarHipoteses, sugerirProximaInvestigacao } from './hypothesisEngine';
 
@@ -17,22 +11,11 @@ import { gerarHipoteses, sugerirProximaInvestigacao } from './hypothesisEngine';
 // ============================================================
 
 export interface EstadoInvestigacao {
-  // Dados já coletados
   dados: DiagnosticFormData;
-  
-  // Perguntas já respondidas
   perguntasRespondidas: string[];
-  
-  // Hipóteses atuais
   hipoteses: Hipotese[];
-  
-  // Próxima pergunta a fazer
   proximaPergunta: Pergunta | null;
-  
-  // Status da investigação
   etapa: 'coletando_contexto' | 'mapeando_receita' | 'investigando_hipoteses' | 'validando_limitador' | 'concluido';
-  
-  // Nível de confiança global
   confiancaGlobal: number;
 }
 
@@ -44,6 +27,8 @@ export function iniciarInvestigacao(dadosIniciais: Partial<DiagnosticFormData>):
   const dados: DiagnosticFormData = {
     cnpj: '',
     cnpjData: null,
+    mainGoal: '',
+    biggestDifficulty: '',
     companyName: '',
     segment: '',
     cityState: '',
@@ -86,26 +71,20 @@ export function iniciarInvestigacao(dadosIniciais: Partial<DiagnosticFormData>):
     ...dadosIniciais
   };
 
-  // Obtém todas as perguntas ativas
   const perguntasAtivas = getPerguntasAtivas(dados);
-  
-  // Encontra a primeira pergunta não respondida
   const proximaPergunta = getProximaPergunta(perguntasAtivas, dados);
-
-  // Gera hipóteses iniciais (se houver dados suficientes)
   const hipoteses = gerarHipoteses(dados);
 
-  // Determina a etapa
-  let etapa: 'coletando_contexto' | 'mapeando_receita' | 'investigando_hipoteses' | 'validando_limitador' | 'concluido' = 'coletando_contexto';
-  
   const perguntasRespondidas = Object.keys(dados).filter(key => {
     const val = dados[key as keyof DiagnosticFormData];
     return val !== undefined && val !== null && val !== '' && val !== 0 && val !== false;
-  }).length;
+  });
 
-  if (perguntasRespondidas >= 10 && hipoteses.length > 0) {
+  let etapa: EstadoInvestigacao['etapa'] = 'coletando_contexto';
+  
+  if (perguntasRespondidas.length >= 10 && hipoteses.length > 0) {
     etapa = 'investigando_hipoteses';
-  } else if (perguntasRespondidas >= 6) {
+  } else if (perguntasRespondidas.length >= 6) {
     etapa = 'mapeando_receita';
   }
 
@@ -115,10 +94,7 @@ export function iniciarInvestigacao(dadosIniciais: Partial<DiagnosticFormData>):
 
   return {
     dados,
-    perguntasRespondidas: Object.keys(dados).filter(key => {
-      const val = dados[key as keyof DiagnosticFormData];
-      return val !== undefined && val !== null && val !== '' && val !== 0;
-    }),
+    perguntasRespondidas,
     hipoteses,
     proximaPergunta,
     etapa,
@@ -134,7 +110,6 @@ export function calcularConfiancaGlobal(
   dados: DiagnosticFormData,
   hipoteses: Hipotese[]
 ): number {
-  // Quantidade de dados coletados (peso 30%)
   const dadosColetados = Object.keys(dados).filter(key => {
     const val = dados[key as keyof DiagnosticFormData];
     return val !== undefined && val !== null && val !== '' && val !== 0;
@@ -142,14 +117,12 @@ export function calcularConfiancaGlobal(
   
   const pontuacaoDados = Math.min(100, (dadosColetados / 20) * 100) * 0.3;
   
-  // Confiança das hipóteses (peso 40%)
   let confiancaHipoteses = 0;
   if (hipoteses.length > 0) {
     const total = hipoteses.reduce((sum, h) => sum + h.confianca, 0);
     confiancaHipoteses = (total / hipoteses.length) * 0.4;
   }
   
-  // Existência de limitador identificado (peso 30%)
   const temLimitador = hipoteses.some(h => h.confianca >= 60);
   const pontuacaoLimitador = temLimitador ? 30 : 0;
   
@@ -165,33 +138,22 @@ export function avancarInvestigacao(
   resposta: any,
   idPergunta: string
 ): EstadoInvestigacao {
-  // Atualiza os dados com a resposta
   const dadosAtualizados = {
     ...estado.dados,
     [idPergunta]: resposta,
   };
 
-  // Marca a pergunta como respondida
   const perguntasAtualizadas = [...estado.perguntasRespondidas, idPergunta];
-
-  // Obtém todas as perguntas ativas
   const perguntasAtivas = getPerguntasAtivas(dadosAtualizados);
-  
-  // Encontra a próxima pergunta
   const proximaPergunta = getProximaPergunta(perguntasAtivas, dadosAtualizados);
-
-  // Gera hipóteses atualizadas
   const hipotesesAtualizadas = gerarHipoteses(dadosAtualizados);
 
-  // Verifica se a próxima pergunta deve vir das hipóteses
   let proximaPerguntaFinal = proximaPergunta;
   let etapa = estado.etapa;
 
   if (hipotesesAtualizadas.length > 0 && perguntasAtualizadas.length >= 8) {
-    // Se já temos algumas respostas, tenta investigar a hipótese mais promissora
     const investigacao = sugerirProximaInvestigacao(hipotesesAtualizadas, dadosAtualizados);
     if (investigacao && !proximaPergunta) {
-      // Cria uma pergunta dinâmica baseada na hipótese
       proximaPerguntaFinal = {
         id: `hip_${Date.now()}`,
         texto: investigacao.pergunta,
@@ -204,7 +166,6 @@ export function avancarInvestigacao(
     }
   }
 
-  // Verifica se já temos confiança suficiente para concluir
   const confiancaGlobal = calcularConfiancaGlobal(dadosAtualizados, hipotesesAtualizadas);
   
   if (confiancaGlobal >= 70 && hipotesesAtualizadas.some(h => h.confianca >= 70)) {
@@ -226,19 +187,11 @@ export function avancarInvestigacao(
 // ============================================================
 
 export function isDiagnosticoCompleto(estado: EstadoInvestigacao): boolean {
-  // Condições para considerar o diagnóstico completo:
-  // 1. Temos confiança global >= 70%
-  // 2. Temos pelo menos uma hipótese com confiança >= 70%
-  // 3. Já respondemos pelo menos 12 perguntas
-  // 4. OU a etapa está em 'concluido'
-  
   if (estado.etapa === 'concluido') return true;
   
   const temHipoteseForte = estado.hipoteses.some(h => h.confianca >= 70);
   const confiancaSuficiente = estado.confiancaGlobal >= 70;
   const perguntasSuficientes = estado.perguntasRespondidas.length >= 12;
-  
-  // Se não tem mais perguntas para fazer
   const naoTemMaisPerguntas = estado.proximaPergunta === null;
   
   return (temHipoteseForte && confiancaSuficiente && perguntasSuficientes) || 
@@ -246,34 +199,7 @@ export function isDiagnosticoCompleto(estado: EstadoInvestigacao): boolean {
 }
 
 // ============================================================
-// 6. OBTER RESUMO DA INVESTIGAÇÃO
-// ============================================================
-
-export function obterResumoInvestigacao(estado: EstadoInvestigacao): string {
-  const linhas: string[] = [];
-  
-  linhas.push(`📊 Status: ${estado.etapa.toUpperCase()}`);
-  linhas.push(`🎯 Confiança: ${estado.confiancaGlobal}%`);
-  linhas.push(`📝 Perguntas respondidas: ${estado.perguntasRespondidas.length}`);
-  
-  if (estado.hipoteses.length > 0) {
-    linhas.push('\n🔍 Hipóteses ativas:');
-    for (const h of estado.hipoteses) {
-      linhas.push(`  - ${h.descricao.substring(0, 80)}... (${h.confianca}%)`);
-    }
-  }
-  
-  if (estado.proximaPergunta) {
-    linhas.push(`\n❓ Próxima pergunta: ${estado.proximaPergunta.texto}`);
-  } else {
-    linhas.push('\n✅ Nenhuma pergunta pendente.');
-  }
-  
-  return linhas.join('\n');
-}
-
-// ============================================================
-// 7. GERAR PERGUNTAS PARA O DIAGNÓSTICO GRÁTIS (5 PERGUNTAS)
+// 6. GERAR PERGUNTAS PARA O DIAGNÓSTICO GRÁTIS (5 PERGUNTAS)
 // ============================================================
 
 export function gerarPerguntasGratis(): Pergunta[] {
@@ -354,19 +280,14 @@ export function gerarPerguntasGratis(): Pergunta[] {
 }
 
 // ============================================================
-// 8. GERAR PERGUNTAS RESTANTES PARA UPGRADE
+// 7. GERAR PERGUNTAS RESTANTES PARA UPGRADE
 // ============================================================
 
 export function gerarPerguntasRestantes(
   respostasGratis: Record<string, any>,
   estado: EstadoInvestigacao
 ): Pergunta[] {
-  // Todas as perguntas ativas
   const todasPerguntas = getPerguntasAtivas(estado.dados);
-  
-  // Perguntas já respondidas no diagnóstico grátis
   const idsRespondidos = Object.keys(respostasGratis);
-  
-  // Retorna apenas as perguntas que não foram respondidas
   return todasPerguntas.filter(p => !idsRespondidos.includes(p.id));
 }

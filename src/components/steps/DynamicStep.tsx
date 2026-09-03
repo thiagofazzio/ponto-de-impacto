@@ -54,9 +54,12 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
     onResponder(resposta);
   };
 
-  // 🔥 Detecta se é campo monetário ou percentual
-  const isCurrency = pergunta.id.includes('capital') || pergunta.id.includes('giro') || pergunta.id.includes('faturamento') || pergunta.id.includes('ticket');
-  const isPercent = pergunta.id.includes('percent') || pergunta.id.includes('taxa') || pergunta.id.includes('margem') || pergunta.id.includes('retencao') || pergunta.tipo === 'range';
+  // Detecta se é campo monetário ou percentual
+  const isCurrency = pergunta.id.includes('capital') || pergunta.id.includes('giro') || 
+                     pergunta.id.includes('faturamento') || pergunta.id.includes('ticket');
+  const isPercent = pergunta.id.includes('percent') || pergunta.id.includes('taxa') || 
+                    pergunta.id.includes('margem') || pergunta.id.includes('retencao') || 
+                    pergunta.tipo === 'range';
 
   const renderInput = () => {
     switch (pergunta.tipo) {

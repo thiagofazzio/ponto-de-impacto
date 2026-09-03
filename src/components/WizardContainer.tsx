@@ -6,7 +6,7 @@ import { ReviewStep } from './steps/ReviewStep';
 import { ProcessingStep } from './steps/ProcessingStep';
 import { ReportDashboard } from './report/ReportDashboard';
 import { PdfGenerator } from './report/PdfGenerator';
-import { AlertCircle, Sparkles } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import CheckoutModal from './checkout/CheckoutModal';
@@ -21,8 +21,7 @@ import {
   gerarPerguntasGratis
 } from '../utils/questionSelector';
 import { gerarHipoteses, identificarLimitadorPrincipal, projetarProximoLimitador } from '../utils/hypothesisEngine';
-import { gerarResultadoSimulacao, gerarTextoSimulacao } from '../utils/simulationEngine';
-import { getPerguntasAtivas } from '../config/questionMap';
+import { gerarResultadoSimulacao } from '../utils/simulationEngine';
 
 // ============================================================
 // CONSTANTES
@@ -104,8 +103,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   // ===== ESTADOS DO DIAGNÓSTICO 2.0 =====
   const [investigacao, setInvestigacao] = useState<EstadoInvestigacao | null>(null);
   const [perguntaAtual, setPerguntaAtual] = useState<Pergunta | null>(null);
-  const [isUpgradeMode, setIsUpgradeMode] = useState(false);
-  const [respostasGratis, setRespostasGratis] = useState<Record<string, any>>({});
   const [modoGratis, setModoGratis] = useState(false);
 
   // ============================================================
@@ -118,7 +115,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         const parsed = JSON.parse(savedData);
         setFormData(prev => ({ ...prev, ...parsed }));
         
-        // Se já tem dados, inicia a investigação
         if (parsed.companyName || parsed.cnpj) {
           iniciarDiagnosticoAdaptativo(parsed);
         }
@@ -141,7 +137,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setInvestigacao(estado);
     setPerguntaAtual(estado.proximaPergunta);
     setModoGratis(false);
-    setIsUpgradeMode(false);
   };
 
   // ============================================================
@@ -214,15 +209,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     return true;
   };
 
-  // ============================================================
-  // 🔥 NEXT STEP - VERIFICA PAGAMENTO NA ETAPA 4
-  // ============================================================
   const nextStep = () => {
     if (!validateStep()) return;
     
-    // 🔥 VERIFICA PAGAMENTO - Etapa 4 (CNPJ)
     if (currentStep === 4 && !formData.paymentConfirmed) {
-      console.log('💳 Abrindo checkout...');
       setShowCheckout(true);
       return;
     }
@@ -321,7 +311,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-            {currentStep === 1 && <WelcomeStep onStart={nextStep} />}
+            {currentStep === 1 && (
+              <WelcomeStep onStart={nextStep} />
+            )}
 
             {currentStep === 2 && perguntaAtual && (
               <DynamicStep
