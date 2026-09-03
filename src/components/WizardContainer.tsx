@@ -23,16 +23,8 @@ import {
 import { gerarHipoteses, identificarLimitadorPrincipal, projetarProximoLimitador } from '../utils/hypothesisEngine';
 import { gerarResultadoSimulacao } from '../utils/simulationEngine';
 
-// ============================================================
-// CONSTANTES
-// ============================================================
-
 const TOTAL_STEPS = 13;
 const MIN_PROCESSING_MS = 3600;
-
-// ============================================================
-// ESTADO INICIAL
-// ============================================================
 
 const INITIAL_FORM_DATA: DiagnosticFormData = {
   cnpj: '',
@@ -85,12 +77,7 @@ interface WizardContainerProps {
   onCompanyChange?: (name: string) => void;
 }
 
-// ============================================================
-// COMPONENTE PRINCIPAL
-// ============================================================
-
 export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, onCompanyChange }) => {
-  // ===== ESTADOS =====
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<DiagnosticFormData>(INITIAL_FORM_DATA);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
@@ -99,22 +86,16 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showCheckout, setShowCheckout] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // ===== ESTADOS DO DIAGNÓSTICO 2.0 =====
   const [investigacao, setInvestigacao] = useState<EstadoInvestigacao | null>(null);
   const [perguntaAtual, setPerguntaAtual] = useState<Pergunta | null>(null);
   const [modoGratis, setModoGratis] = useState(false);
 
-  // ============================================================
-  // CARREGAR DADOS DO LOCALSTORAGE
-  // ============================================================
   useEffect(() => {
     const savedData = localStorage.getItem('tfazzio_diagnostic_data');
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         setFormData(prev => ({ ...prev, ...parsed }));
-        
         if (parsed.companyName || parsed.cnpj) {
           iniciarDiagnosticoAdaptativo(parsed);
         }
@@ -122,16 +103,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     }
   }, []);
 
-  // ============================================================
-  // SALVAR DADOS NO LOCALSTORAGE
-  // ============================================================
   useEffect(() => {
     localStorage.setItem('tfazzio_diagnostic_data', JSON.stringify(formData));
   }, [formData]);
 
-  // ============================================================
-  // INICIAR DIAGNÓSTICO ADAPTATIVO
-  // ============================================================
   const iniciarDiagnosticoAdaptativo = (dadosIniciais: Partial<DiagnosticFormData>) => {
     const estado = iniciarInvestigacao(dadosIniciais);
     setInvestigacao(estado);
@@ -139,9 +114,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setModoGratis(false);
   };
 
-  // ============================================================
-  // AVANÇAR PERGUNTA (DIAGNÓSTICO ADAPTATIVO)
-  // ============================================================
   const responderPergunta = (resposta: any) => {
     if (!investigacao) return;
 
@@ -157,7 +129,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     } else {
       setPerguntaAtual(null);
       if (isDiagnosticoCompleto(novoEstado)) {
-        // 🔥 VAI PARA CNPJ (ETAPA 4) EM VEZ DE REVISÃO
         setCurrentStep(4);
         if (onStepChange) onStepChange(4);
       }
@@ -166,9 +137,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setValidationError(null);
   };
 
-  // ============================================================
-  // FUNÇÕES DE NAVEGAÇÃO
-  // ============================================================
   const updateFormData = (fields: Partial<DiagnosticFormData>) => {
     setFormData((prev) => {
       const updated = { ...prev, ...fields };
@@ -200,13 +168,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     return true;
   };
 
-  // ============================================================
-  // NEXT STEP - INICIA DIAGNÓSTICO ADAPTATIVO
-  // ============================================================
   const nextStep = () => {
     if (!validateStep()) return;
     
-    // 🔥 Se for para a etapa 2 (vindo do Welcome), inicia o diagnóstico adaptativo
     if (currentStep === 1) {
       const dadosIniciais = {
         ...formData,
@@ -243,9 +207,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ============================================================
-  // GERAR DIAGNÓSTICO - ROTA V2
-  // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -290,9 +251,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (onStepChange) onStepChange(16);
   };
 
-  // ============================================================
-  // TELA DE SUCESSO
-  // ============================================================
   if (showSuccess) {
     return (
       <CheckoutSuccess 
@@ -301,9 +259,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     );
   }
 
-  // ============================================================
-  // RENDER PRINCIPAL
-  // ============================================================
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6">
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6">
@@ -326,6 +281,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 isGratis={modoGratis}
                 totalPerguntas={modoGratis ? 5 : 15}
                 perguntasRespondidas={investigacao?.perguntasRespondidas.length || 0}
+                onVoltar={prevStep}
               />
             )}
 
@@ -387,7 +343,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         )}
       </div>
 
-      {/* NAVEGAÇÃO LEGACY */}
       {currentStep >= 3 && currentStep <= 14 && currentStep !== 4 && currentStep !== 2 && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
           <WizardNavigation
@@ -403,7 +358,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
-      {/* MODAL PDF */}
       {showPdfModal && diagnosticResult && (
         <div className="fixed inset-0 z-50 bg-[#1A1A1A]/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#D8D3CB] rounded-2xl p-6 max-w-4xl w-full space-y-4 shadow-xl">
@@ -418,7 +372,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         </div>
       )}
 
-      {/* CHECKOUT MODAL */}
       {showCheckout && (
         <CheckoutModal
           email={formData.contactEmail}

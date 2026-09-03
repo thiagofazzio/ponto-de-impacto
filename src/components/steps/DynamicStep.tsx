@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Pergunta } from '../../types';
-import { WizardNavigation } from '../WizardNavigation';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DynamicStepProps {
   pergunta: Pergunta;
@@ -9,6 +8,7 @@ interface DynamicStepProps {
   isGratis?: boolean;
   totalPerguntas?: number;
   perguntasRespondidas?: number;
+  onVoltar?: () => void;
 }
 
 export const DynamicStep: React.FC<DynamicStepProps> = ({
@@ -17,6 +17,7 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
   isGratis = false,
   totalPerguntas = 15,
   perguntasRespondidas = 0,
+  onVoltar,
 }) => {
   const [resposta, setResposta] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -221,6 +222,8 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
   };
 
   const isGratisStep = isGratis && perguntasRespondidas < 5;
+  const isLast = isGratisStep && perguntasRespondidas === 4;
+  const total = isGratis ? 5 : 15;
 
   return (
     <div className="space-y-6">
@@ -242,17 +245,33 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </div>
 
-      <WizardNavigation
-        currentStep={2}
-        totalSteps={isGratis ? 5 : 15}
-        onPrevious={() => {}}
-        onNext={handleSubmit}
-        isNextDisabled={false}
-        isLastStep={isGratisStep && perguntasRespondidas === 4}
-        nextLabel={isGratisStep && perguntasRespondidas === 4 ? 'Ver Resultado Grátis' : 'Continuar'}
-        showPrevious={false}
-        showStepCounter={false}
-      />
+      {/* Navegação simples - sem WizardNavigation para evitar bugs */}
+      <div className="flex justify-between items-center pt-6 border-t border-[#D8D3CB]">
+        <div>
+          {onVoltar && (
+            <button
+              onClick={onVoltar}
+              className="flex items-center gap-2 px-4 py-2 text-[#6B0F1A] font-semibold hover:bg-[#F9F7F3] rounded-lg transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Voltar
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-[#5A6270]">
+            Pergunta {perguntasRespondidas + 1} de {total}
+          </span>
+          <button
+            onClick={handleSubmit}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#6B0F1A] text-white font-bold rounded-lg hover:bg-[#500B13] transition"
+          >
+            {isLast ? 'Finalizar' : 'Continuar'}
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
