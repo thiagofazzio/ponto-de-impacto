@@ -245,10 +245,10 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </div>
 
-      {/* Navegação simples - sem WizardNavigation para evitar bugs */}
-      <div className="flex justify-between items-center pt-6 border-t border-[#D8D3CB]">
+      {/* NAVEGAÇÃO SIMPLES - SEM WIZARDNAVIGATION */}
+      <div className="flex justify-between items-center pt-6 border-t border-[#D8D3CB] mt-6">
         <div>
-          {onVoltar && (
+          {onVoltar && perguntasRespondidas > 0 && (
             <button
               onClick={onVoltar}
               className="flex items-center gap-2 px-4 py-2 text-[#6B0F1A] font-semibold hover:bg-[#F9F7F3] rounded-lg transition"
@@ -261,11 +261,11 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
 
         <div className="flex items-center gap-3">
           <span className="text-sm text-[#5A6270]">
-            Pergunta {perguntasRespondidas + 1} de {total}
+            {perguntasRespondidas + 1} de {total}
           </span>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#6B0F1A] text-white font-bold rounded-lg hover:bg-[#500B13] transition"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#6B0F1A] text-white font-bold rounded-lg hover:bg-[#500B13] transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLast ? 'Finalizar' : 'Continuar'}
             <ChevronRight className="w-4 h-4" />

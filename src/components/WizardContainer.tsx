@@ -202,6 +202,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const handleContinueAfterPayment = () => {
     setShowSuccess(false);
     setFormData(prev => ({ ...prev, paymentConfirmed: true }));
+    // Pula para a etapa 5 (Financeiro) após pagamento
     setCurrentStep(5);
     if (onStepChange) onStepChange(5);
     window.scrollTo({ top: 0, behavior: 'smooth' });
