@@ -140,17 +140,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   };
 
   // ============================================================
-  // INICIAR DIAGNÓSTICO GRÁTIS
-  // ============================================================
-  const iniciarDiagnosticoGratis = () => {
-    const perguntas = gerarPerguntasGratis();
-    setModoGratis(true);
-    setPerguntaAtual(perguntas[0]);
-    setInvestigacao(null);
-    setCurrentStep(2);
-  };
-
-  // ============================================================
   // AVANÇAR PERGUNTA (DIAGNÓSTICO ADAPTATIVO)
   // ============================================================
   const responderPergunta = (resposta: any) => {
@@ -168,7 +157,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     } else {
       setPerguntaAtual(null);
       if (isDiagnosticoCompleto(novoEstado)) {
-        setCurrentStep(14);
+        // 🔥 VAI PARA CNPJ (ETAPA 4) EM VEZ DE REVISÃO
+        setCurrentStep(4);
+        if (onStepChange) onStepChange(4);
       }
     }
 
@@ -209,8 +200,21 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     return true;
   };
 
+  // ============================================================
+  // NEXT STEP - INICIA DIAGNÓSTICO ADAPTATIVO
+  // ============================================================
   const nextStep = () => {
     if (!validateStep()) return;
+    
+    // 🔥 Se for para a etapa 2 (vindo do Welcome), inicia o diagnóstico adaptativo
+    if (currentStep === 1) {
+      const dadosIniciais = {
+        ...formData,
+        companyName: formData.companyName || '',
+        cnpj: formData.cnpj || '',
+      };
+      iniciarDiagnosticoAdaptativo(dadosIniciais);
+    }
     
     if (currentStep === 4 && !formData.paymentConfirmed) {
       setShowCheckout(true);
@@ -311,20 +315,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.2 }}
           >
-           {currentStep === 1 && (
-  <WelcomeStep onStart={() => {
-    // 🔥 Inicia o diagnóstico adaptativo com os dados iniciais
-    const dadosIniciais = {
-      ...formData,
-      companyName: formData.companyName || '',
-      cnpj: formData.cnpj || '',
-    };
-    iniciarDiagnosticoAdaptativo(dadosIniciais);
-    setCurrentStep(2);
-    if (onStepChange) onStepChange(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }} />
-)}
+            {currentStep === 1 && (
+              <WelcomeStep onStart={nextStep} />
+            )}
 
             {currentStep === 2 && perguntaAtual && (
               <DynamicStep
@@ -334,6 +327,13 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 totalPerguntas={modoGratis ? 5 : 15}
                 perguntasRespondidas={investigacao?.perguntasRespondidas.length || 0}
               />
+            )}
+
+            {currentStep === 2 && !perguntaAtual && (
+              <div className="bg-white rounded-2xl p-8 border border-[#D8D3CB] text-center">
+                <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4">Carregando perguntas...</h2>
+                <p className="text-[#5A6270]">Aguarde um momento enquanto preparamos seu diagnóstico personalizado.</p>
+              </div>
             )}
 
             {currentStep === 3 && (

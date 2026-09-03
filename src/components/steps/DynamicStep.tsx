@@ -23,7 +23,6 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
   const [percentuais, setPercentuais] = useState<Record<string, number>>({});
 
   const handleSubmit = () => {
-    // Validação
     if (pergunta.tipo === 'select' && !resposta) {
       setError('Por favor, selecione uma opção.');
       return;
@@ -54,7 +53,6 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
     onResponder(resposta);
   };
 
-  // Detecta se é campo monetário ou percentual
   const isCurrency = pergunta.id.includes('capital') || pergunta.id.includes('giro') || 
                      pergunta.id.includes('faturamento') || pergunta.id.includes('ticket');
   const isPercent = pergunta.id.includes('percent') || pergunta.id.includes('taxa') || 
@@ -159,6 +157,11 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
         const rangeValue = resposta !== null && resposta !== undefined ? resposta : 50;
         return (
           <div className="mt-4">
+            <div className="flex justify-between text-xs text-[#5A6270] mb-1">
+              <span>0%</span>
+              <span className="font-bold text-[#6B0F1A]">{rangeValue}%</span>
+              <span>100%</span>
+            </div>
             <input
               type="range"
               min={0}
@@ -167,11 +170,6 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
               onChange={(e) => setResposta(Number(e.target.value))}
               className="w-full accent-[#6B0F1A] h-2 rounded-lg"
             />
-            <div className="flex justify-between text-xs text-[#5A6270] mt-2">
-              <span>0%</span>
-              <span className="font-bold text-[#6B0F1A]">{rangeValue}%</span>
-              <span>100%</span>
-            </div>
           </div>
         );
 
@@ -180,8 +178,6 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
           <div className="mt-4 space-y-3">
             <p className="text-sm text-[#5A6270]">Distribua 100% entre os canais selecionados:</p>
             {pergunta.opcoes?.map((opcao) => {
-              const canalSelecionado = true;
-              if (!canalSelecionado) return null;
               return (
                 <div key={opcao.value} className="flex items-center gap-4">
                   <span className="w-32 text-sm font-medium">{opcao.label}</span>
@@ -255,6 +251,7 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
         isLastStep={isGratisStep && perguntasRespondidas === 4}
         nextLabel={isGratisStep && perguntasRespondidas === 4 ? 'Ver Resultado Grátis' : 'Continuar'}
         showPrevious={false}
+        showStepCounter={false}
       />
     </div>
   );
