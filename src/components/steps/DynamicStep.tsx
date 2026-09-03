@@ -245,7 +245,7 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </div>
 
-      {/* NAVEGAÇÃO SIMPLES - SEM WIZARDNAVIGATION */}
+      {/* NAVEGAÇÃO SIMPLES - SEM CONTADOR DE PERGUNTAS */}
       <div className="flex justify-between items-center pt-6 border-t border-[#D8D3CB] mt-6">
         <div>
           {onVoltar && perguntasRespondidas > 0 && (
@@ -259,10 +259,7 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-[#5A6270]">
-            {perguntasRespondidas + 1} de {total}
-          </span>
+        <div>
           <button
             onClick={handleSubmit}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#6B0F1A] text-white font-bold rounded-lg hover:bg-[#500B13] transition disabled:opacity-50 disabled:cursor-not-allowed"
