@@ -171,7 +171,7 @@ export const PERGUNTAS_RECEITA: Pergunta[] = [
   {
     id: 'taxa_retencao',
     texto: 'Qual a sua taxa de retenção de clientes?',
-    descricao: '% de clientes que continuam comprando depois de 12 meses',
+    descricao: '% de clientes que continuam comprando depois de 12 meses (0% = nenhum, 100% = todos)',
     tipo: 'range',
     prioridade: 14,
     mapa: 'receita',
@@ -203,7 +203,7 @@ export const PERGUNTAS_FINANCEIRAS: Pergunta[] = [
   {
     id: 'margem_liquida',
     texto: 'Qual a sua margem líquida atual?',
-    descricao: 'Lucro líquido / Faturamento x 100',
+    descricao: 'Lucro líquido / Faturamento x 100 (ex: 15 = 15%)',
     tipo: 'number',
     prioridade: 20,
     mapa: 'financeiro',
@@ -211,7 +211,7 @@ export const PERGUNTAS_FINANCEIRAS: Pergunta[] = [
   {
     id: 'capital_giro',
     texto: 'Qual o seu capital de giro disponível?',
-    descricao: 'Recursos em caixa para financiar o dia a dia',
+    descricao: 'Recursos em caixa para financiar o dia a dia (R$)',
     tipo: 'number',
     prioridade: 21,
     mapa: 'financeiro',
@@ -266,7 +266,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
   {
     id: 'capacidade_producao',
     texto: 'Qual a sua capacidade atual de produção / entrega?',
-    descricao: 'Se a demanda aumentasse hoje, quanto você conseguiria atender?',
+    descricao: 'Se a demanda aumentasse hoje, quanto você conseguiria atender? (0% = não consigo atender mais, 100% = consigo dobrar)',
     tipo: 'range',
     prioridade: 30,
     mapa: 'operacional',
@@ -274,7 +274,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
   {
     id: 'capacidade_atendimento',
     texto: 'Qual a sua capacidade de atendimento comercial?',
-    descricao: 'Se os leads aumentassem, quantos sua equipe conseguiria atender?',
+    descricao: 'Se os leads aumentassem, quantos sua equipe conseguiria atender? (0% = não consigo atender mais, 100% = consigo dobrar)',
     tipo: 'range',
     prioridade: 31,
     mapa: 'comercial',
@@ -282,7 +282,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
   {
     id: 'capacidade_distribuicao',
     texto: 'Qual a sua capacidade de distribuição/entrega?',
-    descricao: 'Se as vendas aumentassem, a entrega suportaria?',
+    descricao: 'Se as vendas aumentassem, a entrega suportaria? (0% = não suporta mais, 100% = suporta o dobro)',
     tipo: 'range',
     prioridade: 32,
     mapa: 'operacional',
@@ -290,7 +290,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
   {
     id: 'capacidade_financeira',
     texto: 'Qual a sua capacidade financeira para investir?',
-    descricao: 'Quanto você conseguiria investir para crescer sem comprometer o caixa?',
+    descricao: 'Quanto você conseguiria investir para crescer sem comprometer o caixa? (0% = nada, 100% = muito)',
     tipo: 'range',
     prioridade: 33,
     mapa: 'financeiro',
@@ -434,20 +434,16 @@ export function getPerguntasAtivas(data: any): Pergunta[] {
   const perguntas: Pergunta[] = [];
   const perguntasIds = new Set<string>();
 
-  // Itera por todos os mapas
   for (const mapa of MAPAS) {
-    // Verifica se o mapa deve ser ativado
     if (mapa.condicao_ativacao && !mapa.condicao_ativacao(data)) {
       continue;
     }
 
     for (const pergunta of mapa.perguntas) {
-      // Verifica se a pergunta já foi adicionada
       if (perguntasIds.has(pergunta.id)) {
         continue;
       }
 
-      // Verifica se a pergunta tem condição específica
       if (pergunta.condicao && !pergunta.condicao(data)) {
         continue;
       }
@@ -457,7 +453,6 @@ export function getPerguntasAtivas(data: any): Pergunta[] {
     }
   }
 
-  // Ordena por prioridade
   return perguntas.sort((a, b) => a.prioridade - b.prioridade);
 }
 
@@ -470,12 +465,10 @@ export function getProximaPergunta(
   respostas: Record<string, any>
 ): Pergunta | null {
   for (const pergunta of perguntas) {
-    // Se a pergunta já foi respondida, pula
     if (respostas[pergunta.id] !== undefined && respostas[pergunta.id] !== null && respostas[pergunta.id] !== '') {
       continue;
     }
 
-    // Verifica se a pergunta tem condição específica
     if (pergunta.condicao && !pergunta.condicao(respostas)) {
       continue;
     }
@@ -484,22 +477,4 @@ export function getProximaPergunta(
   }
 
   return null;
-}
-
-// ============================================================
-// 10. FUNÇÃO PARA VERIFICAR SE O DIAGNÓSTICO ESTÁ COMPLETO
-// ============================================================
-
-export function isDiagnosticoCompleto(
-  perguntas: Pergunta[],
-  respostas: Record<string, any>,
-  perguntasMinimas: number = 15
-): boolean {
-  const respondidas = perguntas.filter(p => 
-    respostas[p.id] !== undefined && 
-    respostas[p.id] !== null && 
-    respostas[p.id] !== ''
-  ).length;
-
-  return respondidas >= perguntasMinimas;
 }
