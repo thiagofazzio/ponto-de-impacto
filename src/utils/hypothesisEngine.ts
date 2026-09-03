@@ -257,3 +257,26 @@ export function projetarProximoLimitador(
     estimativa_confianca: Math.min(70, limitadorAtual.confianca * 0.7),
   };
 }
+
+// ============================================================
+// 4. SUGERIR PRÓXIMA INVESTIGAÇÃO (NOVO!)
+// ============================================================
+
+export function sugerirProximaInvestigacao(
+  hipoteses: Hipotese[],
+  data: DiagnosticFormData
+): { pergunta: string; area: AreaLimitadora; confianca: number } | null {
+  // Encontra a hipótese com mais potencial de ser confirmada
+  const candidatas = hipoteses
+    .filter(h => h.confianca >= 40 && h.confianca < 70)
+    .sort((a, b) => b.confianca - a.confianca);
+
+  if (candidatas.length === 0) return null;
+
+  const principal = candidatas[0];
+  return {
+    pergunta: principal.proxima_pergunta || `Para confirmar que o gargalo está em ${principal.area}, precisamos entender melhor: qual evidência você tem sobre isso?`,
+    area: principal.area,
+    confianca: principal.confianca,
+  };
+}
