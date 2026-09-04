@@ -90,11 +90,15 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [perguntaAtual, setPerguntaAtual] = useState<Pergunta | null>(null);
   const [modoGratis, setModoGratis] = useState(false);
 
+  // ============================================================
+  // CARREGAR DADOS DO LOCALSTORAGE
+  // ============================================================
   useEffect(() => {
     const savedData = localStorage.getItem('tfazzio_diagnostic_data');
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
+        console.log('📦 Dados carregados do localStorage:', parsed);
         setFormData(prev => ({ ...prev, ...parsed }));
         if (parsed.companyName || parsed.cnpj) {
           iniciarDiagnosticoAdaptativo(parsed);
@@ -103,17 +107,64 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     }
   }, []);
 
+  // ============================================================
+  // SALVAR DADOS NO LOCALSTORAGE
+  // ============================================================
   useEffect(() => {
     localStorage.setItem('tfazzio_diagnostic_data', JSON.stringify(formData));
   }, [formData]);
 
+  // ============================================================
+  // VERIFICAR RETORNO DO PAGAMENTO
+  // ============================================================
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const sessionId = params.get('session_id');
+
+    if (success === 'true' && sessionId) {
+      console.log('✅ Pagamento confirmado! Session ID:', sessionId);
+      
+      // 🔥 RESTAURAR O ESTADO SALVO
+      const savedData = localStorage.getItem('tfazzio_diagnostic_data');
+      const awaitingPayment = localStorage.getItem('tfazzio_diagnostic_awaiting_payment');
+      
+      console.log('📦 Aguardando pagamento:', awaitingPayment);
+      
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData(prev => ({ ...prev, ...parsed, paymentConfirmed: true }));
+          console.log('✅ Estado restaurado com sucesso!');
+        } catch (e) {
+          console.error('❌ Erro ao restaurar estado:', e);
+        }
+      }
+      
+      // Limpar flags
+      localStorage.removeItem('tfazzio_diagnostic_awaiting_payment');
+      
+      // Mostrar tela de sucesso
+      setShowSuccess(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  // ============================================================
+  // INICIAR DIAGNÓSTICO ADAPTATIVO
+  // ============================================================
   const iniciarDiagnosticoAdaptativo = (dadosIniciais: Partial<DiagnosticFormData>) => {
+    console.log('🔍 Iniciando diagnóstico adaptativo com:', dadosIniciais);
     const estado = iniciarInvestigacao(dadosIniciais);
+    console.log('🔍 Estado da investigação:', estado);
     setInvestigacao(estado);
     setPerguntaAtual(estado.proximaPergunta);
     setModoGratis(false);
   };
 
+  // ============================================================
+  // AVANÇAR PERGUNTA (DIAGNÓSTICO ADAPTATIVO)
+  // ============================================================
   const responderPergunta = (resposta: any) => {
     if (!investigacao) return;
 
@@ -137,6 +188,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setValidationError(null);
   };
 
+  // ============================================================
+  // FUNÇÕES DE NAVEGAÇÃO
+  // ============================================================
   const updateFormData = (fields: Partial<DiagnosticFormData>) => {
     setFormData((prev) => {
       const updated = { ...prev, ...fields };
@@ -168,6 +222,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     return true;
   };
 
+  // ============================================================
+  // NEXT STEP - COM SALVAMENTO ANTES DO CHECKOUT
+  // ============================================================
   const nextStep = () => {
     if (!validateStep()) return;
     
@@ -178,9 +235,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         cnpj: formData.cnpj || '',
       };
       iniciarDiagnosticoAdaptativo(dadosIniciais);
+      setCurrentStep(2);
+      if (onStepChange) onStepChange(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
     
     if (currentStep === 4 && !formData.paymentConfirmed) {
+      // 🔥 SALVAR O ESTADO COMPLETO ANTES DO CHECKOUT
+      localStorage.setItem('tfazzio_diagnostic_data', JSON.stringify(formData));
+      localStorage.setItem('tfazzio_diagnostic_step', String(currentStep));
+      localStorage.setItem('tfazzio_diagnostic_awaiting_payment', 'true');
+      console.log('💳 Salvando estado antes do checkout:', formData);
       setShowCheckout(true);
       return;
     }
@@ -199,15 +265,34 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ============================================================
+  // CONTINUAR APÓS PAGAMENTO
+  // ============================================================
   const handleContinueAfterPayment = () => {
+    console.log('🔄 Continuando após pagamento...');
+    
+    // 🔥 GARANTIR QUE OS DADOS ESTÃO NO FORM_DATA
+    const savedData = localStorage.getItem('tfazzio_diagnostic_data');
+    if (savedData && !formData.paymentConfirmed) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setFormData(prev => ({ ...prev, ...parsed, paymentConfirmed: true }));
+        console.log('✅ Dados restaurados no handleContinueAfterPayment');
+      } catch (e) {
+        console.error('❌ Erro ao restaurar dados:', e);
+      }
+    }
+    
     setShowSuccess(false);
     setFormData(prev => ({ ...prev, paymentConfirmed: true }));
-    // Pula para a etapa 5 (Financeiro) após pagamento
     setCurrentStep(5);
     if (onStepChange) onStepChange(5);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ============================================================
+  // GERAR DIAGNÓSTICO - ROTA V2
+  // ============================================================
   const runDiagnosticCalculation = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -252,6 +337,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (onStepChange) onStepChange(16);
   };
 
+  // ============================================================
+  // TELA DE SUCESSO
+  // ============================================================
   if (showSuccess) {
     return (
       <CheckoutSuccess 
@@ -260,6 +348,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     );
   }
 
+  // ============================================================
+  // RENDER PRINCIPAL
+  // ============================================================
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6">
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6">
