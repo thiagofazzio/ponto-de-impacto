@@ -89,6 +89,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [investigacao, setInvestigacao] = useState<EstadoInvestigacao | null>(null);
   const [perguntaAtual, setPerguntaAtual] = useState<Pergunta | null>(null);
   const [modoGratis, setModoGratis] = useState(false);
+  const [historicoPerguntas, setHistoricoPerguntas] = useState<Pergunta[]>([]);
 
   // ============================================================
   // CARREGAR DADOS DO LOCALSTORAGE
@@ -125,7 +126,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (success === 'true' && sessionId) {
       console.log('✅ Pagamento confirmado! Session ID:', sessionId);
       
-      // 🔥 RESTAURAR O ESTADO SALVO
       const savedData = localStorage.getItem('tfazzio_diagnostic_data');
       const awaitingPayment = localStorage.getItem('tfazzio_diagnostic_awaiting_payment');
       
@@ -141,10 +141,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         }
       }
       
-      // Limpar flags
       localStorage.removeItem('tfazzio_diagnostic_awaiting_payment');
-      
-      // Mostrar tela de sucesso
       setShowSuccess(true);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -160,6 +157,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setInvestigacao(estado);
     setPerguntaAtual(estado.proximaPergunta);
     setModoGratis(false);
+    setHistoricoPerguntas([]);
   };
 
   // ============================================================
@@ -172,6 +170,11 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     const dadosAtualizados = { ...formData, [campoId]: resposta };
     setFormData(dadosAtualizados);
 
+    // 🔥 SALVAR NO HISTÓRICO PARA PODER VOLTAR
+    if (perguntaAtual) {
+      setHistoricoPerguntas(prev => [...prev, perguntaAtual]);
+    }
+
     const novoEstado = avancarInvestigacao(investigacao, resposta, campoId);
     setInvestigacao(novoEstado);
 
@@ -182,6 +185,44 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
       if (isDiagnosticoCompleto(novoEstado)) {
         setCurrentStep(4);
         if (onStepChange) onStepChange(4);
+      }
+    }
+
+    setValidationError(null);
+  };
+
+  // ============================================================
+  // VOLTAR PERGUNTA (DIAGNÓSTICO ADAPTATIVO)
+  // ============================================================
+  const voltarPergunta = () => {
+    if (historicoPerguntas.length === 0) {
+      // Se não tem histórico, volta para a etapa anterior
+      prevStep();
+      return;
+    }
+
+    // 🔥 REMOVER A ÚLTIMA PERGUNTA DO HISTÓRICO
+    const novoHistorico = [...historicoPerguntas];
+    const ultimaPergunta = novoHistorico.pop();
+    setHistoricoPerguntas(novoHistorico);
+
+    // 🔥 REMOVER A RESPOSTA DA ÚLTIMA PERGUNTA
+    if (ultimaPergunta) {
+      const novosDados = { ...formData };
+      delete novosDados[ultimaPergunta.id as keyof DiagnosticFormData];
+      setFormData(novosDados);
+      
+      // 🔥 VOLTAR PARA A PERGUNTA ANTERIOR
+      if (novoHistorico.length > 0) {
+        const perguntaAnterior = novoHistorico[novoHistorico.length - 1];
+        setPerguntaAtual(perguntaAnterior);
+      } else {
+        // Se não tem mais perguntas no histórico, volta para a primeira
+        const perguntasAtivas = investigacao?.dados ? [] : [];
+        // Recria a investigação com os dados atuais
+        const novoEstado = iniciarInvestigacao(novosDados);
+        setInvestigacao(novoEstado);
+        setPerguntaAtual(novoEstado.proximaPergunta);
       }
     }
 
@@ -273,11 +314,11 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     
     // 🔥 GARANTIR QUE OS DADOS ESTÃO NO FORM_DATA
     const savedData = localStorage.getItem('tfazzio_diagnostic_data');
-    if (savedData && !formData.paymentConfirmed) {
+    if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         setFormData(prev => ({ ...prev, ...parsed, paymentConfirmed: true }));
-        console.log('✅ Dados restaurados no handleContinueAfterPayment');
+        console.log('✅ Dados restaurados no handleContinueAfterPayment:', parsed);
       } catch (e) {
         console.error('❌ Erro ao restaurar dados:', e);
       }
@@ -299,10 +340,40 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setCurrentStep(15);
     if (onStepChange) onStepChange(15);
 
-    const hipoteses = gerarHipoteses(formData);
-    const limitadorPrincipal = identificarLimitadorPrincipal(hipoteses, formData);
-    const proximoLimitador = limitadorPrincipal ? projetarProximoLimitador(limitadorPrincipal, formData) : null;
-    const simulacao = gerarResultadoSimulacao(formData, formData.mainGoal || 'crescer_faturamento');
+    // 🔥 GARANTIR QUE OS DADOS ESTÃO NO FORM_DATA
+    const savedData = localStorage.getItem('tfazzio_diagnostic_data');
+    let dadosParaEnviar = formData;
+    
+    // Se o formData estiver vazio mas o localStorage tiver dados, restaura
+    if (savedData && !formData.paymentConfirmed) {
+      try {
+        const parsed = JSON.parse(savedData);
+        dadosParaEnviar = { ...formData, ...parsed };
+        setFormData(dadosParaEnviar);
+        console.log('✅ Dados restaurados para o diagnóstico:', dadosParaEnviar);
+      } catch (e) {
+        console.error('❌ Erro ao restaurar dados:', e);
+      }
+    }
+
+    // Se ainda assim estiver vazio, tenta restaurar do localStorage novamente
+    if (!dadosParaEnviar.companyName && savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        dadosParaEnviar = parsed;
+        setFormData(parsed);
+        console.log('✅ Dados restaurados do localStorage (fallback):', dadosParaEnviar);
+      } catch (e) {
+        console.error('❌ Erro ao restaurar dados (fallback):', e);
+      }
+    }
+
+    console.log('📊 Dados enviados para diagnóstico:', dadosParaEnviar);
+
+    const hipoteses = gerarHipoteses(dadosParaEnviar);
+    const limitadorPrincipal = identificarLimitadorPrincipal(hipoteses, dadosParaEnviar);
+    const proximoLimitador = limitadorPrincipal ? projetarProximoLimitador(limitadorPrincipal, dadosParaEnviar) : null;
+    const simulacao = gerarResultadoSimulacao(dadosParaEnviar, dadosParaEnviar.mainGoal || 'crescer_faturamento');
 
     const minDelay = new Promise<void>((resolve) => setTimeout(resolve, MIN_PROCESSING_MS));
 
@@ -312,7 +383,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            ...formData, 
+            ...dadosParaEnviar, 
             hipoteses, 
             limitadorPrincipal, 
             proximoLimitador, 
@@ -322,10 +393,10 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
         if (response.ok) {
           return (await response.json()) as DiagnosticResult;
         }
-        return generateFullDiagnostic(formData);
+        return generateFullDiagnostic(dadosParaEnviar);
       } catch (e) {
         console.warn('API call failed, calculating locally:', e);
-        return generateFullDiagnostic(formData);
+        return generateFullDiagnostic(dadosParaEnviar);
       }
     })();
 
@@ -373,7 +444,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
                 isGratis={modoGratis}
                 totalPerguntas={modoGratis ? 5 : 15}
                 perguntasRespondidas={investigacao?.perguntasRespondidas.length || 0}
-                onVoltar={prevStep}
+                onVoltar={voltarPergunta}
               />
             )}
 
@@ -381,6 +452,19 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               <div className="bg-white rounded-2xl p-8 border border-[#D8D3CB] text-center">
                 <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4">Carregando perguntas...</h2>
                 <p className="text-[#5A6270]">Aguarde um momento enquanto preparamos seu diagnóstico personalizado.</p>
+                <button 
+                  onClick={() => {
+                    const dadosIniciais = {
+                      ...formData,
+                      companyName: formData.companyName || 'Empresa Teste',
+                      cnpj: formData.cnpj || '00000000000000',
+                    };
+                    iniciarDiagnosticoAdaptativo(dadosIniciais);
+                  }}
+                  className="mt-4 px-6 py-2 bg-[#6B0F1A] text-white rounded-lg hover:bg-[#500B13]"
+                >
+                  Tentar carregar novamente
+                </button>
               </div>
             )}
 
