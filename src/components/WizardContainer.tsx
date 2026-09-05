@@ -15,6 +15,8 @@ import { WizardNavigation } from './WizardNavigation';
 import { DynamicStep } from './steps/DynamicStep';
 import { FinancialDataStep } from './steps/FinancialDataStep';
 import { CommercialDataStep } from './steps/CommercialDataStep';
+import { SelfAssessmentStep } from './steps/SelfAssessmentStep'; // 👈 ADICIONADO
+import { StrategicQuestionsStep } from './steps/StrategicQuestionsStep';
 import { 
   iniciarInvestigacao, 
   avancarInvestigacao, 
