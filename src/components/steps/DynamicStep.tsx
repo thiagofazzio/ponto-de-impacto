@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pergunta } from '../../types';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 
 interface DynamicStepProps {
   pergunta: Pergunta;
@@ -22,21 +22,29 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
   const [resposta, setResposta] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [percentuais, setPercentuais] = useState<Record<string, number>>({});
+  const [naoSei, setNaoSei] = useState<boolean>(false);
 
-  // 🔥 Resetar estado local sempre que a pergunta mudar
+  // Resetar estado local sempre que a pergunta mudar
   useEffect(() => {
     setResposta(null);
     setError(null);
     setPercentuais({});
+    setNaoSei(false);
   }, [pergunta.id]);
 
   const handleSubmit = () => {
+    if (naoSei) {
+      // Marca como desconhecido
+      onResponder('nao_sei');
+      return;
+    }
+
     if (pergunta.tipo === 'select' && !resposta) {
       setError('Por favor, selecione uma opção.');
       return;
     }
     if (pergunta.tipo === 'number' && (resposta === null || resposta === undefined || resposta === '' || isNaN(resposta))) {
-      setError('Por favor, insira um valor válido.');
+      setError('Por favor, insira um valor válido ou marque "Não sei".');
       return;
     }
     if (pergunta.tipo === 'boolean' && resposta === null) {
@@ -62,10 +70,11 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
   };
 
   const isCurrency = pergunta.id.includes('capital') || pergunta.id.includes('giro') || 
-                     pergunta.id.includes('faturamento') || pergunta.id.includes('ticket');
+                     pergunta.id.includes('faturamento') || pergunta.id.includes('ticket') ||
+                     pergunta.id.includes('receita') || pergunta.id.includes('mensal');
   const isPercent = pergunta.id.includes('percent') || pergunta.id.includes('taxa') || 
                     pergunta.id.includes('margem') || pergunta.id.includes('retencao') || 
-                    pergunta.tipo === 'range';
+                    pergunta.tipo === 'range' || pergunta.id.includes('capacidade');
 
   const renderInput = () => {
     switch (pergunta.tipo) {
@@ -145,6 +154,68 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
         );
 
       case 'number':
+      case 'range':
+        // Se allowUnknown, exibir campo numérico + opção "Não sei"
+        if (pergunta.allowUnknown) {
+          return (
+            <div className="mt-4 space-y-3">
+              <div className="relative">
+                {isCurrency && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A6270] font-bold">R$</span>}
+                <input
+                  type="number"
+                  value={resposta !== null && resposta !== undefined && resposta !== 'nao_sei' ? resposta : ''}
+                  onChange={(e) => {
+                    setResposta(Number(e.target.value));
+                    setNaoSei(false);
+                  }}
+                  disabled={naoSei}
+                  placeholder={isPercent ? 'Ex: 15' : isCurrency ? 'Ex: 50000' : 'Digite o valor...'}
+                  className={`w-full px-4 py-3 border border-[#D8D3CB] rounded-xl focus:ring-2 focus:ring-[#6B0F1A] focus:border-transparent ${isCurrency ? 'pl-10' : ''} ${naoSei ? 'bg-gray-100 text-gray-400' : ''}`}
+                />
+                {isPercent && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6270] font-bold">%</span>}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setNaoSei(true);
+                  setResposta('nao_sei');
+                }}
+                className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg border transition ${
+                  naoSei
+                    ? 'bg-[#F4E8C1] border-[#D4AF37] text-[#6B0F1A]'
+                    : 'bg-white border-[#D8D3CB] text-[#5A6270] hover:border-[#6B0F1A]/50'
+                }`}
+              >
+                <HelpCircle className="w-4 h-4" />
+                Não sei informar
+              </button>
+            </div>
+          );
+        }
+        
+        // Sem allowUnknown: para number normal, range vira slider (comportamento antigo)
+        if (pergunta.tipo === 'range') {
+          const rangeValue = resposta !== null && resposta !== undefined ? resposta : 50;
+          return (
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-[#5A6270] mb-1">
+                <span>0%</span>
+                <span className="font-bold text-[#6B0F1A]">{rangeValue}%</span>
+                <span>100%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={rangeValue}
+                onChange={(e) => setResposta(Number(e.target.value))}
+                className="w-full accent-[#6B0F1A] h-2 rounded-lg"
+              />
+            </div>
+          );
+        }
+
+        // number simples
         return (
           <div className="mt-4">
             <div className="relative">
@@ -158,26 +229,6 @@ export const DynamicStep: React.FC<DynamicStepProps> = ({
               />
               {isPercent && !isCurrency && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A6270] font-bold">%</span>}
             </div>
-          </div>
-        );
-
-      case 'range':
-        const rangeValue = resposta !== null && resposta !== undefined ? resposta : 50;
-        return (
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-[#5A6270] mb-1">
-              <span>0%</span>
-              <span className="font-bold text-[#6B0F1A]">{rangeValue}%</span>
-              <span>100%</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={rangeValue}
-              onChange={(e) => setResposta(Number(e.target.value))}
-              className="w-full accent-[#6B0F1A] h-2 rounded-lg"
-            />
           </div>
         );
 
