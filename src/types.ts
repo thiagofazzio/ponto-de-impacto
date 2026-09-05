@@ -512,6 +512,7 @@ export interface Pergunta {
   prioridade: number;
   canais?: CanalAquisicao[];
   setores?: SetorAtuacao[];
+  allowUnknown?: boolean; // 👈 NOVO: permite marcar "Não sei" (para números e range)
 }
 
 export interface MapaPerguntas {

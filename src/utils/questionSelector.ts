@@ -75,6 +75,8 @@ export function iniciarInvestigacao(dadosIniciais: Partial<DiagnosticFormData>):
   const proximaPergunta = getProximaPergunta(perguntasAtivas, dados);
   const hipoteses = gerarHipoteses(dados);
 
+  // Considera resposta válida se não for undefined/null/''/0/false (0 e false podem ser respostas válidas, mas aqui são consideradas não respondidas)
+  // Adiciona 'nao_sei' como resposta válida
   const perguntasRespondidas = Object.keys(dados).filter(key => {
     const val = dados[key as keyof DiagnosticFormData];
     return val !== undefined && val !== null && val !== '' && val !== 0 && val !== false;
@@ -110,9 +112,10 @@ export function calcularConfiancaGlobal(
   dados: DiagnosticFormData,
   hipoteses: Hipotese[]
 ): number {
+  // Ignora 'nao_sei' na contagem de dados coletados, pois não agrega valor real
   const dadosColetados = Object.keys(dados).filter(key => {
     const val = dados[key as keyof DiagnosticFormData];
-    return val !== undefined && val !== null && val !== '' && val !== 0;
+    return val !== undefined && val !== null && val !== '' && val !== 0 && val !== 'nao_sei';
   }).length;
   
   const pontuacaoDados = Math.min(100, (dadosColetados / 20) * 100) * 0.3;

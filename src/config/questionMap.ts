@@ -5,7 +5,7 @@
 import { Pergunta, MapaPerguntas, CanalAquisicao, SetorAtuacao } from '../types';
 
 // ============================================================
-// 1. PERGUNTAS UNIVERSATS (SEMPRE APARECEM)
+// 1. PERGUNTAS UNIVERSAIS (SEMPRE APARECEM)
 // ============================================================
 
 export const PERGUNTAS_UNIVERSAIS: Pergunta[] = [
@@ -78,14 +78,7 @@ export const PERGUNTAS_UNIVERSAIS: Pergunta[] = [
     prioridade: 4,
     mapa: 'estrategia',
   },
-  {
-    id: 'faturamento_mensal',
-    texto: 'Qual o faturamento mensal médio da sua empresa?',
-    descricao: 'Use a média dos últimos 3-6 meses',
-    tipo: 'number',
-    prioridade: 5,
-    mapa: 'financeiro',
-  },
+  // 🔥 REMOVIDO: faturamento_mensal daqui, pois será coletado no FinancialDataStep
   {
     id: 'numero_colaboradores',
     texto: 'Quantas pessoas trabalham na empresa atualmente?',
@@ -145,14 +138,7 @@ export const PERGUNTAS_RECEITA: Pergunta[] = [
     mapa: 'receita',
     condicao: (data) => data.canaisAquisicao && data.canaisAquisicao.length > 0,
   },
-  {
-    id: 'ticket_medio',
-    texto: 'Qual o ticket médio por cliente/venda?',
-    descricao: 'Valor médio de cada venda ou cliente',
-    tipo: 'number',
-    prioridade: 12,
-    mapa: 'receita',
-  },
+  // 🔥 REMOVIDO: ticket_medio, pois FinancialDataStep já pergunta (averageTicket)
   {
     id: 'frequencia_compra',
     texto: 'Com que frequência seus clientes compram de vocês?',
@@ -172,7 +158,8 @@ export const PERGUNTAS_RECEITA: Pergunta[] = [
     id: 'taxa_retencao',
     texto: 'Qual a sua taxa de retenção de clientes?',
     descricao: '% de clientes que continuam comprando depois de 12 meses (0% = nenhum, 100% = todos)',
-    tipo: 'range',
+    tipo: 'number',
+    allowUnknown: true,
     prioridade: 14,
     mapa: 'receita',
   },
@@ -189,6 +176,7 @@ export const PERGUNTAS_RECEITA: Pergunta[] = [
       { value: '30', label: '30 dias' },
       { value: '60', label: '60 dias' },
       { value: '90+', label: 'Mais de 90 dias' },
+      { value: 'nao_tem_fluxo', label: 'Não tenho fluxo comercial ativo' },
     ],
     prioridade: 15,
     mapa: 'receita',
@@ -203,16 +191,18 @@ export const PERGUNTAS_FINANCEIRAS: Pergunta[] = [
   {
     id: 'margem_liquida',
     texto: 'Qual a sua margem líquida atual?',
-    descricao: 'Lucro líquido / Faturamento x 100 (ex: 15 = 15%)',
+    descricao: 'Lucro líquido / Faturamento x 100 (ex: 15 = 15%). Se não souber, marque "Não sei".',
     tipo: 'number',
+    allowUnknown: true,
     prioridade: 20,
     mapa: 'financeiro',
   },
   {
     id: 'capital_giro',
     texto: 'Qual o seu capital de giro disponível?',
-    descricao: 'Recursos em caixa para financiar o dia a dia (R$)',
+    descricao: 'Recursos em caixa para financiar o dia a dia (R$). Se não souber, marque "Não sei".',
     tipo: 'number',
+    allowUnknown: true,
     prioridade: 21,
     mapa: 'financeiro',
   },
@@ -268,6 +258,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
     texto: 'Qual a sua capacidade atual de produção / entrega?',
     descricao: 'Se a demanda aumentasse hoje, quanto você conseguiria atender? (0% = não consigo atender mais, 100% = consigo dobrar)',
     tipo: 'range',
+    allowUnknown: true,
     prioridade: 30,
     mapa: 'operacional',
   },
@@ -276,6 +267,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
     texto: 'Qual a sua capacidade de atendimento comercial?',
     descricao: 'Se os leads aumentassem, quantos sua equipe conseguiria atender? (0% = não consigo atender mais, 100% = consigo dobrar)',
     tipo: 'range',
+    allowUnknown: true,
     prioridade: 31,
     mapa: 'comercial',
   },
@@ -284,6 +276,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
     texto: 'Qual a sua capacidade de distribuição/entrega?',
     descricao: 'Se as vendas aumentassem, a entrega suportaria? (0% = não suporta mais, 100% = suporta o dobro)',
     tipo: 'range',
+    allowUnknown: true,
     prioridade: 32,
     mapa: 'operacional',
   },
@@ -292,6 +285,7 @@ export const PERGUNTAS_CAPACIDADE: Pergunta[] = [
     texto: 'Qual a sua capacidade financeira para investir?',
     descricao: 'Quanto você conseguiria investir para crescer sem comprometer o caixa? (0% = nada, 100% = muito)',
     tipo: 'range',
+    allowUnknown: true,
     prioridade: 33,
     mapa: 'financeiro',
   },
@@ -391,14 +385,14 @@ export const MAPAS: MapaPerguntas[] = [
     nome: 'Máquina de Receita',
     descricao: 'Como a empresa gera e captura valor',
     perguntas: PERGUNTAS_RECEITA,
-    condicao_ativacao: (data) => data.faturamento_mensal !== undefined && data.faturamento_mensal > 0,
+    condicao_ativacao: (data) => data.objetivo_principal !== undefined,
   },
   {
     id: 'mapa_financeiro',
     nome: 'Mapa Financeiro',
     descricao: 'Saúde financeira e capital de giro',
     perguntas: PERGUNTAS_FINANCEIRAS,
-    condicao_ativacao: (data) => data.margem_liquida !== undefined || data.faturamento_mensal !== undefined,
+    condicao_ativacao: (data) => data.objetivo_principal !== undefined,
   },
   {
     id: 'mapa_capacidade',

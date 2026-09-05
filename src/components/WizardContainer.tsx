@@ -12,23 +12,24 @@ import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import CheckoutModal from './checkout/CheckoutModal';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import { WizardNavigation } from './WizardNavigation';
-import { DynamicStep } from './steps/DynamicStep';
+import { DynamicStepGroup } from './steps/DynamicStepGroup'; // 👈 NOVO COMPONENTE
 import { FinancialDataStep } from './steps/FinancialDataStep';
 import { CommercialDataStep } from './steps/CommercialDataStep';
-import { SelfAssessmentStep } from './steps/SelfAssessmentStep'; // 👈 ADICIONADO
+import { SelfAssessmentStep } from './steps/SelfAssessmentStep';
 import { StrategicQuestionsStep } from './steps/StrategicQuestionsStep';
 import { 
   iniciarInvestigacao, 
   avancarInvestigacao, 
   isDiagnosticoCompleto,
   EstadoInvestigacao,
-  gerarPerguntasGratis
 } from '../utils/questionSelector';
+import { getPerguntasAtivas } from '../config/questionMap'; // 👈 ADICIONADO
 import { gerarHipoteses, identificarLimitadorPrincipal, projetarProximoLimitador } from '../utils/hypothesisEngine';
 import { gerarResultadoSimulacao } from '../utils/simulationEngine';
 
 const TOTAL_STEPS = 13;
 const MIN_PROCESSING_MS = 3600;
+const GROUP_SIZE = 4; // 👈 QUANTIDADE DE PERGUNTAS POR TELA
 
 const INITIAL_FORM_DATA: DiagnosticFormData = {
   cnpj: '',
@@ -91,8 +92,8 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [investigacao, setInvestigacao] = useState<EstadoInvestigacao | null>(null);
-  const [perguntaAtual, setPerguntaAtual] = useState<Pergunta | null>(null);
   const [modoGratis, setModoGratis] = useState(false);
+  const [grupoPerguntas, setGrupoPerguntas] = useState<Pergunta[]>([]);
   const [historicoPerguntas, setHistoricoPerguntas] = useState<Pergunta[]>([]);
   const [dadosCarregados, setDadosCarregados] = useState(false);
 
@@ -173,16 +174,13 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     if (success === 'true' && sessionId) {
       console.log('✅ Pagamento confirmado! Session ID:', sessionId);
       
-      // 🔥 FORÇAR RESTAURAÇÃO DOS DADOS
       const dadosRestaurados = forcarRestauracaoDados();
       
       if (dadosRestaurados) {
         console.log('✅ Dados forçados com sucesso!');
-        // 🔥 IR DIRETO PARA A ETAPA 5
         setCurrentStep(5);
         if (onStepChange) onStepChange(5);
       } else {
-        // TENTAR NOVAMENTE APÓS 1 SEGUNDO
         setTimeout(() => {
           const dadosRestaurados2 = forcarRestauracaoDados();
           if (dadosRestaurados2) {
@@ -206,69 +204,83 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     const estado = iniciarInvestigacao(dadosIniciais);
     console.log('🔍 Estado da investigação:', estado);
     setInvestigacao(estado);
-    setPerguntaAtual(estado.proximaPergunta);
-    setModoGratis(false);
+    const primeiroGrupo = obterProximoGrupo(estado.dados, estado.perguntasRespondidas);
+    setGrupoPerguntas(primeiroGrupo);
     setHistoricoPerguntas([]);
+    setModoGratis(false);
   };
 
   // ============================================================
-  // AVANÇAR PERGUNTA
+  // OBTER PRÓXIMO GRUPO DE PERGUNTAS
   // ============================================================
-  const responderPergunta = (resposta: any) => {
+  const obterProximoGrupo = (dados: DiagnosticFormData, respondidas: string[]): Pergunta[] => {
+    const todas = getPerguntasAtivas(dados);
+    const naoRespondidas = todas.filter(p => !respondidas.includes(p.id));
+    return naoRespondidas.slice(0, GROUP_SIZE);
+  };
+
+  // ============================================================
+  // RESPONDER GRUPO INTEIRO
+  // ============================================================
+  const responderGrupo = (respostas: Record<string, any>) => {
     if (!investigacao) return;
 
-    const campoId = perguntaAtual?.id || '';
-    const dadosAtualizados = { ...formData, [campoId]: resposta };
-    setFormData(dadosAtualizados);
+    // Salvar respostas no formData
+    const novosDados = { ...formData, ...respostas };
+    setFormData(novosDados);
 
-    if (perguntaAtual) {
-      setHistoricoPerguntas(prev => [...prev, perguntaAtual]);
+    // Adicionar perguntas do grupo ao histórico
+    const perguntasDoGrupo = grupoPerguntas;
+    setHistoricoPerguntas(prev => [...prev, ...perguntasDoGrupo]);
+
+    // Avançar investigação com todas as respostas
+    let estadoAtual = investigacao;
+    for (const [id, resposta] of Object.entries(respostas)) {
+      estadoAtual = avancarInvestigacao(estadoAtual, resposta, id);
     }
+    setInvestigacao(estadoAtual);
 
-    const novoEstado = avancarInvestigacao(investigacao, resposta, campoId);
-    setInvestigacao(novoEstado);
-
-    if (novoEstado.proximaPergunta) {
-      setPerguntaAtual(novoEstado.proximaPergunta);
+    // Verificar se concluiu ou definir próximo grupo
+    if (isDiagnosticoCompleto(estadoAtual)) {
+      setGrupoPerguntas([]);
+      setCurrentStep(4);
+      if (onStepChange) onStepChange(4);
     } else {
-      setPerguntaAtual(null);
-      if (isDiagnosticoCompleto(novoEstado)) {
+      const proximoGrupo = obterProximoGrupo(estadoAtual.dados, estadoAtual.perguntasRespondidas);
+      setGrupoPerguntas(proximoGrupo);
+      if (proximoGrupo.length === 0) {
         setCurrentStep(4);
         if (onStepChange) onStepChange(4);
       }
     }
-
     setValidationError(null);
   };
 
   // ============================================================
-  // VOLTAR PERGUNTA
+  // VOLTAR GRUPO ANTERIOR
   // ============================================================
-  const voltarPergunta = () => {
+  const voltarGrupo = () => {
     if (historicoPerguntas.length === 0) {
       prevStep();
       return;
     }
 
-    const novoHistorico = [...historicoPerguntas];
-    const ultimaPergunta = novoHistorico.pop();
-    setHistoricoPerguntas(novoHistorico);
+    // Remove o último grupo de perguntas do histórico
+    const tamanhoGrupoAnterior = Math.min(GROUP_SIZE, historicoPerguntas.length);
+    const removidas = historicoPerguntas.slice(-tamanhoGrupoAnterior);
+    const novasPerguntas = historicoPerguntas.slice(0, -tamanhoGrupoAnterior);
+    setHistoricoPerguntas(novasPerguntas);
 
-    if (ultimaPergunta) {
-      const novosDados = { ...formData };
-      delete novosDados[ultimaPergunta.id as keyof DiagnosticFormData];
-      setFormData(novosDados);
-      
-      if (novoHistorico.length > 0) {
-        const perguntaAnterior = novoHistorico[novoHistorico.length - 1];
-        setPerguntaAtual(perguntaAnterior);
-      } else {
-        const novoEstado = iniciarInvestigacao(novosDados);
-        setInvestigacao(novoEstado);
-        setPerguntaAtual(novoEstado.proximaPergunta);
-      }
-    }
+    // Remove respostas dessas perguntas do formData
+    const novosDados = { ...formData };
+    removidas.forEach(p => delete novosDados[p.id as keyof DiagnosticFormData]);
+    setFormData(novosDados);
 
+    // Recalcula estado e grupo anterior
+    const estado = iniciarInvestigacao(novosDados);
+    setInvestigacao(estado);
+    const grupo = obterProximoGrupo(estado.dados, estado.perguntasRespondidas);
+    setGrupoPerguntas(grupo);
     setValidationError(null);
   };
 
@@ -326,7 +338,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     }
     
     if (currentStep === 4 && !formData.paymentConfirmed) {
-      // 🔥 SALVAR ANTES DO CHECKOUT
       salvarDadosNoLocalStorage(formData);
       localStorage.setItem('tfazzio_diagnostic_awaiting_payment', 'true');
       console.log('💳 Abrindo checkout com dados:', formData);
@@ -354,7 +365,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const handleContinueAfterPayment = () => {
     console.log('🔄 Continuando após pagamento...');
     
-    // 🔥 FORÇAR RESTAURAÇÃO DOS DADOS
     const dados = carregarDadosDoLocalStorage();
     if (dados) {
       setFormData(prev => ({ ...prev, ...dados, paymentConfirmed: true }));
@@ -376,7 +386,6 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
     setCurrentStep(15);
     if (onStepChange) onStepChange(15);
 
-    // 🔥 GARANTIR DADOS - FORÇAR RESTAURAÇÃO
     let dadosParaEnviar = formData;
     
     if (!dadosParaEnviar.companyName) {
@@ -457,18 +466,18 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
               <WelcomeStep onStart={nextStep} />
             )}
 
-            {currentStep === 2 && perguntaAtual && (
-              <DynamicStep
-                pergunta={perguntaAtual}
-                onResponder={responderPergunta}
+            {currentStep === 2 && grupoPerguntas.length > 0 && (
+              <DynamicStepGroup
+                perguntas={grupoPerguntas}
+                onResponderGroup={responderGrupo}
+                onVoltar={voltarGrupo}
                 isGratis={modoGratis}
                 totalPerguntas={modoGratis ? 5 : 15}
                 perguntasRespondidas={investigacao?.perguntasRespondidas.length || 0}
-                onVoltar={voltarPergunta}
               />
             )}
 
-            {currentStep === 2 && !perguntaAtual && (
+            {currentStep === 2 && grupoPerguntas.length === 0 && (
               <div className="bg-white rounded-2xl p-8 border border-[#D8D3CB] text-center">
                 <h2 className="text-2xl font-bold text-[#1A1A1A] mb-4">Carregando perguntas...</h2>
                 <p className="text-[#5A6270]">Aguarde um momento enquanto preparamos seu diagnóstico personalizado.</p>
