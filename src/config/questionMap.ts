@@ -78,7 +78,6 @@ export const PERGUNTAS_UNIVERSAIS: Pergunta[] = [
     prioridade: 4,
     mapa: 'estrategia',
   },
-  // 🔥 REMOVIDO: faturamento_mensal daqui, pois será coletado no FinancialDataStep
   {
     id: 'numero_colaboradores',
     texto: 'Quantas pessoas trabalham na empresa atualmente?',
@@ -138,7 +137,6 @@ export const PERGUNTAS_RECEITA: Pergunta[] = [
     mapa: 'receita',
     condicao: (data) => data.canaisAquisicao && data.canaisAquisicao.length > 0,
   },
-  // 🔥 REMOVIDO: ticket_medio, pois FinancialDataStep já pergunta (averageTicket)
   {
     id: 'frequencia_compra',
     texto: 'Com que frequência seus clientes compram de vocês?',
@@ -385,14 +383,14 @@ export const MAPAS: MapaPerguntas[] = [
     nome: 'Máquina de Receita',
     descricao: 'Como a empresa gera e captura valor',
     perguntas: PERGUNTAS_RECEITA,
-    condicao_ativacao: (data) => data.objetivo_principal !== undefined,
+    condicao_ativacao: () => true, // 👈 SEMPRE ATIVO
   },
   {
     id: 'mapa_financeiro',
     nome: 'Mapa Financeiro',
     descricao: 'Saúde financeira e capital de giro',
     perguntas: PERGUNTAS_FINANCEIRAS,
-    condicao_ativacao: (data) => data.objetivo_principal !== undefined,
+    condicao_ativacao: () => true, // 👈 SEMPRE ATIVO
   },
   {
     id: 'mapa_capacidade',

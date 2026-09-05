@@ -12,7 +12,7 @@ import { generateFullDiagnostic } from '../utils/diagnosticCalculator';
 import CheckoutModal from './checkout/CheckoutModal';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import { WizardNavigation } from './WizardNavigation';
-import { DynamicStepGroup } from './steps/DynamicStepGroup'; // 👈 NOVO COMPONENTE
+import { DynamicStepGroup } from './steps/DynamicStepGroup';
 import { FinancialDataStep } from './steps/FinancialDataStep';
 import { CommercialDataStep } from './steps/CommercialDataStep';
 import { SelfAssessmentStep } from './steps/SelfAssessmentStep';
@@ -23,13 +23,13 @@ import {
   isDiagnosticoCompleto,
   EstadoInvestigacao,
 } from '../utils/questionSelector';
-import { getPerguntasAtivas } from '../config/questionMap'; // 👈 ADICIONADO
+import { getPerguntasAtivas } from '../config/questionMap';
 import { gerarHipoteses, identificarLimitadorPrincipal, projetarProximoLimitador } from '../utils/hypothesisEngine';
 import { gerarResultadoSimulacao } from '../utils/simulationEngine';
 
 const TOTAL_STEPS = 13;
 const MIN_PROCESSING_MS = 3600;
-const GROUP_SIZE = 4; // 👈 QUANTIDADE DE PERGUNTAS POR TELA
+const GROUP_SIZE = 4;
 
 const INITIAL_FORM_DATA: DiagnosticFormData = {
   cnpj: '',
@@ -216,7 +216,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({ onStepChange, 
   const obterProximoGrupo = (dados: DiagnosticFormData, respondidas: string[]): Pergunta[] => {
     const todas = getPerguntasAtivas(dados);
     const naoRespondidas = todas.filter(p => !respondidas.includes(p.id));
-    return naoRespondidas.slice(0, GROUP_SIZE);
+    // Se houver não respondidas, use-as; senão, mostre as primeiras perguntas ativas (evita tela vazia)
+    const grupo = naoRespondidas.length > 0 ? naoRespondidas : todas;
+    return grupo.slice(0, GROUP_SIZE);
   };
 
   // ============================================================
